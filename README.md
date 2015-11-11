@@ -30,7 +30,7 @@ and the dependencies for this launcher:
 If g++-4.9 fails to install and you're using Ubuntu 14.04 you may need to add the repository ppa:ubuntu-toolchain-r/test.
 
 You'll also need to install 32-bit version of the graphic drivers (nvidia drivers ask you about that at installation, so
-you may need to reinstall/reconfigure them; if you use mesa you'll need to install the `libgles2-mesa:i386` and
+you may need to reinstall/reconfigure them; if you use mesa you'll need to install the `libgles2-mesa-dev:i386` and
 `libegl1-mesa-dev:i386` package)
 
 ## Compiling
