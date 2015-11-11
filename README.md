@@ -11,14 +11,14 @@ You'll need to install the basic x32 bit compatibility libraries:
 and the dependencies for this launcher:
 
 ```
-    sudo apt-get install cmake libgles2-mesa-dev gcc-4.9 g++-4.9 gcc-4.9-multilib g++-4.9-multilib zlib1g-dev:i386 libx11-dev:i386 linux-libc-dev:i386 uuid-dev:i386 libpng12-0:i386 libx11-dev:i386 
+    sudo apt-get install cmake libgles2-mesa-dev gcc-4.9 g++-4.9 gcc-4.9-multilib g++-4.9-multilib zlib1g-dev:i386 libx11-dev:i386 linux-libc-dev:i386 uuid-dev:i386 libpng-dev:i386 libx11-dev:i386 
 ```
 
 If g++-4.9 fails to install and you're using Ubuntu 14.04 you may need to add the repository ppa:ubuntu-toolchain-r/test.
 
 You'll also need to install 32-bit version of the graphic drivers (nvidia drivers ask you about that at installation, so
-you may need to reinstall/reconfigure them; if you use mesa you'll need to install the libgles2-mesa:i386 and
-libegl1-mesa package)
+you may need to reinstall/reconfigure them; if you use mesa you'll need to install the libgles2-mesa-dev:i386 and
+libegl1-mesa-dev:i386 packages)
 
 ## Compiling
 This app uses cmake so it is enough to do:
