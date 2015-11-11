@@ -1,0 +1,31 @@
+#pragma once
+
+const char* fmod_symbols[] = {
+    "_ZN4FMOD14ChannelControl7setMuteEb",
+    "_ZN4FMOD14ChannelControl9setVolumeEf",
+    "_ZN4FMOD14ChannelControl9isPlayingEPb",
+    "_ZN4FMOD14ChannelControl4stopEv",
+    "_ZN4FMOD6System9playSoundEPNS_5SoundEPNS_12ChannelGroupEbPPNS_7ChannelE",
+    "_ZN4FMOD5Sound15getNumSubSoundsEPi",
+    "_ZN4FMOD5Sound11getSubSoundEiPPS0_",
+    "_ZN4FMOD14ChannelControl15set3DAttributesEPK11FMOD_VECTORS3_S3_",
+    "_ZN4FMOD14ChannelControl8setPitchEf",
+    "_ZN4FMOD14ChannelControl9setPausedEb",
+    "_ZN4FMOD5Sound7releaseEv",
+    "_ZN4FMOD6System5closeEv",
+    "_ZN4FMOD6System7releaseEv",
+    "FMOD_System_Create",
+    "_ZN4FMOD6System10getVersionEPj",
+    "_ZN4FMOD6System9setOutputE15FMOD_OUTPUTTYPE",
+    "_ZN4FMOD6System4initEijPv",
+    "_ZN4FMOD6System13set3DSettingsEfff",
+    "_ZN4FMOD6System18createChannelGroupEPKcPPNS_12ChannelGroupE",
+    "_ZN4FMOD6System21getMasterChannelGroupEPPNS_12ChannelGroupE",
+    "_ZN4FMOD12ChannelGroup8addGroupEPS0_bPPNS_13DSPConnectionE",
+    "_ZN4FMOD6System23set3DListenerAttributesEiPK11FMOD_VECTORS3_S3_S3_",
+    "_ZN4FMOD6System6updateEv",
+    "_ZN4FMOD6System12createStreamEPKcjP22FMOD_CREATESOUNDEXINFOPPNS_5SoundE",
+    "_ZN4FMOD6System11createSoundEPKcjP22FMOD_CREATESOUNDEXINFOPPNS_5SoundE",
+    "_ZN4FMOD5Sound19set3DMinMaxDistanceEff",
+    nullptr
+};
