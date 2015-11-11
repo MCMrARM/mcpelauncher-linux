@@ -114,7 +114,7 @@ void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool
             break;
         case PNG_COLOR_TYPE_GRAY:
             if(bitDepth < 8) {
-                png_set_gray_1_2_4_to_8(png);
+                png_set_expand_gray_1_2_4_to_8(png);
             }
 
         default:

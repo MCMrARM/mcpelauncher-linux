@@ -232,11 +232,29 @@ void patchCallInstruction(void* patchOff, void* func, bool jump) {
     printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
 }
 
+std::string getOSLibraryPath(std::string libName) {
+    std::string p = std::string("/usr/lib/i386-linux-gnu/") + libName;
+    if (access(p.c_str(), F_OK) != -1) {
+        return p;
+    }
+    p = std::string("/usr/lib32/") + libName;
+    if (access(p.c_str(), F_OK) != -1) {
+        return p;
+    }
+    p = std::string("/lib32/") + libName;
+    if (access(p.c_str(), F_OK) != -1) {
+        return p;
+    }
+
+    std::cout << "could not find os library: " << libName << "\n";
+    abort();
+}
+
 using namespace std;
 int main(int argc, char *argv[]) {
     std::cout << "loading MCPE\n";
 
-    void* glesLib = loadLibraryOS("/usr/lib/i386-linux-gnu/libGLESv2.so", gles_symbols); // TODO: Is this safe to assume?
+    void* glesLib = loadLibraryOS(getOSLibraryPath("libGLESv2.so"), gles_symbols);
     void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.7.2").c_str(), fmod_symbols);
     if (glesLib == nullptr || fmodLib == nullptr)
         return -1;
