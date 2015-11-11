@@ -4,8 +4,21 @@ MCPE Linux Launcher
 ## Required packages
 You'll need to install the basic x32 bit compatibility libraries:
 
+First, you will need to add the `i386` architecture via `dpkg`:
+
+```
+sudo dpkg --add-architecture i386
+sudo apt-get update
+```
+
 ```
     sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0
+```
+
+Please note that `lib32bz2-1.0` has been discontinued after Utopic. If you are running Utopic or above, install with this command line:
+
+```
+sudo apt-get install lib32z1 lib32ncurses5 libbz2-1.0:i386
 ```
 
 and the dependencies for this launcher:
