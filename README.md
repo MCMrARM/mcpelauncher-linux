@@ -4,8 +4,21 @@ MCPE Linux Launcher
 ## Required packages
 You'll need to install the basic x32 bit compatibility libraries:
 
+First, you will need to add the `i386` architecture via `dpkg`:
+
+```
+sudo dpkg --add-architecture i386
+sudo apt-get update
+```
+
 ```
     sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0
+```
+
+Please note that `lib32bz2-1.0` has been discontinued after Utopic. If you are running Utopic or above, install with this command line:
+
+```
+sudo apt-get install lib32z1 lib32ncurses5 libbz2-1.0:i386
 ```
 
 and the dependencies for this launcher:
@@ -17,8 +30,8 @@ and the dependencies for this launcher:
 If g++-4.9 fails to install and you're using Ubuntu 14.04 you may need to add the repository ppa:ubuntu-toolchain-r/test.
 
 You'll also need to install 32-bit version of the graphic drivers (nvidia drivers ask you about that at installation, so
-you may need to reinstall/reconfigure them; if you use mesa you'll need to install the libgles2-mesa:i386 and
-libegl1-mesa package)
+you may need to reinstall/reconfigure them; if you use mesa you'll need to install the `libgles2-mesa-dev:i386` and
+`libegl1-mesa-dev:i386` package)
 
 ## Compiling
 This app uses cmake so it is enough to do:
