@@ -191,8 +191,9 @@ static void minecraft_mouse(int x, int y) {
     }
 }
 static void minecraft_mouse_button(int x, int y, int btn, int action) {
-    int mcBtn = (btn == 1 ? 1 : (btn == 2 ? 3 : (btn == 3 ? 2 : btn)));
-    Mouse::feed(mcBtn, (action == EGLUT_MOUSE_PRESS ? 1 : 0), x, y, 0, 0);
+    std::cout << btn << "\n";
+    int mcBtn = (btn == 1 ? 1 : (btn == 2 ? 3 : (btn == 3 ? 2 : (btn == 5 ? 4 : btn))));
+    Mouse::feed((char) mcBtn, (char) (action == EGLUT_MOUSE_PRESS ? (btn == 5 ? -1 : 1) : 0), x, y, 0, 0);
 }
 
 int getKeyMinecraft(int keyCode) {
