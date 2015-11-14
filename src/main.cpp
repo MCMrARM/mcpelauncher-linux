@@ -27,6 +27,8 @@ extern "C" {
 #include "../hybris/include/hybris/hook.h"
 #include "../hybris/src/jb/linker.h"
 
+static void* MCPEHandle = nullptr;
+
 void ANativeWindow_setBuffersGeometry() { }
 void AAssetManager_open() { }
 void AAsset_getLength() { }
@@ -247,6 +249,13 @@ void* hookFunction(void* symbol, void* hook, void** original) {
     return ret;
 }
 
+void* dlsymFunction(const char* symbol) {
+    if(MCPEHandle == nullptr)
+        return nullptr;
+
+    return hybris_dlsym(MCPEHandle, symbol);
+}
+
 void* loadMod(std::string path) {
     void* handle = hybris_dlopen((getCWD() + "mods/" + path).c_str(), RTLD_LAZY);
     if (handle == nullptr) {
@@ -295,6 +304,7 @@ int main(int argc, char *argv[]) {
     stubSymbols(egl_symbols, (void*) eglStub);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
+    hybris_hook("mcpelauncher_dlsym", (void*) dlsymFunction);
     hybris_hook("__android_log_print", (void*) __android_log_print);
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
@@ -306,13 +316,14 @@ int main(int argc, char *argv[]) {
         return -1;
     if (!loadLibrary("libmcpelauncher_mod.so"))
         return -1;
-    void* handle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
-    if (handle == nullptr) {
+
+    MCPEHandle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
+    if (MCPEHandle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
         return -1;
     }
 
-    unsigned int libBase = ((soinfo*) handle)->base;
+    unsigned int libBase = ((soinfo*) MCPEHandle)->base;
     std::cout << "loaded MCPE (at " << libBase << ")\n";
 
     DIR *dir;
@@ -337,49 +348,49 @@ int main(int argc, char *argv[]) {
     }
 
     /*
-    unsigned int patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12StoreFactory11createStoreER13StoreListener") + 66;
+    unsigned int patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN12StoreFactory11createStoreER13StoreListener") + 66;
     patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, false);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN11HTTPRequestC2ERKSs") + 154;
+    patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN11HTTPRequestC2ERKSs") + 154;
     patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, false);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN11HTTPRequest4sendEv") + 26;
+    patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN11HTTPRequest4sendEv") + 26;
     patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, false);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN11HTTPRequest5abortEv") + 26;
+    patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN11HTTPRequest5abortEv") + 26;
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, false);
      */
-    unsigned int patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12AndroidStore21createGooglePlayStoreERKSsR13StoreListener");
+    unsigned int patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN12AndroidStore21createGooglePlayStoreERKSsR13StoreListener");
     patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroidC2ER11HTTPRequest");
+    patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN26HTTPRequestInternalAndroidC2ER11HTTPRequest");
     patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid4sendEv");
+    patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN26HTTPRequestInternalAndroid4sendEv");
     patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
+    patchOff = (unsigned int) hybris_dlsym(MCPEHandle, "_ZN26HTTPRequestInternalAndroid5abortEv");
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
 
     // load symbols for gl
-    gl::getOpenGLVendor = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
-    gl::getOpenGLRenderer = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
-    gl::getOpenGLVersion = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl16getOpenGLVersionEv");
-    gl::getOpenGLExtensions = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl19getOpenGLExtensionsEv");
+    gl::getOpenGLVendor = (std::string (*)()) hybris_dlsym(MCPEHandle, "_ZN2gl15getOpenGLVendorEv");
+    gl::getOpenGLRenderer = (std::string (*)()) hybris_dlsym(MCPEHandle, "_ZN2gl17getOpenGLRendererEv");
+    gl::getOpenGLVersion = (std::string (*)()) hybris_dlsym(MCPEHandle, "_ZN2gl16getOpenGLVersionEv");
+    gl::getOpenGLExtensions = (std::string (*)()) hybris_dlsym(MCPEHandle, "_ZN2gl19getOpenGLExtensionsEv");
 
     // init linux app platform
-    AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
-    AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
-    AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
-    AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
+    AppPlatform::myVtable = (void**) hybris_dlsym(MCPEHandle, "_ZTV11AppPlatform");
+    AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(MCPEHandle, "_ZN11AppPlatform10mSingletonE");
+    AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(MCPEHandle, "_ZN11AppPlatformC2Ev");
+    AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(MCPEHandle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
     LinuxAppPlatform::initVtable(AppPlatform::myVtable, 73);
     LinuxAppPlatform* platform = new LinuxAppPlatform();
 
-    Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(handle, "_ZN5Mouse4feedEccssss");
+    Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(MCPEHandle, "_ZN5Mouse4feedEccssss");
 
-    Keyboard::inputs = (std::vector<KeyboardAction>*) hybris_dlsym(handle, "_ZN8Keyboard7_inputsE");
-    Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
-    Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsb");
+    Keyboard::inputs = (std::vector<KeyboardAction>*) hybris_dlsym(MCPEHandle, "_ZN8Keyboard7_inputsE");
+    Keyboard::states = (int*) hybris_dlsym(MCPEHandle, "_ZN8Keyboard7_statesE");
+    Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool)) hybris_dlsym(MCPEHandle, "_ZN8Keyboard8feedTextERKSsb");
 
     eglutInitWindowSize(720, 480);
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
@@ -388,10 +399,10 @@ int main(int argc, char *argv[]) {
     eglutCreateWindow("MCPE");
 
     // init MinecraftClient
-    App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
-    MinecraftClient::MinecraftClient_construct = (void (*)(MinecraftClient*, int, char**)) hybris_dlsym(handle, "_ZN15MinecraftClientC2EiPPc");
-    MinecraftClient::MinecraftClient_update = (void (*)(MinecraftClient*)) hybris_dlsym(handle, "_ZN15MinecraftClient6updateEv");
-    MinecraftClient::MinecraftClient_setSize = (void (*)(MinecraftClient*, int, int, float)) hybris_dlsym(handle, "_ZN15MinecraftClient7setSizeEiif");
+    App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(MCPEHandle, "_ZN3App4initER10AppContext");
+    MinecraftClient::MinecraftClient_construct = (void (*)(MinecraftClient*, int, char**)) hybris_dlsym(MCPEHandle, "_ZN15MinecraftClientC2EiPPc");
+    MinecraftClient::MinecraftClient_update = (void (*)(MinecraftClient*)) hybris_dlsym(MCPEHandle, "_ZN15MinecraftClient6updateEv");
+    MinecraftClient::MinecraftClient_setSize = (void (*)(MinecraftClient*, int, int, float)) hybris_dlsym(MCPEHandle, "_ZN15MinecraftClient7setSizeEiif");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
