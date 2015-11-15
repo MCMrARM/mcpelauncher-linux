@@ -2,8 +2,6 @@ MCPE Linux Launcher
 ===================
 
 ## Required packages
-<<<<<<< HEAD
-
 
 ### Ubuntu
 You'll need to install the basic x32 bit compatibility libraries:
