@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <dirent.h>
+#include <subhook.h>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -191,8 +193,8 @@ static void minecraft_mouse(int x, int y) {
     }
 }
 static void minecraft_mouse_button(int x, int y, int btn, int action) {
-    int mcBtn = (btn == 1 ? 1 : (btn == 2 ? 3 : (btn == 3 ? 2 : btn)));
-    Mouse::feed(mcBtn, (action == EGLUT_MOUSE_PRESS ? 1 : 0), x, y, 0, 0);
+    int mcBtn = (btn == 1 ? 1 : (btn == 2 ? 3 : (btn == 3 ? 2 : (btn == 5 ? 4 : btn))));
+    Mouse::feed((char) mcBtn, (char) (action == EGLUT_MOUSE_PRESS ? (btn == 5 ? -120 : (btn == 4 ? 120 : 1)) : 0), x, y, 0, 0);
 }
 
 int getKeyMinecraft(int keyCode) {
@@ -232,6 +234,37 @@ void patchCallInstruction(void* patchOff, void* func, bool jump) {
     printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
 }
 
+void unhookFunction(void* hook) {
+    SubHook* shook = (SubHook*) hook;
+    shook->Remove();
+    delete shook;
+}
+
+void* hookFunction(void* symbol, void* hook, void** original) {
+    SubHook* ret = new SubHook();
+    ret->Install(symbol, hook);
+    *original = ret->GetTrampoline();
+    return ret;
+}
+
+void* loadMod(std::string path) {
+    void* handle = hybris_dlopen((getCWD() + "mods/" + path).c_str(), RTLD_LAZY);
+    if (handle == nullptr) {
+        std::cout << "failed to load mod: " << path << "\n";
+        return nullptr;
+    }
+
+    void (*initFunc)();
+    initFunc = (void (*)()) hybris_dlsym(handle, "mod_init");
+    if (((void*) initFunc) == nullptr) {
+        std::cout << "warn: mod " << path << " doesn't have a init function\n";
+        return handle;
+    }
+    initFunc();
+
+    return handle;
+}
+
 std::string getOSLibraryPath(std::string libName) {
     std::string p = std::string("/usr/lib/i386-linux-gnu/") + libName;
     if (access(p.c_str(), F_OK) != -1) {
@@ -260,6 +293,8 @@ int main(int argc, char *argv[]) {
         return -1;
     stubSymbols(android_symbols, (void*) androidStub);
     stubSymbols(egl_symbols, (void*) eglStub);
+    hybris_hook("mcpelauncher_hook", (void*) hookFunction);
+    hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
     hybris_hook("__android_log_print", (void*) __android_log_print);
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
@@ -269,6 +304,8 @@ int main(int argc, char *argv[]) {
     // load libgnustl_shared
     if (!loadLibrary("libgnustl_shared.so"))
         return -1;
+    if (!loadLibrary("libmcpelauncher_mod.so"))
+        return -1;
     void* handle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
@@ -277,6 +314,27 @@ int main(int argc, char *argv[]) {
 
     unsigned int libBase = ((soinfo*) handle)->base;
     std::cout << "loaded MCPE (at " << libBase << ")\n";
+
+    DIR *dir;
+    struct dirent *ent;
+    std::vector<void*> mods;
+    if ((dir = opendir ("mods/")) != NULL) {
+        std::cout << "loading mods\n";
+        while ((ent = readdir (dir)) != NULL) {
+            if (ent->d_name[0] == '.')
+                continue;
+            std::string fileName (ent->d_name);
+            int len = fileName.length();
+            if (len < 4 || fileName[len - 3] != '.' || fileName[len - 2] != 's' || fileName[len - 1] != 'o')
+                continue;
+            std::cout << "loading: " << fileName << "\n";
+            void* mod = loadMod(fileName);
+            if (mod != nullptr)
+                mods.push_back(mod);
+        }
+        closedir(dir);
+        std::cout << "loaded " << mods.size() << " mods\n";
+    }
 
     /*
     unsigned int patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12StoreFactory11createStoreER13StoreListener") + 66;
@@ -340,6 +398,12 @@ int main(int argc, char *argv[]) {
     client = new MinecraftClient(argc, argv);
     client->init(ctx);
     std::cout << "initialized lib\n";
+
+    for (void* mod : mods) {
+        void (*initFunc)(MinecraftClient*) = (void (*)(MinecraftClient*)) hybris_dlsym(mod, "mod_set_minecraft");
+        if ((void*) initFunc != nullptr)
+            initFunc(client);
+    }
 
     eglutIdleFunc(minecraft_idle);
     eglutReshapeFunc(minecraft_reshape);
