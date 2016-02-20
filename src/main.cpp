@@ -177,8 +177,9 @@ static void minecraft_idle() {
 static void minecraft_draw() {
     client->update();
 }
+float pixelSize = 2.f;
 static void minecraft_reshape(int w, int h) {
-    client->setSize(w, h, 2.f);
+    client->setSize(w, h, pixelSize);
 }
 static void minecraft_mouse(int x, int y) {
     if (LinuxAppPlatform::mousePointerHidden) {
@@ -285,6 +286,34 @@ std::string getOSLibraryPath(std::string libName) {
 
 using namespace std;
 int main(int argc, char *argv[]) {
+    int windowWidth = 720;
+    int windowHeight = 480;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
+            i++;
+            pixelSize = std::stof(argv[i]);
+        } else if (strcmp(argv[i], "-sw") == 0 || strcmp(argv[i], "--window") == 0) {
+            i++;
+            windowWidth = std::stoi(argv[i]);
+        } else if (strcmp(argv[i], "-sh") == 0 || strcmp(argv[i], "--height") == 0) {
+            i++;
+            windowHeight = std::stoi(argv[i]);
+        } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            std::cout << "Help\n";
+            std::cout << "--help               Shows this help information\n";
+            std::cout << "--scale <scale>      Sets the pixel scale\n";
+            std::cout << "--width <width>      Sets the window width\n";
+            std::cout << "--height <height>    Sets the window height\n\n";
+            std::cout << "EGL Options\n";
+            std::cout << "-display <display>  Sets the display\n";
+            std::cout << "-info               Shows info about the display\n\n";
+            std::cout << "MCPE arguments:\n";
+            std::cout << "edu <true|false>\n";
+            std::cout << "mcworld <world>\n";
+            return 0;
+        }
+    }
+
     std::cout << "loading MCPE\n";
 
     void* glesLib = loadLibraryOS(getOSLibraryPath("libGLESv2.so"), gles_symbols);
@@ -390,7 +419,7 @@ int main(int argc, char *argv[]) {
     Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsb");
 
     std::cout << "init window\n";
-    eglutInitWindowSize(720, 480);
+    eglutInitWindowSize(windowWidth, windowHeight);
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
 
@@ -426,7 +455,7 @@ int main(int argc, char *argv[]) {
 
     // init
     //(*AppPlatform::_singleton)->_fireAppFocusGained();
-    client->setSize(720, 480, 2.f);
+    client->setSize(windowWidth, windowHeight, pixelSize);
     eglutMainLoop();
     return 0;
 }

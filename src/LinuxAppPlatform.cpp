@@ -25,8 +25,8 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[2] = (void*) &LinuxAppPlatform::getDataUrl;
     myVtable[3] = (void*) &LinuxAppPlatform::getImagePath;
     myVtable[4] = (void*) &LinuxAppPlatform::loadPNG;
-    myVtable[11] = (void*) &LinuxAppPlatform::hideMousePointer;
-    myVtable[12] = (void*) &LinuxAppPlatform::showMousePointer;
+    myVtable[10] = (void*) &LinuxAppPlatform::hideMousePointer;
+    myVtable[11] = (void*) &LinuxAppPlatform::showMousePointer;
     myVtable[15] = (void*) &LinuxAppPlatform::swapBuffers;
     myVtable[17] = (void*) &LinuxAppPlatform::getSystemRegion;
     myVtable[18] = (void*) &LinuxAppPlatform::getGraphicsVendor;
