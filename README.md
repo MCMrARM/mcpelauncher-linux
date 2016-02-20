@@ -13,6 +13,8 @@ You'll also need to install 32-bit version of the graphic drivers (nvidia driver
 you may need to reinstall/reconfigure them; if you use mesa you'll need to install the libgles2-mesa-dev:i386 and
 libegl1-mesa-dev:i386 packages)
 
+You may also need to do `sudo dpkg --add-architecture i386` if you have never installed i386 packages before.
+
 ## Compiling
 This app uses cmake so it is enough to do:
 
