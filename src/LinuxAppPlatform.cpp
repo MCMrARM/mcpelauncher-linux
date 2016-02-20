@@ -27,29 +27,30 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[4] = (void*) &LinuxAppPlatform::loadPNG;
     myVtable[11] = (void*) &LinuxAppPlatform::hideMousePointer;
     myVtable[12] = (void*) &LinuxAppPlatform::showMousePointer;
-    myVtable[17] = (void*) &LinuxAppPlatform::swapBuffers;
-    myVtable[18] = (void*) &LinuxAppPlatform::getSystemRegion;
-    myVtable[19] = (void*) &LinuxAppPlatform::getGraphicsVendor;
-    myVtable[20] = (void*) &LinuxAppPlatform::getGraphicsRenderer;
-    myVtable[21] = (void*) &LinuxAppPlatform::getGraphicsVersion;
-    myVtable[22] = (void*) &LinuxAppPlatform::getGraphicsExtensions;
-    myVtable[23] = (void*) &LinuxAppPlatform::pickImage;
-    myVtable[25] = (void*) &LinuxAppPlatform::getExternalStoragePath;
-    myVtable[26] = (void*) &LinuxAppPlatform::getInternalStoragePath;
-    myVtable[27] = (void*) &LinuxAppPlatform::getUserdataPath;
-    myVtable[41] = (void*) &LinuxAppPlatform::readAssetFile;
-    myVtable[58] = (void*) &LinuxAppPlatform::getApplicationId;
-    myVtable[63] = (void*) &LinuxAppPlatform::getDeviceId;
-    myVtable[64] = (void*) &LinuxAppPlatform::createUUID;
-    myVtable[65] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
-    myVtable[66] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
-    myVtable[67] = (void*) &LinuxAppPlatform::isTablet;
+    myVtable[15] = (void*) &LinuxAppPlatform::swapBuffers;
+    myVtable[17] = (void*) &LinuxAppPlatform::getSystemRegion;
+    myVtable[18] = (void*) &LinuxAppPlatform::getGraphicsVendor;
+    myVtable[19] = (void*) &LinuxAppPlatform::getGraphicsRenderer;
+    myVtable[20] = (void*) &LinuxAppPlatform::getGraphicsVersion;
+    myVtable[21] = (void*) &LinuxAppPlatform::getGraphicsExtensions;
+    myVtable[22] = (void*) &LinuxAppPlatform::pickImage;
+    myVtable[26] = (void*) &LinuxAppPlatform::getExternalStoragePath;
+    myVtable[27] = (void*) &LinuxAppPlatform::getInternalStoragePath;
+    myVtable[28] = (void*) &LinuxAppPlatform::getUserdataPath;
+    myVtable[43] = (void*) &LinuxAppPlatform::readAssetFile;
+    myVtable[57] = (void*) &LinuxAppPlatform::getScreenType;
+    myVtable[60] = (void*) &LinuxAppPlatform::getApplicationId;
+    myVtable[65] = (void*) &LinuxAppPlatform::getDeviceId;
+    myVtable[66] = (void*) &LinuxAppPlatform::createUUID;
+    myVtable[67] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
+    myVtable[68] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
+    myVtable[69] = (void*) &LinuxAppPlatform::isTablet;
 }
 
 void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool b) {
-    std::cout << "loadPNG: " << path << "\n";
+    std::cout << "loadPNG: " << path << "(from assets: " << b << ")" << "\n";
 
-    FILE* file = fopen(path.c_str(), "rb");
+    FILE* file = fopen(getImagePath(path, b).c_str(), "rb");
     if (file == NULL) {
         std::cout << "failed to open file\n";
         return;

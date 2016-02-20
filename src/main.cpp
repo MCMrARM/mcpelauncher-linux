@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
     std::cout << "loading MCPE\n";
 
     void* glesLib = loadLibraryOS(getOSLibraryPath("libGLESv2.so"), gles_symbols);
-    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.7.2").c_str(), fmod_symbols);
+    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.7.7").c_str(), fmod_symbols);
     if (glesLib == nullptr || fmodLib == nullptr)
         return -1;
     stubSymbols(android_symbols, (void*) androidStub);
@@ -336,6 +336,8 @@ int main(int argc, char *argv[]) {
         std::cout << "loaded " << mods.size() << " mods\n";
     }
 
+    std::cout << "apply patches\n";
+
     /*
     unsigned int patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12StoreFactory11createStoreER13StoreListener") + 66;
     patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, false);
@@ -361,6 +363,8 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
 
+    std::cout << "patches applied!\n";
+
     // load symbols for gl
     gl::getOpenGLVendor = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
     gl::getOpenGLRenderer = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
@@ -372,8 +376,12 @@ int main(int argc, char *argv[]) {
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
     AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
     AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
-    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 73);
+
+    std::cout << "init app platform vtable\n";
+    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 77);
+    std::cout << "init app platform\n";
     LinuxAppPlatform* platform = new LinuxAppPlatform();
+    std::cout << "app platform initialized\n";
 
     Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(handle, "_ZN5Mouse4feedEccssss");
 
@@ -381,6 +389,7 @@ int main(int argc, char *argv[]) {
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
     Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsb");
 
+    std::cout << "init window\n";
     eglutInitWindowSize(720, 480);
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
@@ -395,7 +404,9 @@ int main(int argc, char *argv[]) {
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
+    std::cout << "create minecraft client\n";
     client = new MinecraftClient(argc, argv);
+    std::cout << "init minecraft client\n";
     client->init(ctx);
     std::cout << "initialized lib\n";
 

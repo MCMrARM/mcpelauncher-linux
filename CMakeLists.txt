@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(mcpelauncher)
 
-SET(CMAKE_CXX_COMPILER "g++-4.9")
-SET(CMAKE_C_COMPILER "gcc-4.9")
+#SET(CMAKE_CXX_COMPILER "g++-4.9")
+#SET(CMAKE_C_COMPILER "gcc-4.9")
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -15,7 +15,7 @@ include_directories(${PNG_INCLUDE_DIRS})
 include_directories(${EGL_INCLUDE_DIRS})
 include_directories(eglut)
 include_directories(subhook)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_GLIBCXX_USE_CXX11_ABI=0")
 
 set(HYBRIS_SOURCES hybris/src/cache.c hybris/src/dlfcn.c hybris/src/hooks.c hybris/src/hooks_shm.c hybris/src/logging.c hybris/src/properties.c hybris/src/strlcpy.c hybris/src/sysconf.c hybris/src/jb/dlfcn.c hybris/src/jb/linker.c hybris/src/jb/linker_environ.c hybris/src/jb/linker_format.c hybris/src/jb/rt.c)
 set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)

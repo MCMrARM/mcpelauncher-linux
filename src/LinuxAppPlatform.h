@@ -81,6 +81,9 @@ public:
         return userdata;
     }
     std::string readAssetFile(std::string const&);
+    int getScreenType() {
+        return 0; // Win 10 Ed. GUIs
+    }
     std::string getApplicationId() {
         printf("application id = com.mojang.minecraftpe\n");
         return "com.mojang.minecraftpe";
