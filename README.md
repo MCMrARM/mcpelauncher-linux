@@ -3,15 +3,49 @@ MCPE Linux Launcher
 
 ## Required packages
 
+### Ubuntu
+You'll need to install the basic x32 bit compatibility libraries:
+
+First, you will need to add the `i386` architecture via `dpkg`:
+
 ```
-    sudo apt-get install cmake zlib1g-dev:i386 libncurses5-dev:i386 libgles2-mesa-dev gcc-4.9 g++-4.9 gcc-4.9-multilib g++-4.9-multilib zlib1g-dev:i386 libx11-dev:i386 linux-libc-dev:i386 uuid-dev:i386 libpng-dev:i386 libx11-dev:i386 
+sudo dpkg --add-architecture i386
+sudo apt-get update
+```
+
+```
+    sudo apt-get install lib32z1 lib32ncurses5
+```
+
+and the dependencies for this launcher:
+
+```
+    sudo apt-get install cmake zlib1g-dev:i386 libncurses5-dev:i386 libgles2-mesa-dev gcc-4.9 g++-4.9 gcc-4.9-multilib g++-4.9-multilib zlib1g-dev:i386 libx11-dev:i386 linux-libc-dev:i386 uuid-dev:i386 libpng-dev:i386 libx11-dev:i386
 ```
 
 If g++-4.9 fails to install and you're using Ubuntu 14.04 you may need to add the repository ppa:ubuntu-toolchain-r/test.
 
-You'll also need to install 32-bit version of the graphic drivers (nvidia drivers ask you about that at installation, so
-you may need to reinstall/reconfigure them; if you use mesa you'll need to install the libgles2-mesa-dev:i386 and
-libegl1-mesa-dev:i386 packages)
+You'll also need to install 32-bit version of the graphic drivers (nvidia drivers ask you about that at installation, so you may need to reinstall/reconfigure them; if you use mesa you'll need to install the libgles2-mesa-dev:i386 and libegl1-mesa-dev:i386 packages)
+
+### Arch Linux
+mcpelauncher-linux also works on Arch Linux!
+In order to get it to compile under Arch Linux, you must enable multilib support
+in pacman.
+The Arch Linux wiki [has an article to help you enable multilib.](https://wiki.archlinux.org/index.php/Multilib)  
+Make sure that after you enable multilib, you execute `sudo pacman -Syu` to update package lists.
+
+Now, you have to install the proper packages:
+```
+cmake lib32-glibc gcc-multilib lib32-util-linux lib32-zlib lib32-png lib32-mesa lib32-mesa-libgl
+```
+
+Before compiling, you may have to comment these lines out in CMakeLists.txt:
+```
+SET(CMAKE_CXX_COMPILER "g++-4.9")
+SET(CMAKE_C_COMPILER "gcc-4.9")
+```
+The GCC-5 that comes preinstalled on the system can compile mcpelauncher-linux.
+After this, you can compile mcpelauncher-linux normally.
 
 You may also need to do `sudo dpkg --add-architecture i386` if you have never installed i386 packages before.
 

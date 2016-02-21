@@ -1,0 +1,9 @@
+cmake
+(uncomment gcc-4.9)
+lib32-glibc
+gcc-multilib
+lib32-util-linux
+lib32-zlib
+lib32-png
+lib32-mesa
+lib32-mesa-libgl
