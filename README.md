@@ -29,7 +29,7 @@ This app uses cmake so it is enough to do:
 3. You'll need to obtain a x86 MCPE .apk. The easiest way to do so is to use the
 [Google Play downloader tool](https://github.com/MCMrARM/google_play_downloader) (it is an console app; remember that
 you need to type 'y' when you are asked if you want to use x86 as the architecture, and you must have purchased MCPE
-on the Google account you are logging in with; the package name of MCPE is com.mojang.minecraftpe)
+on the Google account you are logging in with; the package name of MCPE is `com.mojang.minecraftpe`)
 4. After you have downloaded MCPE, place it in the directory where you'll be running this app, and run ./extract.sh _filename_
 5. Run the launcher!
 
