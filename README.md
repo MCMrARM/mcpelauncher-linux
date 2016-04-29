@@ -33,8 +33,6 @@ on the Google account you are logging in with; the package name of MCPE is `com.
 4. After you have downloaded MCPE, place it in the directory where you'll be running this app, and run ./extract.sh _filename_
 5. Run the launcher!
 
-This launcher only works with the 0.13 beta version as of now.
-
 If the extract script fails with an error about the .apk not being x86, it means that you have provided it a bad .apk.
 You'll need to purchase MCPE on Google Play and use the downloader tool.
 
