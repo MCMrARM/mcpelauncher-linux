@@ -452,7 +452,7 @@ int main(int argc, char *argv[]) {
     AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
 
     std::cout << "init app platform vtable\n";
-    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 77);
+    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 86);
     std::cout << "init app platform\n";
     LinuxAppPlatform* platform = new LinuxAppPlatform();
     std::cout << "app platform initialized\n";

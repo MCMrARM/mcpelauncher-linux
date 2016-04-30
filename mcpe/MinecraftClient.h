@@ -9,7 +9,7 @@ public:
     static void (*MinecraftClient_update)(MinecraftClient*);
     static void (*MinecraftClient_setSize)(MinecraftClient*, int, int, float);
 
-    char filler [0x1D8-4];
+    char filler [0x1F4-4];
 
     MinecraftClient(int carg, char** args) {
         MinecraftClient_construct(this, carg, args);
