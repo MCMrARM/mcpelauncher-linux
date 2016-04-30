@@ -32,9 +32,9 @@ public:
         return "assets/";
     }
 
-    std::string getImagePath(std::string const& img, bool b) {
-        printf("get image path: %s (%i)\n", img.c_str(), b);
-        return (b ? (std::string("assets/images/") + img) : img);
+    std::string getImagePath(std::string const& img, int loc) {
+        printf("get image path: %s (%i)\n", img.c_str(), loc);
+        return (loc == 0 ? (std::string("assets/images/") + img) : img);
     }
     void loadPNG(ImageData&, std::string const&, bool);
 

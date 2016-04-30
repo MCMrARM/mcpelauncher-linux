@@ -7,7 +7,8 @@ class MinecraftClient : public App {
 public:
     static void (*MinecraftClient_construct)(MinecraftClient*, int, char**);
     static void (*MinecraftClient_update)(MinecraftClient*);
-    static void (*MinecraftClient_setSize)(MinecraftClient*, int, int, float);
+    static void (*MinecraftClient_setRenderingSize)(MinecraftClient*, int, int);
+    static void (*MinecraftClient_setUISizeAndScale)(MinecraftClient*, int, int, float);
 
     char filler [0x1F4-4];
 
@@ -19,8 +20,12 @@ public:
         MinecraftClient_update(this);
     }
 
-    void setSize(int w, int h, float px) {
-        MinecraftClient_setSize(this, w, h, px);
+    void setRenderingSize(int w, int h) {
+        MinecraftClient_setRenderingSize(this, w, h);
+    }
+
+    void setUISizeAndScale(int w, int h, float px) {
+        MinecraftClient_setUISizeAndScale(this, w, h, px);
     }
 
 };

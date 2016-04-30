@@ -16,7 +16,8 @@ void (*App::App_init)(App*, AppContext&);
 
 void (*MinecraftClient::MinecraftClient_construct)(MinecraftClient*, int, char**);
 void (*MinecraftClient::MinecraftClient_update)(MinecraftClient*);
-void (*MinecraftClient::MinecraftClient_setSize)(MinecraftClient*, int, int, float);
+void (*MinecraftClient::MinecraftClient_setRenderingSize)(MinecraftClient*, int, int);
+void (*MinecraftClient::MinecraftClient_setUISizeAndScale)(MinecraftClient*, int, int, float);
 
 #include "gl.h"
 

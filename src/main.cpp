@@ -179,7 +179,8 @@ static void minecraft_draw() {
 }
 float pixelSize = 2.f;
 static void minecraft_reshape(int w, int h) {
-    client->setSize(w, h, pixelSize);
+    client->setRenderingSize(w, h);
+    client->setUISizeAndScale(w, h, pixelSize);
 }
 static void minecraft_mouse(int x, int y) {
     if (LinuxAppPlatform::mousePointerHidden) {
@@ -429,13 +430,13 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroidC2ER11HTTPRequest");
-    patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, true);
+    //patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid4sendEv");
-    patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, true);
+    //patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
-    patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
+    //patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
 
     std::cout << "patches applied!\n";
 
@@ -474,7 +475,8 @@ int main(int argc, char *argv[]) {
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
     MinecraftClient::MinecraftClient_construct = (void (*)(MinecraftClient*, int, char**)) hybris_dlsym(handle, "_ZN15MinecraftClientC2EiPPc");
     MinecraftClient::MinecraftClient_update = (void (*)(MinecraftClient*)) hybris_dlsym(handle, "_ZN15MinecraftClient6updateEv");
-    MinecraftClient::MinecraftClient_setSize = (void (*)(MinecraftClient*, int, int, float)) hybris_dlsym(handle, "_ZN15MinecraftClient7setSizeEiif");
+    MinecraftClient::MinecraftClient_setRenderingSize = (void (*)(MinecraftClient*, int, int)) hybris_dlsym(handle, "_ZN15MinecraftClient16setRenderingSizeEii");
+    MinecraftClient::MinecraftClient_setUISizeAndScale = (void (*)(MinecraftClient*, int, int, float)) hybris_dlsym(handle, "_ZN15MinecraftClient17setUISizeAndScaleEiif");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
@@ -497,10 +499,12 @@ int main(int argc, char *argv[]) {
     eglutMouseButtonFunc(minecraft_mouse_button);
     eglutKeyboardFunc(NULL);
     eglutSpecialFunc(minecraft_keyboard_special);
+    std::cout << "initialized display\n";
 
     // init
     //(*AppPlatform::_singleton)->_fireAppFocusGained();
-    client->setSize(windowWidth, windowHeight, pixelSize);
+    client->setRenderingSize(windowWidth, windowHeight);
+    client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     eglutMainLoop();
     return 0;
 }
