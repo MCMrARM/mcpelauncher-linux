@@ -2,10 +2,14 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
+#include <algorithm>
 #include <png.h>
 #include <uuid/uuid.h>
 #include "../mcpe/ImageData.h"
+#include "../mcpe/ImagePickingCallback.h"
+#include "../mcpe/FilePickerSettings.h"
 
 void** LinuxAppPlatform::myVtable = nullptr;
 bool LinuxAppPlatform::mousePointerHidden = false;
@@ -34,6 +38,8 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[20] = (void*) &LinuxAppPlatform::getGraphicsVersion;
     myVtable[21] = (void*) &LinuxAppPlatform::getGraphicsExtensions;
     myVtable[22] = (void*) &LinuxAppPlatform::pickImage;
+    myVtable[23] = (void*) &LinuxAppPlatform::pickFile;
+    myVtable[24] = (void*) &LinuxAppPlatform::supportsFilePicking;
     myVtable[26] = (void*) &LinuxAppPlatform::getExternalStoragePath;
     myVtable[27] = (void*) &LinuxAppPlatform::getInternalStoragePath;
     myVtable[28] = (void*) &LinuxAppPlatform::getUserdataPath;
@@ -48,7 +54,7 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
 }
 
 void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool b) {
-    std::cout << "loadPNG: " << path << "(from assets: " << b << ")" << "\n";
+    std::cout << "loadPNG: " << path << " (from assets: " << b << ")\n";
 
     FILE* file = fopen(getImagePath(path, b).c_str(), "rb");
     if (file == NULL) {
@@ -144,6 +150,67 @@ void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool
         imgData.data = " ";
     }
     imgData.data = std::string(&data[0], rowBytes * imgData.h);
+}
+
+std::string LinuxAppPlatform::_pickFile(std::string commandLine) {
+    std::cout << "Launching file picker with args: " << commandLine << "\n";
+    char file[1024];
+    FILE *f = popen(commandLine.c_str(), "r");
+    if (fgets(file, 1024, f) == nullptr) {
+        std::cout << "No file selected\n";
+        return "";
+    }
+    file[strlen(file) - 1] = '\0';
+    std::cout << "Selected file: " << file << "\n";
+    return std::string(file);
+}
+
+void LinuxAppPlatform::pickImage(ImagePickingCallback &callback) {
+    std::cout << "pickImage\n";
+    std::string file = _pickFile("zenity --file-selection --title 'Select image' --file-filter *.png");
+    if (file.empty()) {
+        callback.onImagePickingCanceled();
+    } else {
+        callback.onImagePickingSuccess(file);
+    }
+}
+
+std::string replaceAll(std::string s, std::string a, std::string b) {
+    while (true) {
+        size_t p = s.find(a);
+        if (p == std::string::npos)
+            break;
+        s.replace(p, a.length(), b);
+    }
+    return s;
+}
+
+void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
+    std::cout << "pickFile\n";
+    std::cout << "- title: " << settings.pickerTitle << "\n";
+    std::cout << "- type: " << (int) settings.type << "\n";
+    std::cout << "- file descriptions:\n";
+    for (FilePickerSettings::FileDescription &d : settings.fileDescriptions) {
+        std::cout << " - " << d.ext << " " << d.desc << "\n";
+    }
+    std::stringstream ss;
+    ss << "zenity --file-selection --title '" << replaceAll(settings.pickerTitle, "'", "\\'") << "'";
+    if (settings.type == FilePickerSettings::PickerType::SAVE)
+        ss << " --save";
+    if (settings.fileDescriptions.size() > 0) {
+        ss << " --file-filter '";
+        bool first = true;
+        for (FilePickerSettings::FileDescription &d : settings.fileDescriptions) {
+            if (first)
+                first = false;
+            else
+                ss << "|";
+            ss << "*." << d.ext;
+        }
+        ss << "'";
+    }
+    std::string file = _pickFile(ss.str());
+    //settings.pickedCallback(file);
 }
 
 std::string LinuxAppPlatform::readAssetFile(const std::string& path) {

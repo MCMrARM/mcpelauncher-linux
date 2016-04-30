@@ -1988,7 +1988,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
     if (si->gnu_relro_start != 0 && si->gnu_relro_len != 0) {
         Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
         unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
-        if (mprotect((void *) start, len, PROT_READ) < 0) {
+        if (mprotect((void *) start, len, PROT_READ | PROT_WRITE) < 0) { // NOTE: added PROT_WRITE
             DL_ERR("%5d GNU_RELRO mprotect of library '%s' failed: %d (%s)\n",
                    pid, si->name, errno, strerror(errno));
             goto fail;

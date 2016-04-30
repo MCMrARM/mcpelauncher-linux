@@ -18,6 +18,8 @@
 #ifndef _HYBRIS_DLFCN_H_
 #define _HYBRIS_DLFCN_H_
 
+#include <dlfcn.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,6 +27,7 @@ extern "C" {
 void *hybris_dlopen(const char *filename, int flag);
 void *hybris_dlsym(void *handle, const char *symbol);
 int   hybris_dlclose(void *handle);
+int   hybris_dladdr(const void *addr, Dl_info *info);
 char *hybris_dlerror(void);
 
 #ifdef __cplusplus

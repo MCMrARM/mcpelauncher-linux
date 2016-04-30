@@ -5,11 +5,16 @@
 #include <sys/param.h>
 #include "../mcpe/gl.h"
 #include "../mcpe/AppPlatform.h"
+#include "../mcpe/ImagePickingCallback.h"
 
 class ImageData;
 class ImagePickingCallback;
+class FilePickerSettings;
 
 class LinuxAppPlatform : public AppPlatform {
+
+private:
+    static std::string _pickFile(std::string commandLine);
 
 public:
     static void** myVtable;
@@ -65,8 +70,10 @@ public:
         return gl::getOpenGLExtensions();
     }
 
-    void pickImage(ImagePickingCallback& callback) {
-        printf("pick image\n");
+    void pickImage(ImagePickingCallback& callback);
+    void pickFile(FilePickerSettings& callback);
+    bool supportsFilePicking() {
+        return true;
     }
     std::string& getExternalStoragePath() {
         printf("external storage path = %s\n", externalStorage.c_str());
@@ -82,7 +89,7 @@ public:
     }
     std::string readAssetFile(std::string const&);
     int getScreenType() {
-        return 0; // Win 10 Ed. GUIs
+        return 1; // Win 10 Ed. GUIs
     }
     std::string getApplicationId() {
         printf("application id = com.mojang.minecraftpe\n");

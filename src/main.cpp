@@ -284,26 +284,63 @@ std::string getOSLibraryPath(std::string libName) {
     abort();
 }
 
+#include <execinfo.h>
+#include <cxxabi.h>
+void handleSignal(int signal) {
+    printf("Signal %i received\n", signal);
+    printf("Getting stacktrace...\n");
+    void *array[25];
+    int count = backtrace(array, 25);
+    char **symbols = backtrace_symbols(array, count);
+    char *nameBuf = (char*) malloc(256);
+    size_t nameBufLen = 256;
+    printf("Backtrace elements: %i\n", count);
+    for (int i = 0; i < count; i++) {
+        if (symbols[i] == nullptr) {
+            printf("#%i unk [0x%04x]\n", i, (int)array[i]);
+            continue;
+        }
+        if (symbols[i][0] == '[') { // unknown symbol
+            Dl_info symInfo;
+            if (hybris_dladdr(array[i], &symInfo)) {
+                int status = 0;
+                nameBuf = abi::__cxa_demangle(symInfo.dli_sname, nameBuf, &nameBufLen, &status);
+                printf("#%i HYBRIS %s+%i in %s+0x%04x [0x%04x]\n", i, nameBuf, (unsigned int) array[i] - (unsigned int) symInfo.dli_saddr, symInfo.dli_fname, (unsigned int) array[i] - (unsigned int) symInfo.dli_fbase, (int)array[i]);
+                continue;
+            }
+        }
+        printf("#%i %s\n", i, symbols[i]);
+    }
+    free(symbols);
+    abort();
+}
+
+#include <functional>
 using namespace std;
 int main(int argc, char *argv[]) {
+    bool enableStackTracePrinting = true;
+
     int windowWidth = 720;
     int windowHeight = 480;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
             i++;
             pixelSize = std::stof(argv[i]);
-        } else if (strcmp(argv[i], "-sw") == 0 || strcmp(argv[i], "--window") == 0) {
+        } else if (strcmp(argv[i], "-sw") == 0 || strcmp(argv[i], "--width") == 0) {
             i++;
             windowWidth = std::stoi(argv[i]);
         } else if (strcmp(argv[i], "-sh") == 0 || strcmp(argv[i], "--height") == 0) {
             i++;
             windowHeight = std::stoi(argv[i]);
+        } else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--no-stacktrace") == 0) {
+            enableStackTracePrinting = false;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
             std::cout << "--help               Shows this help information\n";
             std::cout << "--scale <scale>      Sets the pixel scale\n";
             std::cout << "--width <width>      Sets the window width\n";
             std::cout << "--height <height>    Sets the window height\n\n";
+            std::cout << "--no-stacktrace      Disables stack trace printing\n\n";
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";
@@ -312,6 +349,14 @@ int main(int argc, char *argv[]) {
             std::cout << "mcworld <world>\n";
             return 0;
         }
+    }
+
+    if (enableStackTracePrinting) {
+        struct sigaction act;
+        act.sa_handler = handleSignal;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        sigaction(SIGSEGV, &act, 0);
     }
 
     std::cout << "loading MCPE\n";

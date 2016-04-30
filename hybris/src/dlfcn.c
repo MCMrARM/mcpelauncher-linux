@@ -36,6 +36,12 @@ int   hybris_dlclose(void *handle)
 }
 
 
+int   hybris_dladdr(const void *addr, Dl_info *info)
+{
+    return android_dladdr(addr, info);
+}
+
+
 char *hybris_dlerror(void)
 {
     return android_dlerror();
