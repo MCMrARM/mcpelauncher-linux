@@ -487,7 +487,7 @@ int main(int argc, char *argv[]) {
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
 
-    eglutCreateWindow("MCPE");
+    eglutCreateWindow("Minecraft");
 
     // init MinecraftClient
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
