@@ -11,6 +11,8 @@ class ImageData;
 class ImagePickingCallback;
 class FilePickerSettings;
 
+extern bool moveMouseToCenter;
+
 class LinuxAppPlatform : public AppPlatform {
 
 private:
@@ -40,6 +42,7 @@ public:
 
     void hideMousePointer() {
         mousePointerHidden = true;
+        moveMouseToCenter = true;
     }
     void showMousePointer() {
         mousePointerHidden = false;
