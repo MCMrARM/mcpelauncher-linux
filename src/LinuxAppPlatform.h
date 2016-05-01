@@ -11,6 +11,7 @@ class ImageData;
 class ImagePickingCallback;
 class FilePickerSettings;
 
+extern bool enablePocketGuis;
 extern bool moveMouseToCenter;
 
 class LinuxAppPlatform : public AppPlatform {
@@ -92,6 +93,8 @@ public:
     }
     std::string readAssetFile(std::string const&);
     int getScreenType() {
+        if (enablePocketGuis)
+            return 1;
         return 0; // Win 10 Ed. GUIs
     }
     std::string getApplicationId() {
@@ -114,6 +117,11 @@ public:
     bool isTablet() {
         printf("is tablet = true\n");
         return true;
+    }
+    std::string getEdition() {
+        if (enablePocketGuis)
+            return "pocket";
+        return "win10";
     }
 
 };

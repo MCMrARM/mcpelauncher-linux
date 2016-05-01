@@ -335,6 +335,8 @@ int main(int argc, char *argv[]) {
             windowHeight = std::stoi(argv[i]);
         } else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--no-stacktrace") == 0) {
             enableStackTracePrinting = false;
+        } else if (strcmp(argv[i], "--pocket-guis") == 0) {
+            enablePocketGuis = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
             std::cout << "--help               Shows this help information\n";
@@ -342,6 +344,7 @@ int main(int argc, char *argv[]) {
             std::cout << "--width <width>      Sets the window width\n";
             std::cout << "--height <height>    Sets the window height\n\n";
             std::cout << "--no-stacktrace      Disables stack trace printing\n\n";
+            std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n\n";
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";

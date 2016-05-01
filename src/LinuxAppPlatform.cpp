@@ -13,6 +13,7 @@
 
 void** LinuxAppPlatform::myVtable = nullptr;
 bool LinuxAppPlatform::mousePointerHidden = false;
+bool enablePocketGuis = false;
 
 LinuxAppPlatform::LinuxAppPlatform() : AppPlatform() {
     this->vtable = myVtable;
@@ -51,6 +52,7 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[71] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
     myVtable[72] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
     myVtable[73] = (void*) &LinuxAppPlatform::isTablet;
+    myVtable[82] = (void*) &LinuxAppPlatform::getEdition;
 }
 
 void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool b) {
