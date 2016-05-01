@@ -210,7 +210,7 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
         ss << "'";
     }
     std::string file = _pickFile(ss.str());
-    //settings.pickedCallback(file);
+    settings.pickedCallback(settings, file);
 }
 
 std::string LinuxAppPlatform::readAssetFile(const std::string& path) {
