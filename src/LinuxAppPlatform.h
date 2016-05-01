@@ -41,13 +41,8 @@ public:
     }
     void loadPNG(ImageData&, std::string const&, bool);
 
-    void hideMousePointer() {
-        mousePointerHidden = true;
-        moveMouseToCenter = true;
-    }
-    void showMousePointer() {
-        mousePointerHidden = false;
-    }
+    void hideMousePointer();
+    void showMousePointer();
 
     void swapBuffers() {
         //printf("swap buffers\n");

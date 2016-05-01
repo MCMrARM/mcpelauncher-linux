@@ -11,6 +11,10 @@
 #include "../mcpe/ImagePickingCallback.h"
 #include "../mcpe/FilePickerSettings.h"
 
+extern "C" {
+#include <eglut.h>
+}
+
 void** LinuxAppPlatform::myVtable = nullptr;
 bool LinuxAppPlatform::mousePointerHidden = false;
 bool enablePocketGuis = false;
@@ -54,6 +58,16 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[72] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
     myVtable[73] = (void*) &LinuxAppPlatform::isTablet;
     myVtable[82] = (void*) &LinuxAppPlatform::getEdition;
+}
+
+void LinuxAppPlatform::hideMousePointer() {
+    mousePointerHidden = true;
+    moveMouseToCenter = true;
+    eglutSetMousePointerVisiblity(EGLUT_POINTER_INVISIBLE);
+}
+void LinuxAppPlatform::showMousePointer() {
+    mousePointerHidden = false;
+    eglutSetMousePointerVisiblity(EGLUT_POINTER_VISIBLE);
 }
 
 void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool b) {

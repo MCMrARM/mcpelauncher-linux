@@ -288,3 +288,20 @@ void eglutWarpMousePointer(int x, int y) {
     XWarpPointer(_eglut->native_dpy, None, _eglut->current->native.u.window, 0, 0, 0, 0, x, y);
     XFlush(_eglut->native_dpy);
 }
+
+void eglutSetMousePointerVisiblity(int visible) {
+    if (visible == EGLUT_POINTER_INVISIBLE) {
+        char emptyData[] = {0, 0, 0, 0, 0, 0, 0, 0};
+        XColor black;
+        black.red = 0;
+        black.green = 0;
+        black.blue = 0;
+        Pixmap emptyBitmap = XCreateBitmapFromData(_eglut->native_dpy, _eglut->current->native.u.window, emptyData, 8, 8);
+        Cursor cursor = XCreatePixmapCursor(_eglut->native_dpy, emptyBitmap, emptyBitmap, &black, &black, 0, 0);
+        XDefineCursor(_eglut->native_dpy, _eglut->current->native.u.window, cursor);
+        XFreeCursor(_eglut->native_dpy, cursor);
+        XFreePixmap(_eglut->native_dpy, emptyBitmap);
+    } else if (visible == EGLUT_POINTER_VISIBLE) {
+        XUndefineCursor(_eglut->native_dpy, _eglut->current->native.u.window);
+    }
+}

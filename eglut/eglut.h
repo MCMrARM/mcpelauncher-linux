@@ -74,6 +74,11 @@ enum {
     EGLUT_MOUSE_RELEASE
 };
 
+enum {
+    EGLUT_POINTER_INVISIBLE = 0,
+    EGLUT_POINTER_VISIBLE = 1
+};
+
 typedef void (*EGLUTidleCB)(void);
 typedef void (*EGLUTreshapeCB)(int, int);
 typedef void (*EGLUTdisplayCB)(void);
@@ -107,5 +112,6 @@ void eglutMouseFunc(EGLUTmouseCB func);
 void eglutMouseButtonFunc(EGLUTmouseButtonCB func);
 
 void eglutWarpMousePointer(int x, int y);
+void eglutSetMousePointerVisiblity(int visible);
 
 #endif /* EGLUT_H */
