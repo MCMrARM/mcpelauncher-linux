@@ -58,6 +58,7 @@ struct eglut_window {
 struct eglut_state {
     int api_mask;
     int window_width, window_height;
+    int window_fullscreen;
     const char *display_name;
     int verbose;
     int init_time;

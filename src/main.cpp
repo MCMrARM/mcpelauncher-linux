@@ -209,7 +209,14 @@ int getKeyMinecraft(int keyCode) {
 
     return keyCode;
 }
+int winId = 0;
 static void minecraft_keyboard_special(int key, int action) {
+    if (key == 65480) {
+        if (action == EGLUT_KEY_PRESS) {
+            eglutToggleFullscreen();
+        }
+        return;
+    }
     int mKey = getKeyMinecraft(key);
     if (action == EGLUT_KEY_PRESS) {
         Keyboard::inputs->push_back({1, mKey});
@@ -487,7 +494,7 @@ int main(int argc, char *argv[]) {
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
 
-    eglutCreateWindow("Minecraft");
+    winId = eglutCreateWindow("Minecraft");
 
     // init MinecraftClient
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");

@@ -27,6 +27,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "eglutint.h"
 
@@ -304,4 +305,29 @@ void eglutSetMousePointerVisiblity(int visible) {
     } else if (visible == EGLUT_POINTER_VISIBLE) {
         XUndefineCursor(_eglut->native_dpy, _eglut->current->native.u.window);
     }
+}
+int eglutToggleFullscreen()
+{
+    // http://stackoverflow.com/questions/10897503/opening-a-fullscreen-opengl-window
+    _eglut->window_fullscreen = (_eglut->window_fullscreen == EGLUT_WINDOWED ? EGLUT_FULLSCREEN : EGLUT_WINDOWED);
+    Atom wm_state = XInternAtom(_eglut->native_dpy, "_NET_WM_STATE", False);
+    Atom fullscreen = XInternAtom(_eglut->native_dpy, "_NET_WM_STATE_FULLSCREEN", False);
+
+    XEvent xev;
+    memset(&xev, 0, sizeof(xev));
+    xev.type = ClientMessage;
+    xev.xclient.window = _eglut->current->native.u.window;
+    xev.xclient.message_type = wm_state;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = _eglut->window_fullscreen;
+    xev.xclient.data.l[1] = fullscreen;
+    xev.xclient.data.l[2] = 0;
+
+    XMapWindow(_eglut->native_dpy, _eglut->current->native.u.window);
+
+    XSendEvent (_eglut->native_dpy, DefaultRootWindow(_eglut->native_dpy), False,
+                SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+
+    XFlush(_eglut->native_dpy);
+    return -1;
 }

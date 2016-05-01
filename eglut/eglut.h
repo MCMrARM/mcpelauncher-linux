@@ -79,6 +79,11 @@ enum {
     EGLUT_POINTER_VISIBLE = 1
 };
 
+enum {
+    EGLUT_WINDOWED = 0,
+    EGLUT_FULLSCREEN = 1
+};
+
 typedef void (*EGLUTidleCB)(void);
 typedef void (*EGLUTreshapeCB)(int, int);
 typedef void (*EGLUTdisplayCB)(void);
@@ -103,6 +108,7 @@ void eglutDestroyWindow(int win);
 
 int eglutGetWindowWidth(void);
 int eglutGetWindowHeight(void);
+int eglutToggleFullscreen(void);
 
 void eglutDisplayFunc(EGLUTdisplayCB func);
 void eglutReshapeFunc(EGLUTreshapeCB func);

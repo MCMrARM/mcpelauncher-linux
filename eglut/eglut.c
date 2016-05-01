@@ -38,6 +38,7 @@ static struct eglut_state _eglut_state = {
         .api_mask = EGLUT_OPENGL_ES1_BIT,
         .window_width = 300,
         .window_height = 300,
+        .window_fullscreen = EGLUT_WINDOWED,
         .verbose = 0,
         .num_windows = 0,
 };
