@@ -430,13 +430,13 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroidC2ER11HTTPRequest");
-    //patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, true);
+    patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid4sendEv");
-    //patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, true);
+    patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
-    //patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
+    patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
 
     std::cout << "patches applied!\n";
 
