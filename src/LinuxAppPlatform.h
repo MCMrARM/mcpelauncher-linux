@@ -121,5 +121,6 @@ public:
             return "pocket";
         return "win10";
     }
+    long long getAvailableMemory();
 
 };

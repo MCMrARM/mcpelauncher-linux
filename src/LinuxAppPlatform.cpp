@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <png.h>
 #include <uuid/uuid.h>
+#include <sys/types.h>
+#include <sys/sysinfo.h>
 #include "../mcpe/ImageData.h"
 #include "../mcpe/ImagePickingCallback.h"
 #include "../mcpe/FilePickerSettings.h"
@@ -52,6 +54,7 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[59] = (void*) &LinuxAppPlatform::useCenteredGUI;
     myVtable[61] = (void*) &LinuxAppPlatform::getScreenType;
     myVtable[64] = (void*) &LinuxAppPlatform::getApplicationId;
+    myVtable[65] = (void*) &LinuxAppPlatform::getAvailableMemory;
     myVtable[69] = (void*) &LinuxAppPlatform::getDeviceId;
     myVtable[70] = (void*) &LinuxAppPlatform::createUUID;
     myVtable[71] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
@@ -254,4 +257,13 @@ std::string LinuxAppPlatform::createUUID() {
     uuid_unparse(id, out);
     printf("uuid: %s\n", out);
     return std::string(out);
+}
+
+long long LinuxAppPlatform::getAvailableMemory() {
+    struct sysinfo memInfo;
+    sysinfo (&memInfo);
+    long long totalVirtualMem = memInfo.totalram;
+    totalVirtualMem += memInfo.totalswap;
+    totalVirtualMem *= memInfo.mem_unit;
+    return totalVirtualMem;
 }
