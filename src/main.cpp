@@ -322,6 +322,7 @@ void handleSignal(int signal) {
 using namespace std;
 int main(int argc, char *argv[]) {
     bool enableStackTracePrinting = true;
+    bool workaroundAMD = false;
 
     int windowWidth = 720;
     int windowHeight = 480;
@@ -339,14 +340,19 @@ int main(int argc, char *argv[]) {
             enableStackTracePrinting = false;
         } else if (strcmp(argv[i], "--pocket-guis") == 0) {
             enablePocketGuis = true;
+        } else if (strcmp(argv[i], "--temp-amd-fix") == 0) {
+            std::cout << "Warning: Enabling AMD Workaround. This works by removing an unsupported instruction.\n";
+            std::cout << "Expect issues with lighting, and possibly some other ones related to rendering.\n";
+            workaroundAMD = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
             std::cout << "--help               Shows this help information\n";
             std::cout << "--scale <scale>      Sets the pixel scale\n";
             std::cout << "--width <width>      Sets the window width\n";
-            std::cout << "--height <height>    Sets the window height\n\n";
-            std::cout << "--no-stacktrace      Disables stack trace printing\n\n";
-            std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n\n";
+            std::cout << "--height <height>    Sets the window height\n";
+            std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n";
+            std::cout << "--no-stacktrace      Disables stack trace printing\n";
+            std::cout << "--temp-amd-fix       Enables a temporary AMD workaround, expect problems with it\n\n";
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";
@@ -442,6 +448,13 @@ int main(int argc, char *argv[]) {
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
+
+    if (workaroundAMD) {
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
+                   (0x40AD9B - 0x40ACD0);
+        for (unsigned int i = 0; i < 0x40ADA5 - 0x40ADA0; i++)
+            ((char *) (void *) patchOff)[i] = 0x90;
+    }
 
     std::cout << "patches applied!\n";
 
