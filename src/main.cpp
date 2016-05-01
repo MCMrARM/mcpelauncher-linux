@@ -214,12 +214,14 @@ static void minecraft_keyboard_special(int key, int action) {
     if (action == EGLUT_KEY_PRESS) {
         Keyboard::inputs->push_back({1, mKey});
         Keyboard::states[mKey] = 1;
-        if (key >= 32 && key <= 127) {
+        if (key == 65288) {
+            Keyboard::Keyboard_feedText("\x08", false);
+        } else if (key == 65293) {
+            Keyboard::Keyboard_feedText("\n", false);
+        } else if (key >= 32 && key < 60000) {
             std::stringstream ss;
             ss << (char) key;
             Keyboard::Keyboard_feedText(ss.str(), false);
-        } else if (key == 65288) {
-            Keyboard::Keyboard_feedText("\x08", false);
         }
     } else {
         Keyboard::inputs->push_back({0, mKey});
