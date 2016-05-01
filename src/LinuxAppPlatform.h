@@ -97,6 +97,9 @@ public:
             return 1;
         return 0; // Win 10 Ed. GUIs
     }
+    bool useCenteredGUI() {
+        return (enablePocketGuis ? false : true);
+    }
     std::string getApplicationId() {
         printf("application id = com.mojang.minecraftpe\n");
         return "com.mojang.minecraftpe";

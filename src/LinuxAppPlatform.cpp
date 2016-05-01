@@ -45,6 +45,7 @@ void LinuxAppPlatform::initVtable(void** base, int baseSize) {
     myVtable[29] = (void*) &LinuxAppPlatform::getInternalStoragePath;
     myVtable[30] = (void*) &LinuxAppPlatform::getUserdataPath;
     myVtable[46] = (void*) &LinuxAppPlatform::readAssetFile;
+    myVtable[59] = (void*) &LinuxAppPlatform::useCenteredGUI;
     myVtable[61] = (void*) &LinuxAppPlatform::getScreenType;
     myVtable[64] = (void*) &LinuxAppPlatform::getApplicationId;
     myVtable[69] = (void*) &LinuxAppPlatform::getDeviceId;
