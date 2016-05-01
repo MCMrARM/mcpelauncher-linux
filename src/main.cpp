@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <codecvt>
+#include <locale>
 #include <dirent.h>
 #include <subhook.h>
 #include "gles_symbols.h"
@@ -210,6 +212,17 @@ int getKeyMinecraft(int keyCode) {
     return keyCode;
 }
 int winId = 0;
+static void minecraft_keyboard(char str[5], int action) {
+    if (action == EGLUT_KEY_PRESS) {
+        if (str[0] == 13) {
+            str[0] = 10;
+            str[1] = 0;
+        }
+        std::stringstream ss;
+        ss << str;
+        Keyboard::Keyboard_feedText(ss.str(), false);
+    }
+}
 static void minecraft_keyboard_special(int key, int action) {
     if (key == 65480) {
         if (action == EGLUT_KEY_PRESS) {
@@ -221,15 +234,6 @@ static void minecraft_keyboard_special(int key, int action) {
     if (action == EGLUT_KEY_PRESS) {
         Keyboard::inputs->push_back({1, mKey});
         Keyboard::states[mKey] = 1;
-        if (key == 65288) {
-            Keyboard::Keyboard_feedText("\x08", false);
-        } else if (key == 65293) {
-            Keyboard::Keyboard_feedText("\n", false);
-        } else if (key >= 32 && key < 60000) {
-            std::stringstream ss;
-            ss << (char) key;
-            Keyboard::Keyboard_feedText(ss.str(), false);
-        }
     } else {
         Keyboard::inputs->push_back({0, mKey});
         Keyboard::states[mKey] = 0;
@@ -522,7 +526,7 @@ int main(int argc, char *argv[]) {
     eglutDisplayFunc(minecraft_draw);
     eglutMouseFunc(minecraft_mouse);
     eglutMouseButtonFunc(minecraft_mouse_button);
-    eglutKeyboardFunc(NULL);
+    eglutKeyboardFunc(minecraft_keyboard);
     eglutSpecialFunc(minecraft_keyboard_special);
     std::cout << "initialized display\n";
 

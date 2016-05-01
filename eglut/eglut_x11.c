@@ -47,6 +47,8 @@ _eglutNativeFiniDisplay(void)
     XCloseDisplay(_eglut->native_dpy);
 }
 
+XIC x11_ic;
+
 void
 _eglutNativeInitWindow(struct eglut_window *win, const char *title,
                        int x, int y, int w, int h)
@@ -104,6 +106,14 @@ _eglutNativeInitWindow(struct eglut_window *win, const char *title,
     win->native.u.window = xwin;
     win->native.width = w;
     win->native.height = h;
+
+    XIM im = XOpenIM(_eglut->native_dpy, NULL, NULL, NULL);
+    if (im != NULL) {
+        x11_ic = XCreateIC(im, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, XNClientWindow, xwin, NULL);
+        if (x11_ic != NULL) {
+            XSetICFocus(x11_ic);
+        }
+    }
 }
 
 void
@@ -199,6 +209,11 @@ next_event(struct eglut_window *win)
     /* block for next event */
     XNextEvent(_eglut->native_dpy, &event);
 
+    if (XFilterEvent(&event, win->native.u.window)) {
+        _eglut->redisplay = redraw;
+        return;
+    }
+
     switch (event.type) {
         case Expose:
             redraw = 1;
@@ -225,14 +240,19 @@ next_event(struct eglut_window *win)
                 }
             }
 
-            char buffer[1];
+            char buffer[5];
+            memset(buffer, 0, 5);
             KeySym sym;
-            int r = XLookupString(&event.xkey,
-                              buffer, sizeof(buffer), &sym, NULL);
-            if (r && win->keyboard_cb) {
-                win->keyboard_cb(buffer[0], event.type == KeyRelease ? EGLUT_KEY_RELEASE : EGLUT_KEY_PRESS);
+            int r;
+            if (event.type == KeyPress) {
+                r = Xutf8LookupString(x11_ic, (XKeyPressedEvent*) &event, buffer, sizeof(buffer), &sym, NULL);
+            } else {
+                r = XLookupString(&event.xkey, buffer, sizeof(buffer), &sym, NULL);
             }
-            else if (win->special_cb) {
+            if (r > 0 && win->keyboard_cb) {
+                win->keyboard_cb(buffer, event.type == KeyRelease ? EGLUT_KEY_RELEASE : EGLUT_KEY_PRESS);
+            }
+            if (win->special_cb) {
                 /*r = lookup_keysym(sym);
                 if (r == -1)*/
                     r = sym;

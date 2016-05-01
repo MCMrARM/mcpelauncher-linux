@@ -87,7 +87,7 @@ enum {
 typedef void (*EGLUTidleCB)(void);
 typedef void (*EGLUTreshapeCB)(int, int);
 typedef void (*EGLUTdisplayCB)(void);
-typedef void (*EGLUTkeyboardCB)(unsigned char, int);
+typedef void (*EGLUTkeyboardCB)(char[5], int);
 typedef void (*EGLUTspecialCB)(int, int);
 typedef void (*EGLUTmouseCB)(int, int);
 typedef void (*EGLUTmouseButtonCB)(int, int, int, int);
