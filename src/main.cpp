@@ -293,6 +293,11 @@ std::string getOSLibraryPath(std::string libName) {
     if (access(p.c_str(), F_OK) != -1) {
         return p;
     }
+    // if this is a 32-bit machine, we need to check normal lib dirs
+    p = std::string("/usr/lib/") + libName;
+    if (access(p.c_str(), F_OK) != -1) {
+        return p;
+    }
 
     std::cout << "could not find os library: " << libName << "\n";
     abort();
