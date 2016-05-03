@@ -143,12 +143,10 @@ public:
         std::cout << "destroying http request\n";
     }
 };
+void** linuxHttpRequestInternalVtable;
 
 void constructLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal, HTTPRequest* request) {
-    void** vt = (void**) ::operator new(8);
-    vt[0] = (void*) &LinuxHttpRequestInternal::destroy;
-    vt[1] = (void*) &LinuxHttpRequestInternal::destroy;
-    requestInternal->vtable = vt;
+    requestInternal->vtable = linuxHttpRequestInternalVtable;
     requestInternal->request = request;
 }
 
@@ -430,7 +428,7 @@ int main(int argc, char *argv[]) {
     std::cout << "loading MCPE\n";
 
     void* glesLib = loadLibraryOS(getOSLibraryPath("libGLESv2.so"), gles_symbols);
-    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.7.7").c_str(), fmod_symbols);
+    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
     if (glesLib == nullptr || fmodLib == nullptr)
         return -1;
     stubSymbols(android_symbols, (void*) androidStub);
@@ -504,6 +502,10 @@ int main(int argc, char *argv[]) {
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
+
+    linuxHttpRequestInternalVtable = (void**) ::operator new(8);
+    linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
+    linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
 
     if (workaroundAMD) {
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
