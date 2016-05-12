@@ -327,6 +327,15 @@ void handleSignal(int signal) {
     abort();
 }
 
+extern "C"
+void pshufb(char* dest, char* src) {
+    char new_dest[16];
+    for (int i = 0; i < 16; i++)
+        new_dest[i] = (src[i] & 0x80) ? 0 : dest[src[i] & 15];
+    memcpy(dest, new_dest, 16);
+}
+extern "C"
+void pshufb_xmm4_xmm0();
 #include <functional>
 using namespace std;
 int main(int argc, char *argv[]) {
@@ -349,9 +358,8 @@ int main(int argc, char *argv[]) {
             enableStackTracePrinting = false;
         } else if (strcmp(argv[i], "--pocket-guis") == 0) {
             enablePocketGuis = true;
-        } else if (strcmp(argv[i], "--temp-amd-fix") == 0) {
-            std::cout << "Warning: Enabling AMD Workaround. This works by removing an unsupported instruction.\n";
-            std::cout << "Expect issues with lighting, and possibly some other ones related to rendering.\n";
+        } else if (strcmp(argv[i], "--amd-fix") == 0) {
+            std::cout << "--amd-fix: Enabling AMD Workaround.\n";
             workaroundAMD = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
@@ -361,7 +369,7 @@ int main(int argc, char *argv[]) {
             std::cout << "--height <height>    Sets the window height\n";
             std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n";
             std::cout << "--no-stacktrace      Disables stack trace printing\n";
-            std::cout << "--temp-amd-fix       Enables a temporary AMD workaround, expect problems with it\n\n";
+            std::cout << "--amd-workaround     Fixes crashes on pre-i686 and AMD CPUs\n\n";
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";
@@ -462,11 +470,13 @@ int main(int argc, char *argv[]) {
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
 
-    if (workaroundAMD) {
+    if (workaroundAMD) {/*
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
-                   (0x40AD9B - 0x40ACD0);
-        for (unsigned int i = 0; i < 0x40ADA5 - 0x40ADA0; i++)
-            ((char *) (void *) patchOff)[i] = 0x90;
+                   (0x40AD97 - 0x40ACD0);
+        for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
+            ((char *) (void *) patchOff)[i] = 0x90;*/
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
+        patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
     }
 
     std::cout << "patches applied!\n";
