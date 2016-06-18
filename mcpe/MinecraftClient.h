@@ -10,7 +10,7 @@ public:
     static void (*MinecraftClient_setRenderingSize)(MinecraftClient*, int, int);
     static void (*MinecraftClient_setUISizeAndScale)(MinecraftClient*, int, int, float);
 
-    char filler [0x1F4-4];
+    char filler [0x238-4];
 
     MinecraftClient(int carg, char** args) {
         MinecraftClient_construct(this, carg, args);

@@ -26,41 +26,46 @@ LinuxAppPlatform::LinuxAppPlatform() : AppPlatform() {
     internalStorage = "data/private/";
     externalStorage = "data/public/";
     userdata = "data/user/";
+    userdataPathForLevels = "data/user/";
     region = "0xdeadbeef";
+    tmpPath = "tmp/";
 }
 
 void LinuxAppPlatform::initVtable(void** base, int baseSize) {
-    myVtable = (void**) ::operator new(baseSize * sizeof(void*));
+    void** myVtable = (void**) ::operator new(baseSize * sizeof(void*));
     memcpy(&myVtable[0], &base[2], baseSize * sizeof(void*));
 
     myVtable[2] = (void*) &LinuxAppPlatform::getDataUrl;
-    myVtable[4] = (void*) &LinuxAppPlatform::getImagePath;
+    myVtable[4] = (void*) &LinuxAppPlatform::getPackagePath;
     myVtable[5] = (void*) &LinuxAppPlatform::loadPNG;
-    myVtable[12] = (void*) &LinuxAppPlatform::hideMousePointer;
-    myVtable[13] = (void*) &LinuxAppPlatform::showMousePointer;
-    myVtable[17] = (void*) &LinuxAppPlatform::swapBuffers;
-    myVtable[19] = (void*) &LinuxAppPlatform::getSystemRegion;
-    myVtable[20] = (void*) &LinuxAppPlatform::getGraphicsVendor;
-    myVtable[21] = (void*) &LinuxAppPlatform::getGraphicsRenderer;
-    myVtable[22] = (void*) &LinuxAppPlatform::getGraphicsVersion;
-    myVtable[23] = (void*) &LinuxAppPlatform::getGraphicsExtensions;
-    myVtable[24] = (void*) &LinuxAppPlatform::pickImage;
-    myVtable[25] = (void*) &LinuxAppPlatform::pickFile;
-    myVtable[26] = (void*) &LinuxAppPlatform::supportsFilePicking;
-    myVtable[28] = (void*) &LinuxAppPlatform::getExternalStoragePath;
-    myVtable[29] = (void*) &LinuxAppPlatform::getInternalStoragePath;
-    myVtable[30] = (void*) &LinuxAppPlatform::getUserdataPath;
-    myVtable[46] = (void*) &LinuxAppPlatform::readAssetFile;
-    myVtable[59] = (void*) &LinuxAppPlatform::useCenteredGUI;
-    myVtable[61] = (void*) &LinuxAppPlatform::getScreenType;
-    myVtable[64] = (void*) &LinuxAppPlatform::getApplicationId;
-    myVtable[65] = (void*) &LinuxAppPlatform::getAvailableMemory;
-    myVtable[69] = (void*) &LinuxAppPlatform::getDeviceId;
-    myVtable[70] = (void*) &LinuxAppPlatform::createUUID;
-    myVtable[71] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
-    myVtable[72] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
-    myVtable[73] = (void*) &LinuxAppPlatform::isTablet;
-    myVtable[82] = (void*) &LinuxAppPlatform::getEdition;
+    myVtable[13] = (void*) &LinuxAppPlatform::hideMousePointer;
+    myVtable[14] = (void*) &LinuxAppPlatform::showMousePointer;
+    myVtable[18] = (void*) &LinuxAppPlatform::swapBuffers;
+    myVtable[20] = (void*) &LinuxAppPlatform::getSystemRegion;
+    myVtable[21] = (void*) &LinuxAppPlatform::getGraphicsVendor;
+    myVtable[22] = (void*) &LinuxAppPlatform::getGraphicsRenderer;
+    myVtable[23] = (void*) &LinuxAppPlatform::getGraphicsVersion;
+    myVtable[24] = (void*) &LinuxAppPlatform::getGraphicsExtensions;
+    myVtable[25] = (void*) &LinuxAppPlatform::pickImage;
+    myVtable[26] = (void*) &LinuxAppPlatform::pickFile;
+    myVtable[27] = (void*) &LinuxAppPlatform::supportsFilePicking;
+    myVtable[33] = (void*) &LinuxAppPlatform::getExternalStoragePath;
+    myVtable[34] = (void*) &LinuxAppPlatform::getInternalStoragePath;
+    myVtable[35] = (void*) &LinuxAppPlatform::getUserdataPath;
+    myVtable[36] = (void*) &LinuxAppPlatform::getUserdataPathForLevels;
+    myVtable[53] = (void*) &LinuxAppPlatform::getAssetFileFullPath;
+    myVtable[54] = (void*) &LinuxAppPlatform::readAssetFile;
+    myVtable[68] = (void*) &LinuxAppPlatform::useCenteredGUI;
+    myVtable[74] = (void*) &LinuxAppPlatform::getApplicationId;
+    myVtable[75] = (void*) &LinuxAppPlatform::getAvailableMemory;
+    myVtable[80] = (void*) &LinuxAppPlatform::getDeviceId;
+    myVtable[81] = (void*) &LinuxAppPlatform::createUUID;
+    myVtable[82] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
+    myVtable[83] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
+    myVtable[84] = (void*) &LinuxAppPlatform::isTablet;
+    myVtable[93] = (void*) &LinuxAppPlatform::getEdition;
+    myVtable[100] = (void*) &LinuxAppPlatform::getPlatformTempPath;
+    LinuxAppPlatform::myVtable = myVtable;
 }
 
 void LinuxAppPlatform::hideMousePointer() {
@@ -73,10 +78,10 @@ void LinuxAppPlatform::showMousePointer() {
     eglutSetMousePointerVisiblity(EGLUT_POINTER_VISIBLE);
 }
 
-void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path, bool b) {
-    std::cout << "loadPNG: " << path << " (from assets: " << b << ")\n";
+void LinuxAppPlatform::loadPNG(ImageData& imgData, const std::string& path) {
+    std::cout << "loadPNG: " << path << "\n";
 
-    FILE* file = fopen(getImagePath(path, b).c_str(), "rb");
+    FILE* file = fopen((std::string("assets/") + path).c_str(), "rb");
     if (file == NULL) {
         std::cout << "failed to open file\n";
         return;

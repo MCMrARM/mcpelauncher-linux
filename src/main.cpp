@@ -327,6 +327,28 @@ void handleSignal(int signal) {
     abort();
 }
 
+void detachFromJavaStub() {
+    std::cout << "detach from java\n";
+}
+void* getJNIEnv() {
+    std::cout << "getjnienv: hanging up thread\n";
+    while(1) {
+        sleep(1);
+    }
+    return nullptr;
+}
+struct xboxSingleton {
+    char filler[8];
+};
+xboxSingleton xboxGetAppConfigSingleton() {
+    std::cout << "xbox get app config singleton\n";
+    return xboxSingleton();
+}
+void xboxConfigSetSandboxStub() {
+    std::cout << "xbox config: set sandbox (stub)\n";
+}
+
+
 extern "C"
 void pshufb(char* dest, char* src) {
     char new_dest[16];
@@ -337,6 +359,9 @@ void pshufb(char* dest, char* src) {
 extern "C"
 void pshufb_xmm4_xmm0();
 #include <functional>
+#include <sys/mman.h>
+#include <EGL/egl.h>
+
 using namespace std;
 int main(int argc, char *argv[]) {
     bool enableStackTracePrinting = true;
@@ -386,6 +411,7 @@ int main(int argc, char *argv[]) {
         sigemptyset(&act.sa_mask);
         act.sa_flags = 0;
         sigaction(SIGSEGV, &act, 0);
+        sigaction(SIGABRT, &act, 0);
     }
 
     std::cout << "loading MCPE\n";
@@ -396,13 +422,14 @@ int main(int argc, char *argv[]) {
         return -1;
     stubSymbols(android_symbols, (void*) androidStub);
     stubSymbols(egl_symbols, (void*) eglStub);
+    hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
     hybris_hook("__android_log_print", (void*) __android_log_print);
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
     // load stub libraries
-    if (!loadLibrary("libandroid.so") || !loadLibrary("liblog.so") || !loadLibrary("libEGL.so") || !loadLibrary("libGLESv2.so") || !loadLibrary("libOpenSLES.so") || !loadLibrary("libfmod.so"))
+    if (!loadLibrary("libandroid.so") || !loadLibrary("liblog.so") || !loadLibrary("libEGL.so") || !loadLibrary("libGLESv2.so") || !loadLibrary("libOpenSLES.so") || !loadLibrary("libfmod.so") || !loadLibrary("libGLESv1_CM.so"))
         return -1;
     // load libgnustl_shared
     if (!loadLibrary("libgnustl_shared.so"))
@@ -466,6 +493,18 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
 
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat10threadpool16detach_from_javaEPv");
+    patchCallInstruction((void*) patchOff, (void*) &detachFromJavaStub, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat11get_jvm_envEv");
+    patchCallInstruction((void*) patchOff, (void*) &getJNIEnv, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config24get_app_config_singletonEv");
+    patchCallInstruction((void*) patchOff, (void*) &xboxGetAppConfigSingleton, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config11set_sandboxESs");
+    patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
+
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -493,8 +532,11 @@ int main(int argc, char *argv[]) {
     AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
     AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
 
+    void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
+    *ptr = (void*) 1; // this just needs not to be null
+
     std::cout << "init app platform vtable\n";
-    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 86);
+    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 101);
     std::cout << "init app platform\n";
     LinuxAppPlatform* platform = new LinuxAppPlatform();
     std::cout << "app platform initialized\n";
@@ -521,6 +563,7 @@ int main(int argc, char *argv[]) {
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
+
     std::cout << "create minecraft client\n";
     client = new MinecraftClient(argc, argv);
     std::cout << "init minecraft client\n";

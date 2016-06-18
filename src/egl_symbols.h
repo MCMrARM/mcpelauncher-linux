@@ -14,7 +14,7 @@ const char* egl_symbols[] = {
         "eglGetDisplay",
         "eglInitialize",
         "eglQuerySurface",
-        "eglGetProcAddress",
         "eglSwapInterval",
+        "eglQueryString",
         nullptr
 };

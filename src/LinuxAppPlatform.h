@@ -26,7 +26,7 @@ public:
     static bool mousePointerHidden;
 
     std::string region;
-    std::string internalStorage, externalStorage, userdata;
+    std::string internalStorage, externalStorage, userdata, userdataPathForLevels, tmpPath;
 
     LinuxAppPlatform();
 
@@ -35,11 +35,11 @@ public:
         return "assets/";
     }
 
-    std::string getImagePath(std::string const& img, int loc) {
-        printf("get image path: %s (%i)\n", img.c_str(), loc);
-        return (loc == 0 ? (std::string("assets/images/") + img) : img);
+    std::string getPackagePath() {
+        return "./";
     }
-    void loadPNG(ImageData&, std::string const&, bool);
+
+    void loadPNG(ImageData&, std::string const&);
 
     void hideMousePointer();
     void showMousePointer();
@@ -86,6 +86,14 @@ public:
         printf("userdata path = %s\n", userdata.c_str());
         return userdata;
     }
+    std::string& getUserdataPathForLevels() {
+        printf("userdata path for levels = %s\n", userdata.c_str());
+        return userdataPathForLevels;
+    }
+    std::string getAssetFileFullPath(std::string const& s) {
+        printf("get assert full path: %s\n", s.c_str());
+        return s;
+    }
     std::string readAssetFile(std::string const&);
     int getScreenType() {
         if (enablePocketGuis)
@@ -122,5 +130,9 @@ public:
         return "win10";
     }
     long long getAvailableMemory();
+
+    std::string &getPlatformTempPath() {
+        return tmpPath;
+    }
 
 };
