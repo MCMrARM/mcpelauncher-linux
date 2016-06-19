@@ -971,6 +971,7 @@ static struct aFILE* my_fopen(const char *filename, const char *mode)
     struct aFILE* afile = (struct aFILE*) malloc(sizeof(struct aFILE));
     afile->_file = fileno(file);
     afile->actual = file;
+    afile->_flags = 0;
     return afile;
 }
 
@@ -1044,7 +1045,9 @@ static int my_fputs(const char *s, struct aFILE* fp)
 
 static size_t my_fread(void *ptr, size_t size, size_t nmemb, struct aFILE* fp)
 {
-    return fread(ptr, size, nmemb, _get_actual_fp(fp));
+    size_t ret = fread(ptr, size, nmemb, _get_actual_fp(fp));
+    fp->_flags = (short) (feof_unlocked(_get_actual_fp(fp)) ? 0x0020 : 0);
+    return ret;
 }
 
 static FILE* my_freopen(const char *filename, const char *mode, struct aFILE* fp)
