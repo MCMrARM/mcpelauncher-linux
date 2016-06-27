@@ -36,10 +36,8 @@ public:
     }
 
     std::string getPackagePath() {
-        return "./";
+        return "assets/";
     }
-
-    void loadPNG(ImageData&, std::string const&);
 
     void hideMousePointer();
     void showMousePointer();
@@ -92,7 +90,7 @@ public:
     }
     std::string getAssetFileFullPath(std::string const& s) {
         printf("get assert full path: %s\n", s.c_str());
-        return s;
+        return "assets/" + s;
     }
     std::string readAssetFile(std::string const&);
     int getScreenType() {

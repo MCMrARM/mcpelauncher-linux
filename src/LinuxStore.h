@@ -8,10 +8,6 @@ struct LinuxStore {
     virtual ~LinuxStore() {
         std::cout << "destroying store\n";
     }
-    virtual bool allowsQueryPurchasesOnStartup() {
-        std::cout << "allows query purchases on startup: false\n";
-        return false;
-    }
     virtual bool requiresRestorePurchasesButton() {
         std::cout << "requires restore purchases button: false\n";
         return false;
