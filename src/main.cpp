@@ -218,7 +218,7 @@ static void minecraft_keyboard(char str[5], int action) {
         }
         std::stringstream ss;
         ss << str;
-        Keyboard::Keyboard_feedText(ss.str(), false);
+        Keyboard::Keyboard_feedText(ss.str(), false, 0);
     }
 }
 static void minecraft_keyboard_special(int key, int action) {
@@ -298,8 +298,12 @@ std::string getOSLibraryPath(std::string libName) {
 
 #include <execinfo.h>
 #include <cxxabi.h>
+bool hasCrashed = false;
 void handleSignal(int signal) {
     printf("Signal %i received\n", signal);
+    if (hasCrashed)
+        return;
+    hasCrashed = true;
     printf("Getting stacktrace...\n");
     void *array[25];
     int count = backtrace(array, 25);
@@ -346,6 +350,9 @@ xboxSingleton xboxGetAppConfigSingleton() {
 }
 void xboxConfigSetSandboxStub() {
     std::cout << "xbox config: set sandbox (stub)\n";
+}
+void patchNotesModelStub() {
+    std::cout << "fetch patch notes\n";
 }
 
 
@@ -431,9 +438,6 @@ int main(int argc, char *argv[]) {
     // load stub libraries
     if (!loadLibrary("libandroid.so") || !loadLibrary("liblog.so") || !loadLibrary("libEGL.so") || !loadLibrary("libGLESv2.so") || !loadLibrary("libOpenSLES.so") || !loadLibrary("libfmod.so") || !loadLibrary("libGLESv1_CM.so"))
         return -1;
-    // load libgnustl_shared
-    if (!loadLibrary("libgnustl_shared.so"))
-        return -1;
     if (!loadLibrary("libmcpelauncher_mod.so"))
         return -1;
     void* handle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
@@ -505,6 +509,12 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config11set_sandboxESs");
     patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
 
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config29set_title_telemetry_device_idERKSs");
+    patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN15PatchNotesModel17preloadPatchNotesEv");
+    patchCallInstruction((void*) patchOff, (void*) &patchNotesModelStub, true);
+
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -525,18 +535,20 @@ int main(int argc, char *argv[]) {
     gl::getOpenGLRenderer = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
     gl::getOpenGLVersion = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl16getOpenGLVersionEv");
     gl::getOpenGLExtensions = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl19getOpenGLExtensionsEv");
+    mce::Platform::OGL::OGL_initBindings = (void (*)()) hybris_dlsym(handle, "_ZN3mce8Platform3OGL12InitBindingsEv");
 
     // init linux app platform
     AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
     AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
+    AppPlatform::AppPlatform_initialize = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform10initializeEv");
     AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
 
     void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
     *ptr = (void*) 1; // this just needs not to be null
 
     std::cout << "init app platform vtable\n";
-    LinuxAppPlatform::initVtable(AppPlatform::myVtable, 101);
+    LinuxAppPlatform::initVtable(handle);
     std::cout << "init app platform\n";
     LinuxAppPlatform* platform = new LinuxAppPlatform();
     std::cout << "app platform initialized\n";
@@ -545,7 +557,7 @@ int main(int argc, char *argv[]) {
 
     Keyboard::inputs = (std::vector<KeyboardAction>*) hybris_dlsym(handle, "_ZN8Keyboard7_inputsE");
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
-    Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsb");
+    Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
     std::cout << "init window\n";
     eglutInitWindowSize(windowWidth, windowHeight);
@@ -563,6 +575,10 @@ int main(int argc, char *argv[]) {
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
+
+    platform->initialize();
+
+    mce::Platform::OGL::initBindings();
 
     std::cout << "create minecraft client\n";
     client = new MinecraftClient(argc, argv);

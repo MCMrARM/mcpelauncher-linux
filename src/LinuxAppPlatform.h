@@ -19,9 +19,11 @@ class LinuxAppPlatform : public AppPlatform {
 private:
     static std::string _pickFile(std::string commandLine);
 
+    static void replaceVtableEntry(void* lib, void** vtable, const char* sym, void* nw);
+
 public:
     static void** myVtable;
-    static void initVtable(void** base, int baseSize);
+    static void initVtable(void* lib);
 
     static bool mousePointerHidden;
 
@@ -33,6 +35,10 @@ public:
     std::string getDataUrl() { // this is used only for sounds
         printf("get data url: assets/\n");
         return "assets/";
+    }
+    std::string getUserDataUrl() { // this is used only for sounds
+        printf("get user data url: data/user/\n");
+        return "data/user/";
     }
 
     std::string getPackagePath() {
@@ -50,21 +56,8 @@ public:
         return region;
     }
 
-    std::string getGraphicsVendor() {
-        printf("vendor: %s\n", gl::getOpenGLVendor().c_str());
-        return gl::getOpenGLVendor();
-    }
-    std::string getGraphicsRenderer() {
-        printf("renderer: %s\n", gl::getOpenGLRenderer().c_str());
-        return gl::getOpenGLRenderer();
-    }
-    std::string getGraphicsVersion() {
-        printf("version: %s\n", gl::getOpenGLVersion().c_str());
-        return gl::getOpenGLVersion();
-    }
-    std::string getGraphicsExtensions() {
-        printf("extensions: %s\n", gl::getOpenGLExtensions().c_str());
-        return gl::getOpenGLExtensions();
+    bool getGraphicsTearingSupport() {
+        return false;
     }
 
     void pickImage(ImagePickingCallback& callback);
@@ -127,7 +120,14 @@ public:
             return "pocket";
         return "win10";
     }
+    int getPlatformUIScalingRules() {
+        return 2;
+    }
     long long getAvailableMemory();
+
+    long long calculateAvailableDiskFreeSpace() {
+        return 100000000L;
+    }
 
     std::string &getPlatformTempPath() {
         return tmpPath;

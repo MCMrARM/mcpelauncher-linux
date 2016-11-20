@@ -6,6 +6,10 @@ const char* android_symbols[] = {
         "AAsset_getLength",
         "AAsset_getBuffer",
         "AAsset_close",
+        "AAsset_read",
+        "AAsset_seek64",
+        "AAsset_getLength64",
+        "AAsset_getRemainingLength64",
         "ALooper_pollAll",
         "ANativeActivity_finish",
         "AInputQueue_getEvent",
@@ -35,5 +39,8 @@ const char* android_symbols[] = {
         "AInputQueue_detachLooper",
         "AConfiguration_delete",
         "AInputQueue_attachLooper",
+        "AAssetManager_openDir",
+        "AAssetDir_getNextFileName",
+        "AAssetDir_close",
         nullptr
 };

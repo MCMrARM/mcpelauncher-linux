@@ -11,9 +11,11 @@
 #include <sys/sysinfo.h>
 #include "../mcpe/ImagePickingCallback.h"
 #include "../mcpe/FilePickerSettings.h"
+#include "../hybris/src/jb/linker.h"
 
 extern "C" {
 #include <eglut.h>
+#include "../hybris/include/hybris/dlfcn.h"
 }
 
 void** LinuxAppPlatform::myVtable = nullptr;
@@ -30,40 +32,65 @@ LinuxAppPlatform::LinuxAppPlatform() : AppPlatform() {
     tmpPath = "tmp/";
 }
 
-void LinuxAppPlatform::initVtable(void** base, int baseSize) {
-    void** myVtable = (void**) ::operator new(baseSize * sizeof(void*));
-    memcpy(&myVtable[0], &base[2], baseSize * sizeof(void*));
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <dlfcn.h>
 
-    myVtable[2] = (void*) &LinuxAppPlatform::getDataUrl;
-    myVtable[4] = (void*) &LinuxAppPlatform::getPackagePath;
-    myVtable[13] = (void*) &LinuxAppPlatform::hideMousePointer;
-    myVtable[14] = (void*) &LinuxAppPlatform::showMousePointer;
-    myVtable[18] = (void*) &LinuxAppPlatform::swapBuffers;
-    myVtable[20] = (void*) &LinuxAppPlatform::getSystemRegion;
-    myVtable[21] = (void*) &LinuxAppPlatform::getGraphicsVendor;
-    myVtable[22] = (void*) &LinuxAppPlatform::getGraphicsRenderer;
-    myVtable[23] = (void*) &LinuxAppPlatform::getGraphicsVersion;
-    myVtable[24] = (void*) &LinuxAppPlatform::getGraphicsExtensions;
-    myVtable[25] = (void*) &LinuxAppPlatform::pickImage;
-    myVtable[26] = (void*) &LinuxAppPlatform::pickFile;
-    myVtable[27] = (void*) &LinuxAppPlatform::supportsFilePicking;
-    myVtable[33] = (void*) &LinuxAppPlatform::getExternalStoragePath;
-    myVtable[34] = (void*) &LinuxAppPlatform::getInternalStoragePath;
-    myVtable[35] = (void*) &LinuxAppPlatform::getUserdataPath;
-    myVtable[36] = (void*) &LinuxAppPlatform::getUserdataPathForLevels;
-    myVtable[53] = (void*) &LinuxAppPlatform::getAssetFileFullPath;
-    myVtable[54] = (void*) &LinuxAppPlatform::readAssetFile;
-    myVtable[68] = (void*) &LinuxAppPlatform::useCenteredGUI;
-    myVtable[74] = (void*) &LinuxAppPlatform::getApplicationId;
-    myVtable[75] = (void*) &LinuxAppPlatform::getAvailableMemory;
-    myVtable[80] = (void*) &LinuxAppPlatform::getDeviceId;
-    myVtable[81] = (void*) &LinuxAppPlatform::createUUID;
-    myVtable[82] = (void*) &LinuxAppPlatform::isFirstSnoopLaunch;
-    myVtable[83] = (void*) &LinuxAppPlatform::hasHardwareInformationChanged;
-    myVtable[84] = (void*) &LinuxAppPlatform::isTablet;
-    myVtable[93] = (void*) &LinuxAppPlatform::getEdition;
-    myVtable[100] = (void*) &LinuxAppPlatform::getPlatformTempPath;
-    LinuxAppPlatform::myVtable = myVtable;
+void LinuxAppPlatform::replaceVtableEntry(void* lib, void** vtable, const char* sym, void* nw) {
+    void* sm = hybris_dlsym(lib, sym);
+    for (int i = 0; ; i++) {
+        if (vtable[i] == nullptr)
+            break;
+        if (vtable[i] == sm) {
+            myVtable[i] = nw;
+            return;
+        }
+    }
+}
+
+void LinuxAppPlatform::initVtable(void* lib) {
+    void** vt = AppPlatform::myVtable;
+    void** vta = &((void**) hybris_dlsym(lib, "_ZTV19AppPlatform_android"))[2];
+    // get vtable size
+    int size;
+    for (size = 2; ; size++) {
+        if (vt[size] == nullptr)
+            break;
+    }
+    printf("AppPlatform size = %i\n", size);
+
+    myVtable = (void**) ::operator new(size * sizeof(void*));
+    memcpy(&myVtable[0], &vt[2], (size - 2) * sizeof(void*));
+
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getDataUrlEv", (void*) &LinuxAppPlatform::getDataUrl);
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android14getUserDataUrlEv", (void*) &LinuxAppPlatform::getUserDataUrl);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14getPackagePathEv", (void*) &LinuxAppPlatform::getPackagePath);
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16hideMousePointerEv", (void*) &LinuxAppPlatform::hideMousePointer);
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16showMousePointerEv", (void*) &LinuxAppPlatform::showMousePointer);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11swapBuffersEv", (void*) &LinuxAppPlatform::swapBuffers);
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android15getSystemRegionEv", (void*) &LinuxAppPlatform::getSystemRegion);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25getGraphicsTearingSupportEv", (void*) &LinuxAppPlatform::getGraphicsTearingSupport);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android9pickImageER20ImagePickingCallback", (void*) &LinuxAppPlatform::pickImage);
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform8pickFileER18FilePickerSettings", (void*) &LinuxAppPlatform::pickFile);
+    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform19supportsFilePickingEv", (void*) &LinuxAppPlatform::supportsFilePicking);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getExternalStoragePathEv", (void*) &LinuxAppPlatform::getExternalStoragePath);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getInternalStoragePathEv", (void*) &LinuxAppPlatform::getInternalStoragePath);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android15getUserdataPathEv", (void*) &LinuxAppPlatform::getUserdataPath);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android24getUserdataPathForLevelsEv", (void*) &LinuxAppPlatform::getUserdataPathForLevels);
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform20getAssetFileFullPathERKSs", (void*) &LinuxAppPlatform::getAssetFileFullPath);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android13readAssetFileERKSs", (void*) &LinuxAppPlatform::readAssetFile);
+    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform14useCenteredGUIEv", (void*) &LinuxAppPlatform::useCenteredGUI);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android16getApplicationIdEv", (void*) &LinuxAppPlatform::getApplicationId);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18getAvailableMemoryEv", (void*) &LinuxAppPlatform::getAvailableMemory);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11getDeviceIdEv", (void*) &LinuxAppPlatform::getDeviceId);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android10createUUIDEv", (void*) &LinuxAppPlatform::createUUID);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", (void*) &LinuxAppPlatform::isFirstSnoopLaunch);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", (void*) &LinuxAppPlatform::hasHardwareInformationChanged);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", (void*) &LinuxAppPlatform::isTablet);
+    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform10getEditionEv", (void*) &LinuxAppPlatform::getEdition);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", (void*) &LinuxAppPlatform::calculateAvailableDiskFreeSpace);
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", (void*) &LinuxAppPlatform::getPlatformUIScalingRules);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", (void*) &LinuxAppPlatform::getPlatformTempPath);
 }
 
 void LinuxAppPlatform::hideMousePointer() {
@@ -140,16 +167,20 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
 std::string LinuxAppPlatform::readAssetFile(const std::string& path) {
     if (path.length() <= 0 || path == "assets/") {
         std::cout << "warn: readAssetFile with empty path!\n";
-        return "-";
+        return " ";
     }
     std::cout << "readAssetFile: " << path << "\n";
     std::ifstream ifs(path);
     if (!ifs) {
         std::cout << "readAssetFile failed\n";
-        return "-";
+        return " ";
     }
-    return std::string((std::istreambuf_iterator<char>(ifs)),
-                       (std::istreambuf_iterator<char>()));
+    ifs.seekg(0, std::ios::end);
+    std::size_t size = (std::size_t) ifs.tellg();
+    std::string buf(size, ' ');
+    ifs.seekg(0);
+    ifs.read(&buf[0], size);
+    return buf;
 }
 
 std::string LinuxAppPlatform::createUUID() {

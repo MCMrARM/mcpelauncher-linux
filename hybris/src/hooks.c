@@ -1512,6 +1512,7 @@ static struct _hook hooks[] = {
     {"property_set", property_set },
     {"__system_property_get", my_system_property_get },
     {"getenv", getenv },
+    {"setenv", setenv },
     {"printf", printf },
     {"malloc", my_malloc },
     {"free", free },

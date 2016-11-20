@@ -29,5 +29,9 @@ const char* fmod_symbols[] = {
     "_ZN4FMOD6System12createStreamEPKcjP22FMOD_CREATESOUNDEXINFOPPNS_5SoundE",
     "_ZN4FMOD6System11createSoundEPKcjP22FMOD_CREATESOUNDEXINFOPPNS_5SoundE",
     "_ZN4FMOD5Sound19set3DMinMaxDistanceEff",
+    "_ZN4FMOD6System13getNumDriversEPi",
+    "_ZN4FMOD6System13getDriverInfoEiPciP9FMOD_GUIDPiP16FMOD_SPEAKERMODES4_",
+    "_ZN4FMOD6System9setDriverEi",
+    "_ZN4FMOD5Sound7setModeEj",
     nullptr
 };

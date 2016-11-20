@@ -20,6 +20,10 @@ struct LinuxStore {
         std::cout << "get store id: LinuxStore\n";
         return "LinuxStore";
     }
+    virtual std::string getProductSkuPrefix() {
+        std::cout << "get product sku prefix: linux";
+        return "linux";
+    }
     virtual void queryProducts(std::vector<std::string> const& arr) {
         std::cout << "query products\n";
     }
@@ -54,5 +58,29 @@ struct LinuxStore {
     }
     virtual void handleLicenseChange() {
         std::cout << "handle license changed\n";
+    }
+    virtual void restoreFromCache() {
+        std::cout << "restore from cache\n";
+    }
+    virtual void getUserAccessTokenAsync() {
+        std::cout << "get user access token async\n";
+    }
+    virtual void getFullSKUWithMetadataFromProductSku() {
+        std::cout << "get full sku with metadata from product sku\n";
+    }
+    virtual std::string getFullGameProductSku() {
+        std::cout << "get full game product sku\n";
+        return "idk";
+    }
+    virtual std::string getLanguageCode() {
+        std::cout << "get language code\n";
+        return "idk";
+    }
+    virtual std::string getRegionCode() {
+        std::cout << "get region code\n";
+        return "idk";
+    }
+    virtual void refreshLicenses() {
+        std::cout << "refresh licenses\n";
     }
 };
