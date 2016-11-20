@@ -1507,6 +1507,16 @@ const char *my_inet_ntop (int __af, const void * __cp,
     return inet_ntop(__af, __cp, __buf, __len);
 }
 
+void *get_hooked_symbol(const char *sym);
+void *my_android_dlsym(void *handle, const char *symbol)
+{
+    void *retval = get_hooked_symbol(symbol);
+    if (retval != NULL) {
+        return retval;
+    }
+    return android_dlsym(handle, symbol);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1724,7 +1734,7 @@ static struct _hook hooks[] = {
     {"sysconf", my_sysconf},
     {"dlopen", android_dlopen},
     {"dlerror", android_dlerror},
-    {"dlsym", android_dlsym},
+    {"dlsym", my_android_dlsym},
     {"dladdr", android_dladdr},
     {"dlclose", android_dlclose},
     /* dirent.h */
@@ -1805,7 +1815,7 @@ void hybris_hook(const char *name, void* func) {
     add_user_hook(h);
 }
 
-void *get_hooked_symbol(char *sym)
+void *get_hooked_symbol(const char *sym)
 {
     int i;
     struct _hook *ptr = &hooks[0];
