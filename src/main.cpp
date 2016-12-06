@@ -62,13 +62,19 @@ void AInputQueue_detachLooper() { }
 void AConfiguration_delete() { }
 void AInputQueue_attachLooper() { }
 
-void __android_log_print(int prio, const char *tag,  const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
+void __android_log_vprint(int prio, const char *tag,  const char *fmt, va_list args) {
     std::cout << "[" << tag << "] ";
     vprintf(fmt, args);
     std::cout << std::endl;
+}
+void __android_log_print(int prio, const char *tag,  const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    __android_log_vprint(prio, tag, fmt, args);
     va_end(args);
+}
+void __android_log_write(int prio, const char *tag,  const char *fmt, const char *text) {
+    std::cout << "[" << tag << "] " << text << std::endl;
 }
 
 }
@@ -433,6 +439,8 @@ int main(int argc, char *argv[]) {
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
     hybris_hook("__android_log_print", (void*) __android_log_print);
+    hybris_hook("__android_log_vprint", (void*) __android_log_vprint);
+    hybris_hook("__android_log_write", (void*) __android_log_write);
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
     // load stub libraries
