@@ -20,6 +20,10 @@ struct LinuxStore {
         std::cout << "get store id: LinuxStore\n";
         return "LinuxStore";
     }
+    virtual std::string getSubPlatformStoreId() {
+        std::cout << "get sub platform store id: LinuxStore\n";
+        return "LinuxStore";
+    }
     virtual std::string getProductSkuPrefix() {
         std::cout << "get product sku prefix: linux";
         return "linux";

@@ -40,7 +40,7 @@ const char* gles_symbols[] = {
         "glDepthRangef",
         "glDetachShader",
         "glDisable",
-        "glDisableVertexAttribArra",
+        "glDisableVertexAttribArray",
         "glDrawArrays",
         "glDrawElements",
         "glEnable",
