@@ -217,11 +217,17 @@ int getKeyMinecraft(int keyCode) {
 }
 int winId = 0;
 static void minecraft_keyboard(char str[5], int action) {
+    if (str[0] == 9) {
+        Keyboard::inputs->push_back({(action == EGLUT_KEY_PRESS ? 1 : 0), 9});
+        Keyboard::states[9] = (action == EGLUT_KEY_PRESS ? 1 : 0);
+        return;
+    }
     if (action == EGLUT_KEY_PRESS) {
         if (str[0] == 13) {
             str[0] = 10;
             str[1] = 0;
         }
+        printf("%i\n", str[0]);
         std::stringstream ss;
         ss << str;
         Keyboard::Keyboard_feedText(ss.str(), false, 0);

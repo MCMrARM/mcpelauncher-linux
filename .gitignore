@@ -1,6 +1,7 @@
 .idea/
 assets/
 data/
+tmp/
 libs/libminecraftpe.so
 libs/libgnustl_shared.so
 *.apk
