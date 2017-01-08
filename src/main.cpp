@@ -30,39 +30,6 @@ extern "C" {
 #include "../hybris/include/hybris/hook.h"
 #include "../hybris/src/jb/linker.h"
 
-void ANativeWindow_setBuffersGeometry() { }
-void AAssetManager_open() { }
-void AAsset_getLength() { }
-void AAsset_getBuffer() { }
-void AAsset_close() { }
-void ALooper_pollAll() { }
-void ANativeActivity_finish() { }
-void AInputQueue_getEvent() { }
-void AKeyEvent_getKeyCode() { }
-void AInputQueue_preDispatchEvent() { }
-void AInputQueue_finishEvent() { }
-void AKeyEvent_getAction() { }
-void AMotionEvent_getAxisValue() { }
-void AKeyEvent_getRepeatCount() { }
-void AKeyEvent_getMetaState() { }
-void AInputEvent_getDeviceId() { }
-void AInputEvent_getType() { }
-void AInputEvent_getSource() { }
-void AMotionEvent_getAction() { }
-void AMotionEvent_getPointerId() { }
-void AMotionEvent_getX() { }
-void AMotionEvent_getY() { }
-void AMotionEvent_getPointerCount() { }
-void AConfiguration_new() { }
-void AConfiguration_fromAssetManager() { }
-void AConfiguration_getLanguage() { }
-void AConfiguration_getCountry() { }
-void ALooper_prepare() { }
-void ALooper_addFd() { }
-void AInputQueue_detachLooper() { }
-void AConfiguration_delete() { }
-void AInputQueue_attachLooper() { }
-
 void __android_log_vprint(int prio, const char *tag,  const char *fmt, va_list args) {
     std::cout << "[" << tag << "] ";
     vprintf(fmt, args);
