@@ -21,6 +21,7 @@
 #include "LinuxStore.h"
 #include "../mcpe/Mouse.h"
 #include "../mcpe/Keyboard.h"
+#include "../mcpe/Options.h"
 
 extern "C" {
 
@@ -237,7 +238,7 @@ static void minecraft_keyboard(char str[5], int action) {
 static void minecraft_keyboard_special(int key, int action) {
     if (key == 65480) {
         if (action == EGLUT_KEY_PRESS) {
-            eglutToggleFullscreen();
+            client->getOptions()->setFullscreen(!client->getOptions()->getFullscreen());
         }
         return;
     }
@@ -581,6 +582,9 @@ int main(int argc, char *argv[]) {
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
     Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
+    Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
+    Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
+
     std::cout << "init window\n";
     eglutInitWindowSize(windowWidth, windowHeight);
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
@@ -594,6 +598,7 @@ int main(int argc, char *argv[]) {
     MinecraftClient::MinecraftClient_update = (void (*)(MinecraftClient*)) hybris_dlsym(handle, "_ZN15MinecraftClient6updateEv");
     MinecraftClient::MinecraftClient_setRenderingSize = (void (*)(MinecraftClient*, int, int)) hybris_dlsym(handle, "_ZN15MinecraftClient16setRenderingSizeEii");
     MinecraftClient::MinecraftClient_setUISizeAndScale = (void (*)(MinecraftClient*, int, int, float)) hybris_dlsym(handle, "_ZN15MinecraftClient17setUISizeAndScaleEiif");
+    MinecraftClient::MinecraftClient_getOptions = (Options* (*)(MinecraftClient*)) hybris_dlsym(handle, "_ZN15MinecraftClient10getOptionsEv");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
@@ -607,6 +612,9 @@ int main(int argc, char *argv[]) {
     std::cout << "init minecraft client\n";
     client->init(ctx);
     std::cout << "initialized lib\n";
+
+    if (client->getOptions()->getFullscreen())
+        eglutToggleFullscreen();
 
     for (void* mod : mods) {
         void (*initFunc)(MinecraftClient*) = (void (*)(MinecraftClient*)) hybris_dlsym(mod, "mod_set_minecraft");

@@ -87,6 +87,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", (void*) &LinuxAppPlatform::isFirstSnoopLaunch);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", (void*) &LinuxAppPlatform::hasHardwareInformationChanged);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", (void*) &LinuxAppPlatform::isTablet);
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform17setFullscreenModeE14FullscreenMode", (void*) &LinuxAppPlatform::setFullscreenMode);
     replaceVtableEntry(lib, vta, "_ZNK11AppPlatform10getEditionEv", (void*) &LinuxAppPlatform::getEdition);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", (void*) &LinuxAppPlatform::calculateAvailableDiskFreeSpace);
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", (void*) &LinuxAppPlatform::getPlatformUIScalingRules);
@@ -181,6 +182,13 @@ std::string LinuxAppPlatform::readAssetFile(const std::string& path) {
     ifs.seekg(0);
     ifs.read(&buf[0], size);
     return buf;
+}
+
+void LinuxAppPlatform::setFullscreenMode(int mode) {
+    std::cout << "set fullscreen mode: " << mode << "\n";
+    int newMode = mode == 1 ? EGLUT_FULLSCREEN : EGLUT_WINDOWED;
+    if (eglutGet(EGLUT_FULLSCREEN_MODE) != newMode)
+        eglutToggleFullscreen();
 }
 
 std::string LinuxAppPlatform::createUUID() {

@@ -115,6 +115,7 @@ public:
         printf("is tablet = true\n");
         return true;
     }
+    void setFullscreenMode(int mode);
     std::string getEdition() {
         if (enablePocketGuis)
             return "pocket";

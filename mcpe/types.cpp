@@ -19,6 +19,12 @@ void (*MinecraftClient::MinecraftClient_construct)(MinecraftClient*, int, char**
 void (*MinecraftClient::MinecraftClient_update)(MinecraftClient*);
 void (*MinecraftClient::MinecraftClient_setRenderingSize)(MinecraftClient*, int, int);
 void (*MinecraftClient::MinecraftClient_setUISizeAndScale)(MinecraftClient*, int, int, float);
+Options* (*MinecraftClient::MinecraftClient_getOptions)(MinecraftClient*);
+
+#include "Options.h"
+
+bool (*Options::Options_getFullscreen)(Options*);
+void (*Options::Options_setFullscreen)(Options*, bool);
 
 #include "gl.h"
 
