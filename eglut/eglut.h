@@ -59,7 +59,8 @@ enum {
 
 /* used by eglutGet */
 enum {
-    EGLUT_ELAPSED_TIME
+    EGLUT_ELAPSED_TIME,
+    EGLUT_FULLSCREEN_MODE
 };
 
 /* used by EGLUTkeyboardCB */
@@ -92,6 +93,7 @@ typedef void (*EGLUTkeyboardCB)(char[5], int);
 typedef void (*EGLUTspecialCB)(int, int);
 typedef void (*EGLUTmouseCB)(int, int);
 typedef void (*EGLUTmouseButtonCB)(int, int, int, int);
+typedef void (*EGLUTcloseCB)(void);
 
 void eglutInitAPIMask(int mask);
 void eglutInitWindowSize(int width, int height);
@@ -103,6 +105,7 @@ void eglutIdleFunc(EGLUTidleCB func);
 void eglutPostRedisplay(void);
 
 void eglutMainLoop(void);
+void eglutFini(void);
 
 int eglutCreateWindow(const char *title);
 void eglutDestroyWindow(int win);
@@ -117,6 +120,7 @@ void eglutKeyboardFunc(EGLUTkeyboardCB func);
 void eglutSpecialFunc(EGLUTspecialCB func);
 void eglutMouseFunc(EGLUTmouseCB func);
 void eglutMouseButtonFunc(EGLUTmouseButtonCB func);
+void eglutCloseWindowFunc(EGLUTcloseCB func);
 
 void eglutWarpMousePointer(int x, int y);
 void eglutSetMousePointerVisiblity(int visible);

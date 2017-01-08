@@ -169,9 +169,15 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 
 static MinecraftClient* client;
 
+int winId = 0;
 bool moveMouseToCenter = false;
 
 static void minecraft_idle() {
+    if (client->wantToQuit()) {
+        eglutDestroyWindow(winId);
+        eglutFini();
+        return;
+    }
     int cx = eglutGetWindowWidth() / 2;
     int cy = eglutGetWindowHeight() / 2;
     if (moveMouseToCenter) {
@@ -215,7 +221,6 @@ int getKeyMinecraft(int keyCode) {
 
     return keyCode;
 }
-int winId = 0;
 static void minecraft_keyboard(char str[5], int action) {
     if (strcmp(str, "\t") == 0)
         return;
@@ -236,7 +241,6 @@ static void minecraft_keyboard_special(int key, int action) {
         }
         return;
     }
-    printf("%i\n", key);
     int mKey = getKeyMinecraft(key);
     if (action == EGLUT_KEY_PRESS) {
         Keyboard::inputs->push_back({1, mKey});
@@ -245,6 +249,9 @@ static void minecraft_keyboard_special(int key, int action) {
         Keyboard::inputs->push_back({0, mKey});
         Keyboard::states[mKey] = 0;
     }
+}
+static void minecraft_close() {
+    client->quit();
 }
 
 void patchCallInstruction(void* patchOff, void* func, bool jump) {
@@ -614,6 +621,7 @@ int main(int argc, char *argv[]) {
     eglutMouseButtonFunc(minecraft_mouse_button);
     eglutKeyboardFunc(minecraft_keyboard);
     eglutSpecialFunc(minecraft_keyboard_special);
+    eglutCloseWindowFunc(minecraft_close);
     std::cout << "initialized display\n";
 
     // init

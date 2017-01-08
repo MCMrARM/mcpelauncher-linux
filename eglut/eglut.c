@@ -241,6 +241,9 @@ eglutGet(int state)
         case EGLUT_ELAPSED_TIME:
             val = _eglutNow() - _eglut->init_time;
             break;
+        case EGLUT_FULLSCREEN_MODE:
+            val = _eglut->window_fullscreen;
+            break;
         default:
             val = -1;
             break;
@@ -275,8 +278,8 @@ eglutMainLoop(void)
     _eglutNativeEventLoop();
 }
 
-static void
-_eglutFini(void)
+void
+eglutFini(void)
 {
     eglTerminate(_eglut->dpy);
     _eglutNativeFiniDisplay();
@@ -301,7 +304,7 @@ _eglutDefaultKeyboard(unsigned char key)
     if (key == 27) {
         if (_eglut->current)
             eglutDestroyWindow(_eglut->current->index);
-        _eglutFini();
+        eglutFini();
 
         exit(0);
     }
@@ -385,4 +388,11 @@ eglutMouseButtonFunc(EGLUTmouseButtonCB func)
 {
     struct eglut_window *win = _eglut->current;
     win->mouse_button_cb = func;
+}
+
+void
+eglutCloseWindowFunc(EGLUTcloseCB func)
+{
+    struct eglut_window *win = _eglut->current;
+    win->close_cb = func;
 }

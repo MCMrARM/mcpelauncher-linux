@@ -45,6 +45,7 @@ void
 _eglutNativeFiniDisplay(void)
 {
     XCloseDisplay(_eglut->native_dpy);
+    _eglut->native_dpy = NULL;
 }
 
 XIC x11_ic;
@@ -106,6 +107,9 @@ _eglutNativeInitWindow(struct eglut_window *win, const char *title,
     win->native.u.window = xwin;
     win->native.width = w;
     win->native.height = h;
+
+    Atom WM_DELETE_WINDOW = XInternAtom(_eglut->native_dpy, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(_eglut->native_dpy, xwin, &WM_DELETE_WINDOW, 1);
 
     XIM im = XOpenIM(_eglut->native_dpy, NULL, NULL, NULL);
     if (im != NULL) {
@@ -285,6 +289,18 @@ next_event(struct eglut_window *win)
                 win->mouse_button_cb(event.xbutton.x, event.xbutton.y, event.xbutton.button, EGLUT_MOUSE_RELEASE);
             break;
         }
+        case ClientMessage:
+        {
+            if ((ulong) event.xclient.data.l[0] == XInternAtom(_eglut->native_dpy, "WM_DELETE_WINDOW", False)) {
+                if (win->close_cb) {
+                    win->close_cb();
+                } else {
+                    if (_eglut->current)
+                        eglutDestroyWindow(_eglut->current->index);
+                    eglutFini();
+                }
+            }
+        }
         default:
             ; /*no-op*/
     }
@@ -297,6 +313,9 @@ _eglutNativeEventLoop(void)
 {
     while (1) {
         struct eglut_window *win = _eglut->current;
+
+        if (_eglut->native_dpy == NULL)
+            break;
 
         next_event(win);
 

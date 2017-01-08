@@ -18,4 +18,12 @@ public:
         App_init(this, ctx);
     }
 
+    void quit() {
+        ((void (*)(App*)) vtable[23])(this);
+    }
+
+    bool wantToQuit() {
+        return ((bool (*)(App*)) vtable[24])(this);
+    }
+
 };
