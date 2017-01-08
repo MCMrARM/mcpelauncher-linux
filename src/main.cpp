@@ -227,7 +227,6 @@ static void minecraft_keyboard(char str[5], int action) {
             str[0] = 10;
             str[1] = 0;
         }
-        printf("%i\n", str[0]);
         std::stringstream ss;
         ss << str;
         Keyboard::Keyboard_feedText(ss.str(), false, 0);
@@ -346,12 +345,13 @@ void handleSignal(int signal) {
 void detachFromJavaStub() {
     std::cout << "detach from java\n";
 }
-void* getJNIEnv() {
-    std::cout << "getjnienv: hanging up thread\n";
-    while(1) {
-        sleep(1);
-    }
+void* getJVMEnvStub() {
+    std::cout << "getjvmenv\n";
     return nullptr;
+}
+bool verifyCertChainStub() {
+    std::cout << "verifycertchain\n";
+    return true;
 }
 struct xboxSingleton {
     char filler[8];
@@ -515,7 +515,10 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &detachFromJavaStub, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat11get_jvm_envEv");
-    patchCallInstruction((void*) patchOff, (void*) &getJNIEnv, true);
+    patchCallInstruction((void*) patchOff, (void*) &getJVMEnvStub, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details22verify_X509_cert_chainERKSt6vectorISsSaISsEERKSs");
+    patchCallInstruction((void*) patchOff, (void*) &verifyCertChainStub, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config24get_app_config_singletonEv");
     patchCallInstruction((void*) patchOff, (void*) &xboxGetAppConfigSingleton, true);

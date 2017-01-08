@@ -901,6 +901,17 @@ static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
     return pthread_rwlock_unlock(realrwlock);
 }
 
+static void my_pthread_cleanup_push(void (*routine)(void *),
+                                   void *arg)
+{
+    LOGD("pthread_cleanup_push: not implemented");
+}
+
+static void my_pthread_cleanup_pop(int execute)
+{
+    LOGD("pthread_cleanup_pop: not implemented");
+}
+
 
 static int my_set_errno(int oi_errno)
 {
@@ -1665,6 +1676,8 @@ static struct _hook hooks[] = {
     {"pthread_rwlock_trywrlock", my_pthread_rwlock_trywrlock},
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
+    {"__pthread_cleanup_push", my_pthread_cleanup_push},
+    {"__pthread_cleanup_pop", my_pthread_cleanup_pop},
     /* stdio.h */
     {"__isthreaded", &__my_isthreaded},
     {"__sF", &my_sF},
