@@ -227,37 +227,42 @@ next_event(struct eglut_window *win)
         case KeyPress:
         case KeyRelease:
         {
-            if (event.type == KeyRelease) {
-                if (XEventsQueued(_eglut->native_dpy, QueuedAfterReading)) {
-                    XPeekEvent(_eglut->native_dpy, &ahead);
-                    if (ahead.type == KeyPress &&
-                            ahead.xkey.window == event.xkey.window &&
-                            ahead.xkey.keycode == event.xkey.keycode &&
-                            ahead.xkey.time == event.xkey.time) {
-                        XNextEvent(_eglut->native_dpy, &event);
-                        break;
-                    }
-                }
-            }
-
             char buffer[5];
             memset(buffer, 0, 5);
             KeySym sym;
             int r;
+            int type;
             if (event.type == KeyPress) {
                 r = Xutf8LookupString(x11_ic, (XKeyPressedEvent*) &event, buffer, sizeof(buffer), &sym, NULL);
+                type = EGLUT_KEY_PRESS;
             } else {
                 r = XLookupString(&event.xkey, buffer, sizeof(buffer), &sym, NULL);
+                type = EGLUT_KEY_RELEASE;
             }
+
+            if (event.type == KeyRelease) {
+                if (XEventsQueued(_eglut->native_dpy, QueuedAfterReading)) {
+                    XPeekEvent(_eglut->native_dpy, &ahead);
+                    if (ahead.type == KeyPress &&
+                        ahead.xkey.window == event.xkey.window &&
+                        ahead.xkey.keycode == event.xkey.keycode &&
+                        ahead.xkey.time == event.xkey.time) {
+                        type = EGLUT_KEY_REPEAT;
+                        XNextEvent(_eglut->native_dpy, &event);
+                    }
+                }
+            }
+
             if (r > 0 && win->keyboard_cb) {
-                win->keyboard_cb(buffer, event.type == KeyRelease ? EGLUT_KEY_RELEASE : EGLUT_KEY_PRESS);
+                win->keyboard_cb(buffer, type);
             }
+
             if (win->special_cb) {
                 /*r = lookup_keysym(sym);
                 if (r == -1)*/
                     r = sym;
                 if (r >= 0)
-                    win->special_cb(r, event.type == KeyRelease ? EGLUT_KEY_RELEASE : EGLUT_KEY_PRESS);
+                    win->special_cb(r, type);
             }
             redraw = 1;
             break;

@@ -206,7 +206,7 @@ static void minecraft_mouse_button(int x, int y, int btn, int action) {
 }
 
 int getKeyMinecraft(int keyCode) {
-    if (keyCode == 65505)
+    if (keyCode == 65283)
         return 16;
     if (keyCode >= 97 && keyCode <= 122)
         return (keyCode + 65 - 97);
@@ -217,12 +217,9 @@ int getKeyMinecraft(int keyCode) {
 }
 int winId = 0;
 static void minecraft_keyboard(char str[5], int action) {
-    if (str[0] == 9) {
-        Keyboard::inputs->push_back({(action == EGLUT_KEY_PRESS ? 1 : 0), 9});
-        Keyboard::states[9] = (action == EGLUT_KEY_PRESS ? 1 : 0);
+    if (strcmp(str, "\t") == 0)
         return;
-    }
-    if (action == EGLUT_KEY_PRESS) {
+    if (action == EGLUT_KEY_PRESS || action == EGLUT_KEY_REPEAT) {
         if (str[0] == 13) {
             str[0] = 10;
             str[1] = 0;
@@ -239,11 +236,12 @@ static void minecraft_keyboard_special(int key, int action) {
         }
         return;
     }
+    printf("%i\n", key);
     int mKey = getKeyMinecraft(key);
     if (action == EGLUT_KEY_PRESS) {
         Keyboard::inputs->push_back({1, mKey});
         Keyboard::states[mKey] = 1;
-    } else {
+    } else if (action == EGLUT_KEY_RELEASE) {
         Keyboard::inputs->push_back({0, mKey});
         Keyboard::states[mKey] = 0;
     }

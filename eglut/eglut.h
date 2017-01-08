@@ -65,7 +65,8 @@ enum {
 /* used by EGLUTkeyboardCB */
 enum {
     EGLUT_KEY_PRESS,
-    EGLUT_KEY_RELEASE
+    EGLUT_KEY_RELEASE,
+    EGLUT_KEY_REPEAT
 };
 
 /* used by EGLUTmouseButtonCB */
