@@ -212,7 +212,7 @@ static void minecraft_mouse_button(int x, int y, int btn, int action) {
 }
 
 int getKeyMinecraft(int keyCode) {
-    if (keyCode == 65283)
+    if (keyCode == 65505)
         return 16;
     if (keyCode >= 97 && keyCode <= 122)
         return (keyCode + 65 - 97);
