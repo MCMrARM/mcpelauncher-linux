@@ -268,7 +268,8 @@ next_event(struct eglut_window *win)
                 if (r >= 0)
                     win->special_cb(r, type);
             }
-            redraw = 1;
+            if (type != EGLUT_KEY_REPEAT)
+                redraw = 1;
             break;
         }
         case MotionNotify:
