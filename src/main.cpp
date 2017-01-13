@@ -406,12 +406,12 @@ int main(int argc, char *argv[]) {
         sigaction(SIGABRT, &act, 0);
     }
 
-    std::cout << "loading MCPE\n";
-
+    std::cout << "loading native libraries\n";
     void* glesLib = loadLibraryOS(getOSLibraryPath("libGLESv2.so"), gles_symbols);
     void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
     if (glesLib == nullptr || fmodLib == nullptr)
         return -1;
+    std::cout << "loading hybris libraries\n";
     stubSymbols(android_symbols, (void*) androidStub);
     stubSymbols(egl_symbols, (void*) eglStub);
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
@@ -427,6 +427,7 @@ int main(int argc, char *argv[]) {
         return -1;
     if (!loadLibrary("libmcpelauncher_mod.so"))
         return -1;
+    std::cout << "loading MCPE\n";
     void* handle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
