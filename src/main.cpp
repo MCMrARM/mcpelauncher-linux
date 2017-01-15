@@ -262,6 +262,44 @@ void* loadMod(std::string path) {
     return handle;
 }
 
+/*
+ * check_os_64bit
+ * 
+ * from http://stackoverflow.com/a/6200504
+ *
+ * Returns integer:
+ *   1 = it is a 64-bit OS
+ *   0 = it is NOT a 64-bit OS (probably 32-bit)
+ *   < 0 = failure
+ *     -1 = popen failed
+ *     -2 = fgets failed
+ *
+ * **WARNING**
+ * Be CAREFUL! Just testing for a boolean return may not cut it
+ * with this (trivial) implementation! (Think of when it fails,
+ * returning -ve; this could be seen as non-zero & therefore true!)
+ * Suggestions?
+ */
+static int check_os_64bit(void)
+{
+    FILE *fp=NULL;
+    char cb64[3];
+
+    fp = popen ("getconf LONG_BIT", "r");
+    if (!fp)
+       return -1;
+
+    if (!fgets(cb64, 3, fp))
+        return -2;
+
+    if (!strncmp (cb64, "64", 3)) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 std::string getOSLibraryPath(std::string libName) {
     std::string p = std::string("/usr/lib/i386-linux-gnu/") + libName;
     if (access(p.c_str(), F_OK) != -1) {
@@ -274,6 +312,13 @@ std::string getOSLibraryPath(std::string libName) {
     p = std::string("/lib32/") + libName;
     if (access(p.c_str(), F_OK) != -1) {
         return p;
+    }
+    // if this is a 32-bit machine, we need to check normal lib dirs
+    if (check_os_64bit() == 0) {
+        p = std::string("/usr/lib/") + libName;
+        if (access(p.c_str(), F_OK) != -1) {
+            return p;
+        }
     }
 
     std::cout << "could not find os library: " << libName << "\n";
