@@ -78,7 +78,6 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android15getUserdataPathEv", (void*) &LinuxAppPlatform::getUserdataPath);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android24getUserdataPathForLevelsEv", (void*) &LinuxAppPlatform::getUserdataPathForLevels);
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform20getAssetFileFullPathERKSs", (void*) &LinuxAppPlatform::getAssetFileFullPath);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android13readAssetFileERKSs", (void*) &LinuxAppPlatform::readAssetFile);
     replaceVtableEntry(lib, vta, "_ZNK11AppPlatform14useCenteredGUIEv", (void*) &LinuxAppPlatform::useCenteredGUI);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android16getApplicationIdEv", (void*) &LinuxAppPlatform::getApplicationId);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18getAvailableMemoryEv", (void*) &LinuxAppPlatform::getAvailableMemory);
@@ -163,25 +162,6 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
     }
     std::string file = _pickFile(ss.str());
     settings.pickedCallback(settings, file);
-}
-
-std::string LinuxAppPlatform::readAssetFile(const std::string& path) {
-    if (path.length() <= 0 || path == "assets/") {
-        std::cout << "warn: readAssetFile with empty path!\n";
-        return " ";
-    }
-    std::cout << "readAssetFile: " << path << "\n";
-    std::ifstream ifs(path);
-    if (!ifs) {
-        std::cout << "readAssetFile failed\n";
-        return " ";
-    }
-    ifs.seekg(0, std::ios::end);
-    std::size_t size = (std::size_t) ifs.tellg();
-    std::string buf(size, ' ');
-    ifs.seekg(0);
-    ifs.read(&buf[0], size);
-    return buf;
 }
 
 void LinuxAppPlatform::setFullscreenMode(int mode) {

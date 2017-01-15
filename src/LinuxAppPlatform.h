@@ -85,7 +85,6 @@ public:
         printf("get assert full path: %s\n", s.c_str());
         return "assets/" + s;
     }
-    std::string readAssetFile(std::string const&);
     int getScreenType() {
         if (enablePocketGuis)
             return 1;
