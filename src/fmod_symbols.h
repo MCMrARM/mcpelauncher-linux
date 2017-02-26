@@ -33,5 +33,10 @@ const char* fmod_symbols[] = {
     "_ZN4FMOD6System13getDriverInfoEiPciP9FMOD_GUIDPiP16FMOD_SPEAKERMODES4_",
     "_ZN4FMOD6System9setDriverEi",
     "_ZN4FMOD5Sound7setModeEj",
+    "_ZN4FMOD5Sound9getFormatEP15FMOD_SOUND_TYPEP17FMOD_SOUND_FORMATPiS5_",
+    "_ZN4FMOD6System17getSoftwareFormatEPiP16FMOD_SPEAKERMODES1_",
+    "_ZN4FMOD14ChannelControl11getDSPClockEPyS1_",
+    "_ZN4FMOD14ChannelControl12addFadePointEyf",
+    "_ZN4FMOD14ChannelControl8setDelayEyyb",
     nullptr
 };
