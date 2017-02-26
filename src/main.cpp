@@ -22,6 +22,7 @@
 #include "../mcpe/Mouse.h"
 #include "../mcpe/Keyboard.h"
 #include "../mcpe/Options.h"
+#include "common.h"
 
 extern "C" {
 
@@ -30,55 +31,6 @@ extern "C" {
 #include "../hybris/include/hybris/hook.h"
 #include "../hybris/src/jb/linker.h"
 
-void __android_log_vprint(int prio, const char *tag,  const char *fmt, va_list args) {
-    std::cout << "[" << tag << "] ";
-    vprintf(fmt, args);
-    std::cout << std::endl;
-}
-void __android_log_print(int prio, const char *tag,  const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    __android_log_vprint(prio, tag, fmt, args);
-    va_end(args);
-}
-void __android_log_write(int prio, const char *tag,  const char *fmt, const char *text) {
-    std::cout << "[" << tag << "] " << text << std::endl;
-}
-
-}
-
-std::string getCWD() {
-    char _cwd[MAXPATHLEN];
-    getcwd(_cwd, MAXPATHLEN);
-    return std::string(_cwd) + "/";
-}
-
-bool loadLibrary(std::string path) {
-    void* handle = hybris_dlopen((getCWD() + "libs/" + path).c_str(), RTLD_LAZY);
-    if (handle == nullptr) {
-        std::cout << "failed to load library " << path << ": " << hybris_dlerror() << "\n";
-        return false;
-    }
-    return true;
-}
-
-void* loadLibraryOS(std::string path, const char** symbols) {
-    void* handle = dlopen(path.c_str(), RTLD_LAZY);
-    if (handle == nullptr) {
-        std::cout << "failed to load library " << path << ": " << dlerror() << "\n";
-        return nullptr;
-    }
-    std::cout << "oslib: " << path << ": " << (int) handle << "\n";
-    int i = 0;
-    while (true) {
-        const char* sym = symbols[i];
-        if (sym == nullptr)
-            break;
-        void* ptr = dlsym(handle, sym);
-        hybris_hook(sym, ptr);
-        i++;
-    }
-    return handle;
 }
 
 void androidStub() {
@@ -87,17 +39,6 @@ void androidStub() {
 
 void eglStub() {
     std::cout << "warn: egl call\n";
-}
-
-void stubSymbols(const char** symbols, void* stubfunc) {
-    int i = 0;
-    while (true) {
-        const char* sym = symbols[i];
-        if (sym == nullptr)
-            break;
-        hybris_hook(sym, stubfunc);
-        i++;
-    }
 }
 
 std::unique_ptr<LinuxStore> createStoreHookFunc(const std::string& idk, StoreListener& listener) {
@@ -222,15 +163,6 @@ static void minecraft_close() {
     client->quit();
 }
 
-void patchCallInstruction(void* patchOff, void* func, bool jump) {
-    unsigned char* data = (unsigned char*) patchOff;
-    printf("original: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
-    data[0] = (unsigned char) (jump ? 0xe9 : 0xe8);
-    int ptr = ((int) func) - (int) patchOff - 5;
-    memcpy(&data[1], &ptr, sizeof(int));
-    printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
-}
-
 void unhookFunction(void* hook) {
     SubHook* shook = (SubHook*) hook;
     shook->Remove();
@@ -242,59 +174,6 @@ void* hookFunction(void* symbol, void* hook, void** original) {
     ret->Install(symbol, hook);
     *original = ret->GetTrampoline();
     return ret;
-}
-
-void* loadMod(std::string path) {
-    void* handle = hybris_dlopen((getCWD() + "mods/" + path).c_str(), RTLD_LAZY);
-    if (handle == nullptr) {
-        std::cout << "failed to load mod: " << path << "\n";
-        return nullptr;
-    }
-
-    void (*initFunc)();
-    initFunc = (void (*)()) hybris_dlsym(handle, "mod_init");
-    if (((void*) initFunc) == nullptr) {
-        std::cout << "warn: mod " << path << " doesn't have a init function\n";
-        return handle;
-    }
-    initFunc();
-
-    return handle;
-}
-
-#include <execinfo.h>
-#include <cxxabi.h>
-bool hasCrashed = false;
-void handleSignal(int signal) {
-    printf("Signal %i received\n", signal);
-    if (hasCrashed)
-        return;
-    hasCrashed = true;
-    printf("Getting stacktrace...\n");
-    void *array[25];
-    int count = backtrace(array, 25);
-    char **symbols = backtrace_symbols(array, count);
-    char *nameBuf = (char*) malloc(256);
-    size_t nameBufLen = 256;
-    printf("Backtrace elements: %i\n", count);
-    for (int i = 0; i < count; i++) {
-        if (symbols[i] == nullptr) {
-            printf("#%i unk [0x%04x]\n", i, (int)array[i]);
-            continue;
-        }
-        if (symbols[i][0] == '[') { // unknown symbol
-            Dl_info symInfo;
-            if (hybris_dladdr(array[i], &symInfo)) {
-                int status = 0;
-                nameBuf = abi::__cxa_demangle(symInfo.dli_sname, nameBuf, &nameBufLen, &status);
-                printf("#%i HYBRIS %s+%i in %s+0x%04x [0x%04x]\n", i, nameBuf, (unsigned int) array[i] - (unsigned int) symInfo.dli_saddr, symInfo.dli_fname, (unsigned int) array[i] - (unsigned int) symInfo.dli_fbase, (int)array[i]);
-                continue;
-            }
-        }
-        printf("#%i %s\n", i, symbols[i]);
-    }
-    free(symbols);
-    abort();
 }
 
 void detachFromJavaStub() {
@@ -321,7 +200,6 @@ void xboxConfigSetSandboxStub() {
 void patchNotesModelStub() {
     std::cout << "fetch patch notes\n";
 }
-
 
 extern "C"
 void pshufb(char* dest, char* src) {
@@ -380,12 +258,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (enableStackTracePrinting) {
-        struct sigaction act;
-        act.sa_handler = handleSignal;
-        sigemptyset(&act.sa_mask);
-        act.sa_flags = 0;
-        sigaction(SIGSEGV, &act, 0);
-        sigaction(SIGABRT, &act, 0);
+        registerCrashHandler();
     }
 
     std::cout << "loading native libraries\n";
@@ -399,9 +272,7 @@ int main(int argc, char *argv[]) {
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
-    hybris_hook("__android_log_print", (void*) __android_log_print);
-    hybris_hook("__android_log_vprint", (void*) __android_log_vprint);
-    hybris_hook("__android_log_write", (void*) __android_log_write);
+    hookAndroidLog();
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
     // load stub libraries
@@ -587,5 +458,6 @@ int main(int argc, char *argv[]) {
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     eglutMainLoop();
+
     return 0;
 }

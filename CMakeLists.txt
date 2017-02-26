@@ -22,7 +22,7 @@ set(HYBRIS_SOURCES hybris/src/cache.c hybris/src/dlfcn.c hybris/src/hooks.c hybr
 set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)
 set(SUBHOOK_SOURCES subhook/subhook.c)
 
-set(SOURCE_FILES src/main.cpp src/LinuxAppPlatform.cpp src/amdfix.s mcpe/types.cpp mcpe/ImagePickingCallback.h mcpe/FilePickerSettings.h)
+set(SOURCE_FILES src/main.cpp src/common.cpp src/amdfix.s src/LinuxAppPlatform.cpp mcpe/types.cpp mcpe/ImagePickingCallback.h mcpe/FilePickerSettings.h)
 add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${SUBHOOK_SOURCES} ${SOURCE_FILES})
 target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} rt libEGL.so libGLESv2.so ${X11_X11_LIB} uuid)
 target_compile_definitions(mcpelauncher PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
