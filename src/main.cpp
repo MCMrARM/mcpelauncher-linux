@@ -9,7 +9,6 @@
 #include <codecvt>
 #include <locale>
 #include <dirent.h>
-#include <subhook.h>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -23,6 +22,7 @@
 #include "../mcpe/Keyboard.h"
 #include "../mcpe/Options.h"
 #include "common.h"
+#include "hook.h"
 
 extern "C" {
 
@@ -163,19 +163,6 @@ static void minecraft_close() {
     client->quit();
 }
 
-void unhookFunction(void* hook) {
-    SubHook* shook = (SubHook*) hook;
-    shook->Remove();
-    delete shook;
-}
-
-void* hookFunction(void* symbol, void* hook, void** original) {
-    SubHook* ret = new SubHook();
-    ret->Install(symbol, hook);
-    *original = ret->GetTrampoline();
-    return ret;
-}
-
 void detachFromJavaStub() {
     std::cout << "detach from java\n";
 }
@@ -271,7 +258,6 @@ int main(int argc, char *argv[]) {
     stubSymbols(egl_symbols, (void*) eglStub);
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
-    hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
     hookAndroidLog();
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
@@ -281,11 +267,13 @@ int main(int argc, char *argv[]) {
     if (!loadLibrary("libmcpelauncher_mod.so"))
         return -1;
     std::cout << "loading MCPE\n";
-    void* handle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
+    std::string mcpePath = getCWD() + "libs/libminecraftpe.so";
+    void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
         return -1;
     }
+    addHookLibrary(handle, mcpePath);
 
     unsigned int libBase = ((soinfo*) handle)->base;
     std::cout << "loaded MCPE (at " << libBase << ")\n";
