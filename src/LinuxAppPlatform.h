@@ -28,7 +28,7 @@ public:
     static bool mousePointerHidden;
 
     std::string region;
-    std::string internalStorage, externalStorage, userdata, userdataPathForLevels, tmpPath;
+    std::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
 
     LinuxAppPlatform();
 
@@ -72,6 +72,10 @@ public:
     std::string& getInternalStoragePath() {
         printf("internal storage path = %s\n", internalStorage.c_str());
         return internalStorage;
+    }
+    std::string& getCurrentStoragePath() {
+        printf("current storage path = %s\n", currentStorage.c_str());
+        return currentStorage;
     }
     std::string& getUserdataPath() {
         printf("userdata path = %s\n", userdata.c_str());

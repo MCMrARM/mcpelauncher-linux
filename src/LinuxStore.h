@@ -28,6 +28,10 @@ struct LinuxStore {
         std::cout << "get product sku prefix: linux";
         return "linux";
     }
+    virtual std::string getRealmsSkuPrefix() {
+        std::cout << "get product sku prefix: realms";
+        return "realms";
+    }
     virtual void queryProducts(std::vector<std::string> const& arr) {
         std::cout << "query products\n";
     }
