@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
                    (0x40AD97 - 0x40ACD0);
         for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
             ((char *) (void *) patchOff)[i] = 0x90;*/
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessellatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
         patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
     }
 
