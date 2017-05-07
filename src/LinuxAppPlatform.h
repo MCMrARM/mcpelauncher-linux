@@ -137,4 +137,8 @@ public:
         return tmpPath;
     }
 
+    std::string createDeviceID() {
+        return "linux";
+    }
+
 };

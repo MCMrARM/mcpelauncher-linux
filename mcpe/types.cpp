@@ -13,13 +13,13 @@ void (*AppPlatform::AppPlatform_initialize)(AppPlatform*);
 
 void (*App::App_init)(App*, AppContext&);
 
-#include "MinecraftClient.h"
+#include "MinecraftGame.h"
 
-void (*MinecraftClient::MinecraftClient_construct)(MinecraftClient*, int, char**);
-void (*MinecraftClient::MinecraftClient_update)(MinecraftClient*);
-void (*MinecraftClient::MinecraftClient_setRenderingSize)(MinecraftClient*, int, int);
-void (*MinecraftClient::MinecraftClient_setUISizeAndScale)(MinecraftClient*, int, int, float);
-Options* (*MinecraftClient::MinecraftClient_getOptions)(MinecraftClient*);
+void (*MinecraftGame::MinecraftGame_construct)(MinecraftGame*, int, char**);
+void (*MinecraftGame::MinecraftGame_update)(MinecraftGame*);
+void (*MinecraftGame::MinecraftGame_setRenderingSize)(MinecraftGame*, int, int);
+void (*MinecraftGame::MinecraftGame_setUISizeAndScale)(MinecraftGame*, int, int, float);
+Options* (*MinecraftGame::MinecraftGame_getOptions)(MinecraftGame*);
 
 #include "Options.h"
 

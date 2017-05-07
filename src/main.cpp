@@ -15,7 +15,7 @@
 #include "fmod_symbols.h"
 #include "../mcpe/gl.h"
 #include "../mcpe/AppPlatform.h"
-#include "../mcpe/MinecraftClient.h"
+#include "../mcpe/MinecraftGame.h"
 #include "LinuxAppPlatform.h"
 #include "LinuxStore.h"
 #include "../mcpe/Mouse.h"
@@ -76,7 +76,7 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 }
 
 
-static MinecraftClient* client;
+static MinecraftGame* client;
 
 int winId = 0;
 bool moveMouseToCenter = false;
@@ -200,6 +200,7 @@ void pshufb_xmm4_xmm0();
 #include <functional>
 #include <sys/mman.h>
 #include <EGL/egl.h>
+#include <stdlib.h>
 
 using namespace std;
 int main(int argc, char *argv[]) {
@@ -247,6 +248,8 @@ int main(int argc, char *argv[]) {
     if (enableStackTracePrinting) {
         registerCrashHandler();
     }
+
+    setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
     std::cout << "loading native libraries\n";
     void* glesLib = loadLibraryOS("libGLESv2.so", gles_symbols);
@@ -401,13 +404,13 @@ int main(int argc, char *argv[]) {
 
     winId = eglutCreateWindow("Minecraft");
 
-    // init MinecraftClient
+    // init MinecraftGame
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
-    MinecraftClient::MinecraftClient_construct = (void (*)(MinecraftClient*, int, char**)) hybris_dlsym(handle, "_ZN15MinecraftClientC2EiPPc");
-    MinecraftClient::MinecraftClient_update = (void (*)(MinecraftClient*)) hybris_dlsym(handle, "_ZN15MinecraftClient6updateEv");
-    MinecraftClient::MinecraftClient_setRenderingSize = (void (*)(MinecraftClient*, int, int)) hybris_dlsym(handle, "_ZN15MinecraftClient16setRenderingSizeEii");
-    MinecraftClient::MinecraftClient_setUISizeAndScale = (void (*)(MinecraftClient*, int, int, float)) hybris_dlsym(handle, "_ZN15MinecraftClient17setUISizeAndScaleEiif");
-    MinecraftClient::MinecraftClient_getOptions = (Options* (*)(MinecraftClient*)) hybris_dlsym(handle, "_ZN15MinecraftClient10getOptionsEv");
+    MinecraftGame::MinecraftGame_construct = (void (*)(MinecraftGame*, int, char**)) hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
+    MinecraftGame::MinecraftGame_update = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
+    MinecraftGame::MinecraftGame_setRenderingSize = (void (*)(MinecraftGame*, int, int)) hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
+    MinecraftGame::MinecraftGame_setUISizeAndScale = (void (*)(MinecraftGame*, int, int, float)) hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");
+    MinecraftGame::MinecraftGame_getOptions = (Options* (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame10getOptionsEv");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
@@ -417,7 +420,7 @@ int main(int argc, char *argv[]) {
     mce::Platform::OGL::initBindings();
 
     std::cout << "create minecraft client\n";
-    client = new MinecraftClient(argc, argv);
+    client = new MinecraftGame(argc, argv);
     std::cout << "init minecraft client\n";
     client->init(ctx);
     std::cout << "initialized lib\n";
@@ -426,7 +429,7 @@ int main(int argc, char *argv[]) {
         eglutToggleFullscreen();
 
     for (void* mod : mods) {
-        void (*initFunc)(MinecraftClient*) = (void (*)(MinecraftClient*)) hybris_dlsym(mod, "mod_set_minecraft");
+        void (*initFunc)(MinecraftGame*) = (void (*)(MinecraftGame*)) hybris_dlsym(mod, "mod_set_minecraft");
         if ((void*) initFunc != nullptr)
             initFunc(client);
     }
