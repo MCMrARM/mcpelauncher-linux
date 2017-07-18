@@ -42,4 +42,4 @@ mv *.apk mcpe.apk
 ./extract.sh mcpe.apk
 
 #Creates desktop launcher
- cp mcpe.desktop ~/Desktop
+ cp mcpe.desktop ~/.local/share/applications
