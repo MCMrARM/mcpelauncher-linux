@@ -1,6 +1,8 @@
 MCPE Linux Launcher
 ===================
 
+![Alt Text](MCPEicon.png "MCPE icon")
+
 ## Required packages
 
 ```
