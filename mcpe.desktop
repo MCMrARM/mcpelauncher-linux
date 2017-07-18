@@ -1,0 +1,12 @@
+[Desktop Entry]
+Comment= Launches MCPE
+Exec=cd ~/mcpelauncher && ./mcpelauncher
+GenericName=Voxel-based sandbox game
+Icon=~/mcpelauncher/MCPEicon.png
+Name=Minecraft PE
+NoDisplay=false
+Path[$e]=
+StartupNotify=true
+Terminal=0
+TerminalOptions=
+Type=Application
