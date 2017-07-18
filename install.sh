@@ -19,7 +19,7 @@ fi
 
 #Moves compiled files to new dir
 mkdir ~/mcpelauncher
-cp -t ~/mcpelauncher mcpelauncher extract.sh LICENSE mcpe.desktop
+cp -t ~/mcpelauncher mcpelauncher extract.sh LICENSE mcpe.desktop MCPEicon.png
 cp -r libs ~/mcpelauncher/libs
 cd ~/mcpelauncher
 
