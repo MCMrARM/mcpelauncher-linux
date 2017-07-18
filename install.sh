@@ -3,6 +3,8 @@
 #Determines CPU
 if grep -qi "amd" /proc/cpuinfo;  then
   git checkout master-AMD
+  ./installAMD.sh
+  exit
 fi
 
 #Compiles
@@ -41,4 +43,3 @@ mv *.apk mcpe.apk
 
 #Creates desktop launcher
  cp mcpe.desktop ~/Desktop
- 
