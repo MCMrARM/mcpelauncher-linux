@@ -22,14 +22,15 @@ cp -r libs ~/mcpelauncher/libs
 cd ~/mcpelauncher
 
 #Acquires apk
-git clone https://github.com/MCMrARM/Google-Play-API.git
-cd Google-Play-API
-cmake .
-make
-./gplaydl -tos -a com.mojang.minecraftpe
+#git clone https://github.com/MCMrARM/Google-Play-API.git
+#cd Google-Play-API
+#cmake .
+#make
+#./gplaydl -tos -a com.mojang.minecraftpe
+wget https://kris27mc.github.io/files/mcpe.apk
 cp *.apk ~/mcpelauncher
 cd ~/mcpelauncher
-rm -R Google-Play-API
+#rm -R Google-Play-API
 
 #Extracts apk into assets
 if [-f "mcpe.apk"]; then
