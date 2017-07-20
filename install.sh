@@ -47,5 +47,8 @@ mv *.apk mcpe.apk
 printf "Would you like to create a shortcut on your desktop? (y/n)\n"
 read input
 if [[ $input == "Y" || $input == "y" ]]; then
+  printf "Creating a shortcut..."
   /usr/bin/cp mcpe.desktop ~/Desktop
+else
+  printf "No desktop shortcut created."
 fi
