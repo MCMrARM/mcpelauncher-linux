@@ -28,17 +28,24 @@ cd ~/mcpelauncher
 #make
 #./gplaydl -tos -a com.mojang.minecraftpe
 wget https://kris27mc.github.io/files/mcpe.apk
-cp *.apk ~/mcpelauncher
-cd ~/mcpelauncher
+#/usr/bin/cp *.apk ~/mcpelauncher
+#rm mcpe.apk
+#cd ~/mcpelauncher
 #rm -R Google-Play-API
 
 #Extracts apk into assets
-if [-f "mcpe.apk"]; then
-  mkdir oldapks
-  mv mcpe.apk oldapks
-fi
+#if [-f "mcpe.apk"]; then
+#  mkdir oldapks
+#  mv mcpe.apk oldapks
+#fi
 mv *.apk mcpe.apk
 ./extract.sh mcpe.apk
 
 #Creates desktop launcher
- cp mcpe.desktop ~/.local/share/applications
+/usr/bin/cp mcpe.desktop ~/.local/share/applications
+
+printf "Would you like to create a shortcut on your desktop? (y/n)\n"
+read input
+if [[ $input == "Y" || $input == "y" ]]; then
+  /usr/bin/cp mcpe.desktop ~/Desktop
+fi
