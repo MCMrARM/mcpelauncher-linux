@@ -2,7 +2,7 @@
 
 #Determines libs used
 if grep -qi "amd" /proc/cpuinfo;  then
-  cp libs/AMD/* libs/
+  \cp libs/AMD/* libs/
   exit
 fi
 
