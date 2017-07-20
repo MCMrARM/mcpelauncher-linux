@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-#Determines CPU
+#Determines libs used
 if grep -qi "amd" /proc/cpuinfo;  then
-  git checkout master-AMD
-  ./installAMD.sh
+  cp libs/AMD/* libs/
   exit
 fi
 
