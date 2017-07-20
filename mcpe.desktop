@@ -1,6 +1,6 @@
 [Desktop Entry]
 Comment= Launches MCPE
-Exec=cd ~/mcpelauncher && ./mcpelauncher
+Exec=/usr/bin/cd ~/mcpelauncher && ./mcpelauncher
 GenericName=Voxel-based sandbox game
 Icon=~/mcpelauncher/MCPEicon.png
 Name=Minecraft PE
