@@ -5,3 +5,11 @@ tmp/
 libs/libminecraftpe.so
 libs/libgnustl_shared.so
 *.apk
+CMakeFiles/
+Makefile
+mcpelauncher
+cmake_install.cmake
+CMakeCache.txt
+.project
+.cproject
+.settings/
