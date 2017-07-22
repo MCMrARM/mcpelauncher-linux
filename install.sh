@@ -17,12 +17,10 @@ if [ ! -e "mcpelauncher" ]; then
   exit
 fi
 
-sudo su
-
 #Moves compiled files to new dir
-mkdir /usr/share/mcpelauncher
-cp -t /usr/share/mcpelauncher mcpelauncher extract.sh LICENSE mcpe.desktop MCPEicon.png
-cp -r libs /usr/share/mcpelauncher/libs
+sudo mkdir /usr/share/mcpelauncher
+sudo cp -t /usr/share/mcpelauncher mcpelauncher extract.sh LICENSE mcpelauncher.desktop MCPEicon.png
+sudo cp -r libs /usr/share/mcpelauncher/libs
 cd /usr/share/mcpelauncher
 
 #Acquires apk
@@ -42,7 +40,7 @@ if [[ "$answer" == "1" ]]; then
   ./gplaydl -tos -a com.mojang.minecraftpe
   sudo cp *.apk /usr/share/mcpelauncher
   cd /usr/share/mcpelauncher
-  rm -R Google-Play-API
+  sudo rm -R Google-Play-API
 fi
 
 #Hosted apk
@@ -57,36 +55,32 @@ if [[ "$answer" == "3" ]]; then
   printf "Path to APK: "
   read -e pathtoapk
   if grep mcpe.apk <<< echo "$pathtoapk"; then
-    cp "$pathtoapk" /usr/share/mcpelauncher/mcpe-new.apk
+    sudo cp "$pathtoapk" /usr/share/mcpelauncher/mcpe-new.apk
   else
-    cp "$pathtoapk" /usr/share/mcpelauncher
+    sudo cp "$pathtoapk" /usr/share/mcpelauncher
   fi
 fi
 
 #Extracts apk into assets
 if [[ "$answer" == "1" || "$input" == "3" ]]; then
   if [ -f "mcpe.apk" ]; then
-    mkdir oldapks
-    mv mcpe.apk oldapks
-    mv *.apk mcpe.apk
+    sudo mkdir oldapks
+    sudo mv mcpe.apk oldapks
+    sudo mv *.apk mcpe.apk
   fi
 fi
 
-./extract.sh mcpe.apk
-chmod -R 744 /usr/share/mcpelauncher
-chmod 777 /usr/share/mcpelauncher
-
-exit
-cd /usr/share/mcpelauncher
+sudo ./extract.sh mcpe.apk
+sudo chmod -R 777 /usr/share/mcpelauncher
 
 #Creates desktop launcher
-cp mcpe.desktop ~/.local/share/applications
+cp mcpelauncher.desktop ~/.local/share/applications
 
-printf "Would you like to create a shortcut on your desktop? (y/n)\n"
+printf "\nWould you like to create a shortcut on your desktop? (y/n)\n"
 read input
 if [[ $input == "Y" || "$input" == "y" ]]; then
   printf "Creating a shortcut..."
-  cp mcpe.desktop ~/Desktop
+  cp mcpelauncher.desktop ~/Desktop
 else
   printf "No desktop shortcut created."
 fi
