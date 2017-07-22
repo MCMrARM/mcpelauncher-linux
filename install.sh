@@ -53,7 +53,7 @@ fi
 if [[ "$answer" == "3" ]]; then
   printf "Please enter the full path to your apk.\n"
   printf "Path to APK: "
-  read pathtoapk
+  read -e pathtoapk
   if grep mcpe.apk <<< echo "$pathtoapk"; then
     /usr/bin/cp "$pathtoapk" ~/mcpelauncher/mcpe-new.apk
   else
