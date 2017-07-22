@@ -1,11 +1,10 @@
 [Desktop Entry]
-Comment= Launches MCPE
-Exec=/usr/bin/cd ~/mcpelauncher && ./mcpelauncher
+Name=Minecraft
+Comment=Launches MCPE
+Exec=/usr/share/mcpelauncher
 GenericName=Voxel-based sandbox game
-Icon=~/mcpelauncher/MCPEicon.png
-Name=Minecraft PE
+Icon=/usr/share/mcpelauncher/MCPEicon.png
 NoDisplay=false
-Path[$e]=
 StartupNotify=true
 Terminal=0
 TerminalOptions=

@@ -4,7 +4,7 @@
 if grep -qi "amd" /proc/cpuinfo;  then
   /usr/bin/cp -r libs/AMD/* libs/
   printf "Using compatibility libs"
-  sleep 4
+  sleep 3
 fi
 
 #Compiles mcpelauncher
@@ -17,11 +17,13 @@ if [ ! -e "mcpelauncher" ]; then
   exit
 fi
 
+sudo su
+
 #Moves compiled files to new dir
-mkdir ~/mcpelauncher
-/usr/bin/cp -t ~/mcpelauncher mcpelauncher extract.sh LICENSE mcpe.desktop MCPEicon.png
-/usr/bin/cp -r libs ~/mcpelauncher/libs
-cd ~/mcpelauncher
+mkdir /usr/share/mcpelauncher
+cp -t /usr/share/mcpelauncher mcpelauncher extract.sh LICENSE mcpe.desktop MCPEicon.png
+cp -r libs /usr/share/mcpelauncher/libs
+cd /usr/share/mcpelauncher
 
 #Acquires apk
 printf "\nWhich method would you like to use to acquire an APK?\n"
@@ -38,8 +40,8 @@ if [[ "$answer" == "1" ]]; then
   cmake .
   make
   ./gplaydl -tos -a com.mojang.minecraftpe
-  /usr/bin/cp *.apk ~/mcpelauncher
-  cd ~/mcpelauncher
+  sudo cp *.apk /usr/share/mcpelauncher
+  cd /usr/share/mcpelauncher
   rm -R Google-Play-API
 fi
 
@@ -55,9 +57,9 @@ if [[ "$answer" == "3" ]]; then
   printf "Path to APK: "
   read -e pathtoapk
   if grep mcpe.apk <<< echo "$pathtoapk"; then
-    /usr/bin/cp "$pathtoapk" ~/mcpelauncher/mcpe-new.apk
+    cp "$pathtoapk" /usr/share/mcpelauncher/mcpe-new.apk
   else
-    /usr/bin/cp "$pathtoapk" ~/mcpelauncher
+    cp "$pathtoapk" /usr/share/mcpelauncher
   fi
 fi
 
@@ -71,15 +73,20 @@ if [[ "$answer" == "1" || "$input" == "3" ]]; then
 fi
 
 ./extract.sh mcpe.apk
+chmod -R 744 /usr/share/mcpelauncher
+chmod 777 /usr/share/mcpelauncher
+
+exit
+cd /usr/share/mcpelauncher
 
 #Creates desktop launcher
-/usr/bin/cp mcpe.desktop ~/.local/share/applications
+cp mcpe.desktop ~/.local/share/applications
 
 printf "Would you like to create a shortcut on your desktop? (y/n)\n"
 read input
 if [[ $input == "Y" || "$input" == "y" ]]; then
   printf "Creating a shortcut..."
-  /usr/bin/cp mcpe.desktop ~/Desktop
+  cp mcpe.desktop ~/Desktop
 else
   printf "No desktop shortcut created."
 fi
