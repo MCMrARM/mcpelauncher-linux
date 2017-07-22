@@ -10,3 +10,6 @@ Makefile
 mcpelauncher
 cmake_install.cmake
 CMakeCache.txt
+.project
+.cproject
+.settings/
