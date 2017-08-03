@@ -189,6 +189,9 @@ std::string xboxReadConfigFile(void* th) {
     s << f.rdbuf();
     return s.str();
 }
+void workerPoolDestroy(void* th) {
+    std::cout << "worker pool-related class destroy " << (unsigned long)th << "\n";
+}
 
 extern "C"
 void pshufb(char* dest, char* src) {
@@ -443,6 +446,14 @@ int main(int argc, char *argv[]) {
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     eglutMainLoop();
+
+    // this is an ugly hack to workaround the close app crashes MCPE causes
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9TaskGroupD2Ev");
+    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN10WorkerPoolD2Ev");
+    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9SchedulerD2Ev");
+    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
 
     return 0;
 }
