@@ -77,12 +77,14 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 
 
 static MinecraftGame* client;
+static LinuxAppPlatform* platform;
 
 int winId = 0;
 bool moveMouseToCenter = false;
 
 static void minecraft_idle() {
     if (client->wantToQuit()) {
+        delete client;
         eglutDestroyWindow(winId);
         eglutFini();
         return;
@@ -96,6 +98,11 @@ static void minecraft_idle() {
     eglutPostRedisplay();
 }
 static void minecraft_draw() {
+    platform->runOnMainThreadMutex.lock();
+    auto queue = std::move(platform->runOnMainThreadQueue);
+    platform->runOnMainThreadMutex.unlock();
+    for (auto const& func : queue)
+        func();
     client->update();
 }
 float pixelSize = 2.f;
@@ -146,17 +153,17 @@ static void minecraft_keyboard(char str[5], int action) {
 static void minecraft_keyboard_special(int key, int action) {
     if (key == 65480) {
         if (action == EGLUT_KEY_PRESS) {
-            client->getOptions()->setFullscreen(!client->getOptions()->getFullscreen());
+            client->getPrimaryUserOptions()->setFullscreen(!client->getPrimaryUserOptions()->getFullscreen());
         }
         return;
     }
     int mKey = getKeyMinecraft(key);
     if (action == EGLUT_KEY_PRESS) {
-        Keyboard::inputs->push_back({1, mKey});
-        Keyboard::states[mKey] = 1;
+        Keyboard::Keyboard_feed((unsigned char) mKey, 1);
+        //Keyboard::states[mKey] = 1;
     } else if (action == EGLUT_KEY_RELEASE) {
-        Keyboard::inputs->push_back({0, mKey});
-        Keyboard::states[mKey] = 0;
+        Keyboard::Keyboard_feed((unsigned char) mKey, 0);
+        //Keyboard::states[mKey] = 0;
     }
 }
 static void minecraft_close() {
@@ -335,20 +342,22 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat11get_jvm_envEv");
     patchCallInstruction((void*) patchOff, (void*) &getJVMEnvStub, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details22verify_X509_cert_chainERKSt6vectorISsSaISsEERKSs");
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     patchCallInstruction((void*) patchOff, (void*) &verifyCertChainStub, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config24get_app_config_singletonEv");
     patchCallInstruction((void*) patchOff, (void*) &xboxGetAppConfigSingleton, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config11set_sandboxESs");
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config11set_sandboxERKSs");
     patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config29set_title_telemetry_device_idERKSs");
     patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN15PatchNotesModel17preloadPatchNotesEv");
-    patchCallInstruction((void*) patchOff, (void*) &patchNotesModelStub, true);
+    //patchCallInstruction((void*) patchOff, (void*) &patchNotesModelStub, true);
+
+    //_ZN13MinecraftGame8initPostEv
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -385,13 +394,13 @@ int main(int argc, char *argv[]) {
     std::cout << "init app platform vtable\n";
     LinuxAppPlatform::initVtable(handle);
     std::cout << "init app platform\n";
-    LinuxAppPlatform* platform = new LinuxAppPlatform();
+    platform = new LinuxAppPlatform();
     std::cout << "app platform initialized\n";
 
     Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(handle, "_ZN5Mouse4feedEccssss");
 
-    Keyboard::inputs = (std::vector<KeyboardAction>*) hybris_dlsym(handle, "_ZN8Keyboard7_inputsE");
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
+    Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
     Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
@@ -407,10 +416,11 @@ int main(int argc, char *argv[]) {
     // init MinecraftGame
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
     MinecraftGame::MinecraftGame_construct = (void (*)(MinecraftGame*, int, char**)) hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
+    MinecraftGame::MinecraftGame_destruct = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
     MinecraftGame::MinecraftGame_update = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
     MinecraftGame::MinecraftGame_setRenderingSize = (void (*)(MinecraftGame*, int, int)) hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
     MinecraftGame::MinecraftGame_setUISizeAndScale = (void (*)(MinecraftGame*, int, int, float)) hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");
-    MinecraftGame::MinecraftGame_getOptions = (Options* (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame10getOptionsEv");
+    MinecraftGame::MinecraftGame_getPrimaryUserOptions = (std::shared_ptr<Options> (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame21getPrimaryUserOptionsEv");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
@@ -425,7 +435,7 @@ int main(int argc, char *argv[]) {
     client->init(ctx);
     std::cout << "initialized lib\n";
 
-    if (client->getOptions()->getFullscreen())
+    if (client->getPrimaryUserOptions()->getFullscreen())
         eglutToggleFullscreen();
 
     for (void* mod : mods) {

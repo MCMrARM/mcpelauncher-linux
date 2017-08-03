@@ -1,8 +1,11 @@
 #pragma once
 
 #include <string>
+#include <functional>
 #include <unistd.h>
 #include <sys/param.h>
+#include <vector>
+#include <mutex>
 #include "../mcpe/gl.h"
 #include "../mcpe/AppPlatform.h"
 #include "../mcpe/ImagePickingCallback.h"
@@ -29,6 +32,9 @@ public:
 
     std::string region;
     std::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
+
+    std::vector<std::function<void ()>> runOnMainThreadQueue;
+    std::mutex runOnMainThreadMutex;
 
     LinuxAppPlatform();
 
@@ -139,6 +145,12 @@ public:
 
     std::string createDeviceID() {
         return "linux";
+    }
+
+    void queueForMainThread(std::function<void ()> f) {
+        runOnMainThreadMutex.lock();
+        runOnMainThreadQueue.push_back(f);
+        runOnMainThreadMutex.unlock();
     }
 
 };

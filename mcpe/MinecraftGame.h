@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "App.h"
 
 class Options;
@@ -8,15 +9,20 @@ class MinecraftGame : public App {
 
 public:
     static void (*MinecraftGame_construct)(MinecraftGame*, int, char**);
+    static void (*MinecraftGame_destruct)(MinecraftGame*);
     static void (*MinecraftGame_update)(MinecraftGame*);
     static void (*MinecraftGame_setRenderingSize)(MinecraftGame*, int, int);
     static void (*MinecraftGame_setUISizeAndScale)(MinecraftGame*, int, int, float);
-    static Options* (*MinecraftGame_getOptions)(MinecraftGame*);
+    static std::shared_ptr<Options> (*MinecraftGame_getPrimaryUserOptions)(MinecraftGame*);
 
     char filler [0x4000-4];
 
     MinecraftGame(int carg, char** args) {
         MinecraftGame_construct(this, carg, args);
+    }
+
+    ~MinecraftGame() {
+        MinecraftGame_destruct(this);
     }
 
     void update() {
@@ -31,8 +37,8 @@ public:
         MinecraftGame_setUISizeAndScale(this, w, h, px);
     }
 
-    Options* getOptions() {
-        return MinecraftGame_getOptions(this);
+    std::shared_ptr<Options> getPrimaryUserOptions() {
+        return MinecraftGame_getPrimaryUserOptions(this);
     }
 
 };
