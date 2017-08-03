@@ -16,10 +16,11 @@ void (*App::App_init)(App*, AppContext&);
 #include "MinecraftGame.h"
 
 void (*MinecraftGame::MinecraftGame_construct)(MinecraftGame*, int, char**);
+void (*MinecraftGame::MinecraftGame_destruct)(MinecraftGame*);
 void (*MinecraftGame::MinecraftGame_update)(MinecraftGame*);
 void (*MinecraftGame::MinecraftGame_setRenderingSize)(MinecraftGame*, int, int);
 void (*MinecraftGame::MinecraftGame_setUISizeAndScale)(MinecraftGame*, int, int, float);
-Options* (*MinecraftGame::MinecraftGame_getOptions)(MinecraftGame*);
+std::shared_ptr<Options> (*MinecraftGame::MinecraftGame_getPrimaryUserOptions)(MinecraftGame*);
 
 #include "Options.h"
 
@@ -40,6 +41,6 @@ void (*Mouse::feed)(char, char, short, short, short, short);
 
 #include "Keyboard.h"
 
+void (*Keyboard::Keyboard_feed)(unsigned char, int);
 void (*Keyboard::Keyboard_feedText)(const std::string&, bool, unsigned char);
-std::vector<KeyboardAction>* Keyboard::inputs;
 int* Keyboard::states;
