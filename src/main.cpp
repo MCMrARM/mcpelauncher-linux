@@ -9,6 +9,7 @@
 #include <codecvt>
 #include <locale>
 #include <dirent.h>
+#include <fstream>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -181,18 +182,12 @@ bool verifyCertChainStub() {
     std::cout << "verifycertchain\n";
     return true;
 }
-struct xboxSingleton {
-    char filler[8];
-};
-xboxSingleton xboxGetAppConfigSingleton() {
-    std::cout << "xbox get app config singleton\n";
-    return xboxSingleton();
-}
-void xboxConfigSetSandboxStub() {
-    std::cout << "xbox config: set sandbox (stub)\n";
-}
-void patchNotesModelStub() {
-    std::cout << "fetch patch notes\n";
+std::string xboxReadConfigFile(void* th) {
+    std::cout << "xbox read config file\n";
+    std::ifstream f("assets/xboxservices.config");
+    std::stringstream s;
+    s << f.rdbuf();
+    return s.str();
 }
 
 extern "C"
@@ -345,19 +340,8 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     patchCallInstruction((void*) patchOff, (void*) &verifyCertChainStub, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config24get_app_config_singletonEv");
-    patchCallInstruction((void*) patchOff, (void*) &xboxGetAppConfigSingleton, true);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config11set_sandboxERKSs");
-    patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config29set_title_telemetry_device_idERKSs");
-    patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN15PatchNotesModel17preloadPatchNotesEv");
-    //patchCallInstruction((void*) patchOff, (void*) &patchNotesModelStub, true);
-
-    //_ZN13MinecraftGame8initPostEv
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop16read_config_fileEv");
+    patchCallInstruction((void*) patchOff, (void*) &xboxReadConfigFile, true);
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;

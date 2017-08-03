@@ -17,3 +17,4 @@ rm -rf assets/
 
 unzip "${1}" "assets/*"
 unzip -p "${1}" lib/x86/libminecraftpe.so > libs/libminecraftpe.so
+unzip -p "${1}" res/raw/xboxservices.config > assets/xboxservices.config
