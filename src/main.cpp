@@ -24,6 +24,7 @@
 #include "../mcpe/Options.h"
 #include "common.h"
 #include "hook.h"
+#include "../mcpe/Xbox.h"
 
 extern "C" {
 
@@ -192,6 +193,50 @@ std::string xboxReadConfigFile(void* th) {
 void workerPoolDestroy(void* th) {
     std::cout << "worker pool-related class destroy " << (unsigned long)th << "\n";
 }
+xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, std::string const& s) {
+    std::cout << "log_telemetry_signin " << b << " " << s << "\n";
+    xbox::services::xbox_live_result<void> ret;
+    ret.code = 0;
+    ret.error_code_category = xbox::services::xbox_services_error_code_category();
+    ret.message = " ";
+    return ret;
+}
+std::string xboxGetLocalStoragePath() {
+    return "data/xbox/";
+}
+xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int requestCode) {
+    std::cout << "init_sign_in_activity " << requestCode << "\n";
+    xbox::services::xbox_live_result<void> ret;
+    ret.code = 0;
+    ret.error_code_category = xbox::services::xbox_services_error_code_category();
+
+    if (requestCode == 1) { // signin
+        xbox::services::system::java_rps_ticket ticket;
+        ticket.error_code = 1;
+        ticket.error_text = "Must show UI to acquire an account.";
+        pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
+                xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
+    } else if (requestCode == 6) { // sign out
+        xbox::services::xbox_live_result<void> arg;
+        arg.code = 0;
+        arg.error_code_category = xbox::services::xbox_services_error_code_category();
+        pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set(
+                xbox::services::system::user_auth_android::s_signOutCompleteEvent, arg);
+    }
+
+    return ret;
+}
+struct xbox_hooks {
+    void xboxInvokeAuthFlow() {
+        std::cout << "invoke_auth_flow\n";
+
+        xbox::services::system::user_auth_android *ret = (xbox::services::system::user_auth_android *) this;
+
+        ret->auth_flow->auth_flow_result.i = 2;
+        pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
+                &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
+    }
+};
 
 extern "C"
 void pshufb(char* dest, char* src) {
@@ -346,6 +391,18 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop16read_config_fileEv");
     patchCallInstruction((void*) patchOff, (void*) &xboxReadConfigFile, true);
 
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop20log_telemetry_signinEbRKSs");
+    patchCallInstruction((void*) patchOff, (void*) &xboxLogTelemetrySignin, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop22get_local_storage_pathEv");
+    patchCallInstruction((void*) patchOff, (void*) &xboxGetLocalStoragePath, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android21init_sign_in_activityEi");
+    patchCallInstruction((void*) patchOff, (void*) &xboxInitSignInActivity, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android16invoke_auth_flowEv");
+    patchCallInstruction((void*) patchOff, (void*) &xbox_hooks::xboxInvokeAuthFlow, true);
+
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -360,6 +417,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "patches applied!\n";
+
+    mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
     // load symbols for gl
     gl::getOpenGLVendor = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
@@ -378,6 +437,11 @@ int main(int argc, char *argv[]) {
     void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
     *ptr = (void*) 1; // this just needs not to be null
 
+    xbox::services::java_interop::get_java_interop_singleton = (std::shared_ptr<xbox::services::java_interop> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
+
+    std::shared_ptr<xbox::services::java_interop> javaInterop = xbox::services::java_interop::get_java_interop_singleton();
+    javaInterop->activity = (void*) 1; // this just needs not to be null as well
+
     std::cout << "init app platform vtable\n";
     LinuxAppPlatform::initVtable(handle);
     std::cout << "init app platform\n";
@@ -392,6 +456,13 @@ int main(int argc, char *argv[]) {
 
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
     Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
+
+    xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
+    pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set = (void (*)(pplx::task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system15java_rps_ticketEE3setES4_");
+    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set = (void (*)(pplx::task_completion_event_auth_flow_result*, xbox::services::system::auth_flow_result)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system16auth_flow_resultEE3setES4_");
+    pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set = (void (*)(pplx::task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services16xbox_live_resultIvEEE3setES4_");
+    xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
+    xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
 
     std::cout << "init window\n";
     eglutInitWindowSize(windowWidth, windowHeight);
