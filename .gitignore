@@ -2,6 +2,9 @@
 assets/
 data/
 tmp/
+mods/
 libs/libminecraftpe.so
 libs/libgnustl_shared.so
+libs/cef
+cmake-build-debug/
 *.apk
