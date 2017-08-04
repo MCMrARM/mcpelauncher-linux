@@ -44,3 +44,21 @@ void (*Mouse::feed)(char, char, short, short, short, short);
 void (*Keyboard::Keyboard_feed)(unsigned char, int);
 void (*Keyboard::Keyboard_feedText)(const std::string&, bool, unsigned char);
 int* Keyboard::states;
+
+#include "Xbox.h"
+
+namespace xbox {
+namespace services {
+void* (*xbox_services_error_code_category)();
+std::shared_ptr<xbox::services::java_interop> (*java_interop::get_java_interop_singleton)();
+namespace system {
+pplx::task_completion_event_java_rps_ticket* xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent;
+pplx::task_completion_event_xbox_live_result_void* xbox::services::system::user_auth_android::s_signOutCompleteEvent;
+}
+}
+}
+namespace pplx {
+void (*task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set)(task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket);
+void (*task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set)(task_completion_event_auth_flow_result*, xbox::services::system::auth_flow_result);
+void (*task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set)(task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>);
+}
