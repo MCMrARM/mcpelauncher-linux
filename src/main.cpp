@@ -10,6 +10,7 @@
 #include <locale>
 #include <dirent.h>
 #include <fstream>
+#include "include/cef_app.h"
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -25,6 +26,7 @@
 #include "common.h"
 #include "hook.h"
 #include "../mcpe/Xbox.h"
+#include "browser.h"
 
 extern "C" {
 
@@ -226,17 +228,16 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
 
     return ret;
 }
-struct xbox_hooks {
-    void xboxInvokeAuthFlow() {
-        std::cout << "invoke_auth_flow\n";
+void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
+    std::cout << "invoke_auth_flow\n";
 
-        xbox::services::system::user_auth_android *ret = (xbox::services::system::user_auth_android *) this;
-
-        ret->auth_flow->auth_flow_result.i = 2;
-        pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-                &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
-    }
-};
+    XboxLoginBrowserApp::openBrowser();
+    /*
+    ret->auth_flow->auth_flow_result.i = 2;
+    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
+            &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
+            */
+}
 
 extern "C"
 void pshufb(char* dest, char* src) {
@@ -254,6 +255,11 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
+    CefMainArgs cefArgs(argc, argv);
+    int exit_code = CefExecuteProcess(cefArgs, NULL, NULL);
+    if (exit_code >= 0)
+        return exit_code;
+
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
 
@@ -401,7 +407,7 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &xboxInitSignInActivity, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android16invoke_auth_flowEv");
-    patchCallInstruction((void*) patchOff, (void*) &xbox_hooks::xboxInvokeAuthFlow, true);
+    patchCallInstruction((void*) patchOff, (void*) &xboxInvokeAuthFlow, true);
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
