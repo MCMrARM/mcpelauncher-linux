@@ -7,12 +7,15 @@
 #include "../mcpe/Xbox.h"
 
 class SimpleHandler;
+class XboxLiveV8Handler;
 
 class XboxLoginBrowserApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler {
 
 private:
+    static const std::string APPEND_URL_PARAMS;
+
     CefRefPtr<SimpleHandler> handler;
-    CefRefPtr<CefV8Handler> externalInterfaceHandler;
+    CefRefPtr<XboxLiveV8Handler> externalInterfaceHandler;
     bool succeeded = false;
 
 public:
@@ -32,6 +35,8 @@ public:
                                   CefRefPtr<CefV8Context> context) override;
 
     void Close(bool success);
+
+    void ContinueLogIn();
 
 
 private:
@@ -65,6 +70,8 @@ public:
 
     // Request that all existing browser windows close.
     void CloseAllBrowsers(bool forceClose);
+
+    CefRefPtr<CefBrowser> GetPrimaryBrowser() { return browserList.front(); }
 
 private:
 
