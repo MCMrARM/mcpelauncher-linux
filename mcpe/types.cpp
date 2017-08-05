@@ -54,6 +54,12 @@ std::shared_ptr<xbox::services::java_interop> (*java_interop::get_java_interop_s
 namespace system {
 pplx::task_completion_event_java_rps_ticket* xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent;
 pplx::task_completion_event_xbox_live_result_void* xbox::services::system::user_auth_android::s_signOutCompleteEvent;
+void (*auth_manager::auth_manager_set_rps_ticket)(auth_manager*, std::string const&);
+pplx::task (*auth_manager::auth_manager_initialize_default_nsal)(auth_manager*);
+std::shared_ptr<auth_config> (*auth_manager::auth_manager_get_auth_config)(auth_manager*);
+pplx::task (*auth_manager::auth_manager_internal_get_token_and_signature)(auth_manager*, std::string, std::string const&, std::string const&, std::string, std::vector<unsigned char> const&, bool, bool, std::string const&);
+void (*auth_config::auth_config_set_xtoken_composition)(auth_config*, std::vector<xbox::services::system::token_identity_type>);
+std::string const& (*auth_config::auth_config_xbox_live_endpoint)(auth_config*);
 }
 }
 }
@@ -61,4 +67,6 @@ namespace pplx {
 void (*task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set)(task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket);
 void (*task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set)(task_completion_event_auth_flow_result*, xbox::services::system::auth_flow_result);
 void (*task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set)(task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>);
+xbox::services::xbox_live_result<void> (*task::task_xbox_live_result_void_get)(task*);
+xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*task::task_xbox_live_result_token_and_signature_get)(task*);
 }

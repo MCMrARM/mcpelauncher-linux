@@ -17,6 +17,7 @@ private:
     CefRefPtr<SimpleHandler> handler;
     CefRefPtr<XboxLiveV8Handler> externalInterfaceHandler;
     bool succeeded = false;
+    std::string binaryToken;
 
 public:
     static CefMainArgs cefMainArgs;

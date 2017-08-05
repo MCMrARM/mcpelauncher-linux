@@ -12,6 +12,16 @@ extern void* (*xbox_services_error_code_category)();
 template <typename T>
 struct xbox_live_result {
 
+    T data;
+    int code;
+    void* error_code_category;
+    mcpe::string message;
+
+};
+
+template <>
+struct xbox_live_result<void> {
+
     int code;
     void* error_code_category;
     mcpe::string message;
@@ -63,6 +73,10 @@ struct auth_flow_result {
 
 };
 
+struct token_and_signature_result {
+    mcpe::string token, signature, xbox_user_id, gamertag, xbox_user_hash, age_group, priviledges, web_account_id, reserved;
+};
+
 }
 
 };
@@ -83,6 +97,15 @@ struct task_completion_event_xbox_live_result_void {
     static void (*task_completion_event_xbox_live_result_void_set)(task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>);
 };
 
+struct task_impl {
+    virtual ~task_impl();
+};
+struct task {
+    std::shared_ptr<task_impl> impl;
+    static xbox::services::xbox_live_result<void> (*task_xbox_live_result_void_get)(task*);
+    static xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*task_xbox_live_result_token_and_signature_get)(task*);
+};
+
 
 }
 
@@ -100,12 +123,34 @@ namespace xbox {
 namespace services {
 namespace system {
 
+enum class token_identity_type { };
+
+struct auth_config {
+
+    static void (*auth_config_set_xtoken_composition)(auth_config*, std::vector<xbox::services::system::token_identity_type>);
+    static std::string const& (*auth_config_xbox_live_endpoint)(auth_config*);
+
+};
+
+struct auth_manager {
+
+
+    static void (*auth_manager_set_rps_ticket)(auth_manager*, std::string const&);
+    static pplx::task (*auth_manager_initialize_default_nsal)(auth_manager*);
+    static pplx::task (*auth_manager_internal_get_token_and_signature)(auth_manager*, std::string, std::string const&, std::string const&, std::string, std::vector<unsigned char> const&, bool, bool, std::string const&);
+    static std::shared_ptr<auth_config> (*auth_manager_get_auth_config)(auth_manager*);
+
+};
+
 struct user_auth_android {
 
     static pplx::task_completion_event_java_rps_ticket* s_rpsTicketCompletionEvent;
     static pplx::task_completion_event_xbox_live_result_void* s_signOutCompleteEvent;
 
     unknown_auth_flow_class* auth_flow;
+    char filler[0x60 - 4];
+    auth_manager* auth_mgr;
+
 
 };
 
