@@ -50,7 +50,24 @@ void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android*
     CefShutdown();
 
     if (app->succeeded) {
-        //
+        using namespace xbox::services::system;
+        auth_manager::auth_manager_set_rps_ticket(userAuth->auth_mgr, app->binaryToken);
+        auto initTask = auth_manager::auth_manager_initialize_default_nsal(userAuth->auth_mgr);
+        auto initRet = pplx::task::task_xbox_live_result_void_get(&initTask);
+        if (initRet.code != 0)
+            throw std::runtime_error("Failed to initialize default nsal");
+        std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
+                                                  (token_identity_type) 2};
+        auto config = auth_manager::auth_manager_get_auth_config(userAuth->auth_mgr);
+        auth_config::auth_config_set_xtoken_composition(config.get(), types);
+        std::string const& endpoint = auth_config::auth_config_xbox_live_endpoint(config.get());
+        printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
+        auto task = auth_manager::auth_manager_internal_get_token_and_signature(userAuth->auth_mgr, "GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string()); // I'm unsure about the vector (and pretty much only about the vector)
+        printf("Get token and signature task started!\n");
+        auto ret = pplx::task::task_xbox_live_result_token_and_signature_get(&task);
+        printf("User info received! Status: %i\n", ret.code);
+        printf("Gamertag = %s, age group = %s, web account it = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
+
     } else {
         userAuth->auth_flow->auth_flow_result.i = 2;
         pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
@@ -82,6 +99,10 @@ void XboxLoginBrowserApp::ContinueLogIn() {
         }
         return;
     }
+    binaryToken = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
+    succeeded = true;
+    printf("Binary token: %s\n", binaryToken.c_str());
+    Close(true);
 }
 
 XboxLoginBrowserApp::XboxLoginBrowserApp() : handler(new SimpleHandler()),
