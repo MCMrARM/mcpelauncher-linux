@@ -7,6 +7,14 @@
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
+#include "msa.h"
+#include "xboxlive.h"
+#include "base64.h"
+extern "C" {
+#include "eglut.h"
+}
+
+std::string const XboxLoginBrowserApp::APPEND_URL_PARAMS = "platform=android2.1.0504.0524&client_id=android-app%3A%2F%2Fcom.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y&cobrandid=90023&mkt=en-US&phone=&email=";
 
 static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
     LOG(WARNING) << "X error received: "
@@ -34,6 +42,7 @@ void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android*
     CefSettings settings;
     settings.single_process = true;
     settings.no_sandbox = true;
+    CefString(&settings.user_agent) = "Dalvik/2.1.0 (Linux; U; Android 6.0.1; ONEPLUS A3003 Build/MMB29M); com.mojang.minecraftpe/0.15.2.1; MsaAndroidSdk/2.1.0504.0524";
     CefString(&settings.resources_dir_path) = getCWD() + "libs/cef/";
     CefString(&settings.locales_dir_path) = getCWD() + "libs/cef/locales/";
     CefInitialize(cefMainArgs, settings, app.get(), nullptr);
@@ -49,6 +58,32 @@ void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android*
     }
 }
 
+void XboxLoginBrowserApp::ContinueLogIn() {
+    std::string username = externalInterfaceHandler->properties["Username"];
+    std::string cid = externalInterfaceHandler->properties["CID"];
+    std::string daToken = externalInterfaceHandler->properties["DAToken"];
+    std::string daTokenKey = externalInterfaceHandler->properties["DASessionKey"];
+    std::shared_ptr<MSALegacyToken> token (new MSALegacyToken(daToken, Base64::decode(daTokenKey)));
+    std::shared_ptr<MSAAccount> account (new MSAAccount(XboxLiveHelper::getMSALoginManager(), username, cid, token));
+    auto ret = account->requestTokens({{"http://Passport.NET/tb"}, {"user.auth.xboxlive.com", "mbi_ssl"}});
+    auto xboxLiveToken = ret[{"user.auth.xboxlive.com"}];
+    if (xboxLiveToken.hasError()) {
+        printf("Has error\n");
+        if (xboxLiveToken.getError()->inlineAuthUrl.empty()) {
+            handler->CloseAllBrowsers(true);
+        } else {
+            std::string url = xboxLiveToken.getError()->inlineAuthUrl;
+            if (url.find('?') == std::string::npos)
+                url = url + "?" + APPEND_URL_PARAMS;
+            else
+                url = url + "&" + APPEND_URL_PARAMS;
+            printf("Navigating to URL: %s\n", url.c_str());
+            handler->GetPrimaryBrowser()->GetMainFrame()->LoadURL(url);
+        }
+        return;
+    }
+}
+
 XboxLoginBrowserApp::XboxLoginBrowserApp() : handler(new SimpleHandler()),
                                              externalInterfaceHandler(new XboxLiveV8Handler(*this)) {
 
@@ -58,11 +93,11 @@ void XboxLoginBrowserApp::OnContextInitialized() {
     CefWindowInfo window;
     window.width = 480;
     window.height = 640;
+    window.x = eglutGetWindowX() + eglutGetWindowWidth() / 2 - window.width / 2;
+    window.y = eglutGetWindowY() + eglutGetWindowHeight() / 2 - window.height / 2;
     CefBrowserSettings browserSettings;
 
-    CefBrowserHost::CreateBrowser(window, handler,
-                                  "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&platform=android2.1.0504.0524&client_id=android-app%3A%2F%2Fcom.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y&cobrandid=90023&mkt=en-US&phone=&email=",
-                                  browserSettings, NULL);
+    CefBrowserHost::CreateBrowser(window, handler, "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&" + APPEND_URL_PARAMS, browserSettings, NULL);
 }
 
 void XboxLoginBrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
@@ -149,7 +184,7 @@ bool XboxLiveV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> obj
         return true;
     } else if (name == "FinalNext") {
         // Success!
-        app.Close(true);
+        app.ContinueLogIn();
         return true;
     }
     printf("Invalid Execute: %s\n", name.ToString().c_str());

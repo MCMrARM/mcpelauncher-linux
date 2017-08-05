@@ -334,6 +334,20 @@ eglutCreateWindow(const char *title)
 }
 
 int
+eglutGetWindowX(void)
+{
+    struct eglut_window *win = _eglut->current;
+    return win->native.x;
+}
+
+int
+eglutGetWindowY(void)
+{
+    struct eglut_window *win = _eglut->current;
+    return win->native.y;
+}
+
+int
 eglutGetWindowWidth(void)
 {
     struct eglut_window *win = _eglut->current;

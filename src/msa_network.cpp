@@ -248,7 +248,7 @@ std::shared_ptr<MSACompactToken> MSANetwork::parseCompactToken(rapidxml::xml_nod
     rapidxml::xml_node<char>* data = requested->first_node("wsse:BinarySecurityToken");
     if (data == nullptr)
         throw std::runtime_error("Failed to find wsse:BinarySecurityToken");
-    return std::shared_ptr<MSACompactToken>(new MSACompactToken(scope, expire, Base64::decode(data->value())));
+    return std::shared_ptr<MSACompactToken>(new MSACompactToken(scope, expire, data->value()));
 }
 
 
@@ -265,6 +265,9 @@ std::shared_ptr<MSAErrorInfo> MSANetwork::parseErrorInfo(rapidxml::xml_node<char
     rapidxml::xml_node<char>* flowUrl = node->first_node("psf:flowurl");
     if (flowUrl != nullptr)
         ret->flowUrl = flowUrl->value();
+    rapidxml::xml_node<char>* inlineAuthUrl = node->first_node("psf:inlineauthurl");
+    if (inlineAuthUrl != nullptr)
+        ret->inlineAuthUrl = inlineAuthUrl->value();
     rapidxml::xml_node<char>* inlineEndAuthUrl = node->first_node("psf:inlineendauthurl");
     if (inlineEndAuthUrl != nullptr)
         ret->inlineEndAuthUrl = inlineEndAuthUrl->value();

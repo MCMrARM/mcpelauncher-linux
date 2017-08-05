@@ -40,6 +40,7 @@ struct eglut_window {
             EGLNativePixmapType pixmap;
             EGLSurface surface; /* pbuffer or screen surface */
         } u;
+        int x, y;
         int width, height;
     } native;
 

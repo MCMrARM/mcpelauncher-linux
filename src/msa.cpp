@@ -30,8 +30,8 @@ std::unordered_map<MSASecurityScope, MSATokenResponse> MSAAccount::requestTokens
     std::vector<MSASecurityScope> requestScopes;
     std::unordered_map<MSASecurityScope, MSATokenResponse> ret;
     for (MSASecurityScope const& scope : scopes) {
-        if (cachedTokens.count(scope) > 0 && !cachedTokens[scope]->isExpired()) {
-            ret[scope] = MSATokenResponse(scope, cachedTokens[scope]);
+        if (cachedTokens.count(scope) > 0 && !cachedTokens[{scope.address}]->isExpired()) {
+            ret[scope] = MSATokenResponse(scope, cachedTokens[{scope.address}]);
             continue;
         }
         requestScopes.push_back(scope);
