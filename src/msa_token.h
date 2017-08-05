@@ -43,6 +43,24 @@ public:
     MSALegacyToken(MSASecurityScope const& scope, ExpireTime expire, std::string const& xmlData,
                    std::string const& key) : MSAToken(scope, expire), xmlData(xmlData), binarySecret(key) { }
 
+    std::string const& getXmlData() const { return xmlData; }
+    std::string const& getBinarySecret() const { return binarySecret; }
+
+};
+
+class MSACompactToken : public MSAToken {
+
+private:
+    std::string binaryToken;
+
+public:
+    MSACompactToken(std::string const& binaryToken) : binaryToken(binaryToken) { }
+
+    MSACompactToken(MSASecurityScope const& scope, ExpireTime expire, std::string const& binaryToken) :
+            MSAToken(scope, expire), binaryToken(binaryToken) { }
+
+    std::string const& getBinaryToken() const { return binaryToken; }
+
 };
 
 

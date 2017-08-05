@@ -26,6 +26,6 @@ set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)
 
 set(SOURCE_FILES src/main.cpp src/common.cpp src/hook.cpp src/amdfix.s src/LinuxAppPlatform.cpp mcpe/types.cpp mcpe/ImagePickingCallback.h mcpe/FilePickerSettings.h mcpe/Xbox.h mcpe/string.cpp mcpe/string.h src/browser.h src/browser.cpp src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/base64.cpp src/base64.h)
 add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${SOURCE_FILES})
-target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} rt libEGL.so libGLESv2.so ${X11_X11_LIB} curl uuid libcef.so libcef_dll_wrapper.a)
+target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} rt libEGL.so libGLESv2.so ${X11_X11_LIB} curl crypto uuid libcef.so libcef_dll_wrapper.a)
 target_compile_definitions(mcpelauncher PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 set_target_properties(mcpelauncher PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

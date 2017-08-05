@@ -19,16 +19,15 @@ private:
     std::shared_ptr<MSALoginManager> manager;
     std::string username;
     std::string cid;
-    std::string daToken;
-    std::string daSessionKey;
+    std::shared_ptr<MSALegacyToken> daToken;
 
     std::unordered_map<MSASecurityScope, std::shared_ptr<MSAToken>> cachedTokens;
 
 public:
 
     MSAAccount(std::shared_ptr<MSALoginManager> manager, std::string const& username, std::string const& cid,
-               std::string const& daToken, std::string const& daSessionKey)
-            : manager(manager), username(username), cid(cid), daToken(daToken), daSessionKey(daSessionKey) {
+               std::shared_ptr<MSALegacyToken> daToken) : manager(manager), username(username), cid(cid),
+                                                          daToken(daToken) {
         //
     }
 
@@ -55,8 +54,11 @@ public:
 
 };
 
-class MSAErrorInfo {
-    std::string inlineAuthUrl;
+struct MSAErrorInfo {
+    unsigned int reqStatus = 0;
+    unsigned int errorStatus = 0;
+    std::string flowUrl;
+    std::string inlineEndAuthUrl;
 };
 
 class MSADeviceAuth {
