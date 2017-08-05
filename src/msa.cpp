@@ -18,6 +18,8 @@ MSADeviceAuth const& MSALoginManager::requestDeviceAuth() {
     }
     if (!deviceAuth.token) {
         deviceAuth.token = MSANetwork::authenticateDevice(deviceAuth.membername, deviceAuth.password);
+        if (!deviceAuth.token)
+            throw std::runtime_error("Failed to authenticate device");
         if (storageManager)
             storageManager->onDeviceAuthChanged(*this, deviceAuth);
     }
