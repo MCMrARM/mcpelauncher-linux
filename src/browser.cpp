@@ -25,7 +25,7 @@ static int XIOErrorHandlerImpl(Display* display) {
 
 CefMainArgs XboxLoginBrowserApp::cefMainArgs;
 
-void XboxLoginBrowserApp::openBrowser() {
+void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android* userAuth) {
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
 
@@ -39,9 +39,18 @@ void XboxLoginBrowserApp::openBrowser() {
     CefInitialize(cefMainArgs, settings, app.get(), nullptr);
     CefRunMessageLoop();
     CefShutdown();
+
+    if (app->succeeded) {
+        //
+    } else {
+        userAuth->auth_flow->auth_flow_result.i = 2;
+        pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
+                &userAuth->auth_flow->auth_flow_event, userAuth->auth_flow->auth_flow_result);
+    }
 }
 
-XboxLoginBrowserApp::XboxLoginBrowserApp() : externalInterfaceHandler(new XboxLiveV8Handler()) {
+XboxLoginBrowserApp::XboxLoginBrowserApp() : handler(new SimpleHandler()),
+                                             externalInterfaceHandler(new XboxLiveV8Handler(*this)) {
 
 }
 
@@ -49,7 +58,6 @@ void XboxLoginBrowserApp::OnContextInitialized() {
     CefWindowInfo window;
     window.width = 480;
     window.height = 640;
-    CefRefPtr<SimpleHandler> handler(new SimpleHandler());
     CefBrowserSettings browserSettings;
 
     CefBrowserHost::CreateBrowser(window, handler,
@@ -66,6 +74,11 @@ void XboxLoginBrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRef
     object->SetValue("FinalBack", CefV8Value::CreateFunction("FinalBack", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("FinalNext", CefV8Value::CreateFunction("FinalNext", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("external", object, V8_PROPERTY_ATTRIBUTE_NONE);
+}
+
+void XboxLoginBrowserApp::Close(bool success) {
+    succeeded = success;
+    handler->CloseAllBrowsers(true);
 }
 
 void SimpleHandler::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
@@ -130,6 +143,14 @@ bool XboxLiveV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> obj
             properties[prop] = val;
             return true;
         }
+    } else if (name == "FinalBack") {
+        // Cancel
+        app.Close(false);
+        return true;
+    } else if (name == "FinalNext") {
+        // Success!
+        app.Close(true);
+        return true;
     }
     printf("Invalid Execute: %s\n", name.ToString().c_str());
     return false;

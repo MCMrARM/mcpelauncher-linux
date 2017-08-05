@@ -4,16 +4,21 @@
 #include <map>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
+#include "../mcpe/Xbox.h"
+
+class SimpleHandler;
 
 class XboxLoginBrowserApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler {
 
 private:
+    CefRefPtr<SimpleHandler> handler;
     CefRefPtr<CefV8Handler> externalInterfaceHandler;
+    bool succeeded = false;
 
 public:
     static CefMainArgs cefMainArgs;
 
-    static void openBrowser();
+    static void openBrowser(xbox::services::system::user_auth_android* userAuth);
 
     XboxLoginBrowserApp();
 
@@ -25,6 +30,8 @@ public:
 
     virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                   CefRefPtr<CefV8Context> context) override;
+
+    void Close(bool success);
 
 
 private:
@@ -71,10 +78,13 @@ IMPLEMENT_REFCOUNTING(SimpleHandler);
 
 class XboxLiveV8Handler : public CefV8Handler {
 
+private:
+    XboxLoginBrowserApp& app;
+
 public:
     std::map<CefString, CefString> properties;
 
-    XboxLiveV8Handler() {}
+    XboxLiveV8Handler(XboxLoginBrowserApp& app) : app(app) {}
 
     virtual bool Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,
                          CefRefPtr<CefV8Value>& retval, CefString& exception) override;

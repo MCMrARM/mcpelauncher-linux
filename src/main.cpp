@@ -231,12 +231,7 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
 void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     std::cout << "invoke_auth_flow\n";
 
-    XboxLoginBrowserApp::openBrowser();
-    /*
-    ret->auth_flow->auth_flow_result.i = 2;
-    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-            &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
-            */
+    XboxLoginBrowserApp::openBrowser(ret);
 }
 
 extern "C"
