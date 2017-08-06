@@ -10,6 +10,8 @@
 #include "msa.h"
 #include "xboxlive.h"
 #include "base64.h"
+#include "../mcpe/Xbox.h"
+
 extern "C" {
 #include "eglut.h"
 }
@@ -66,10 +68,18 @@ void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android*
         printf("Get token and signature task started!\n");
         auto ret = pplx::task::task_xbox_live_result_token_and_signature_get(&task);
         printf("User info received! Status: %i\n", ret.code);
-        printf("Gamertag = %s, age group = %s, web account it = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
+        printf("Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
 
+        userAuth->auth_flow->auth_flow_result.code = 0;
+        userAuth->auth_flow->auth_flow_result.xbox_user_id = ret.data.xbox_user_id;
+        userAuth->auth_flow->auth_flow_result.gamertag = ret.data.gamertag;
+        userAuth->auth_flow->auth_flow_result.age_group = ret.data.age_group;
+        userAuth->auth_flow->auth_flow_result.privileges = ret.data.privileges;
+        userAuth->auth_flow->auth_flow_result.cid = app->cid;
+        pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
+                &userAuth->auth_flow->auth_flow_event, userAuth->auth_flow->auth_flow_result);
     } else {
-        userAuth->auth_flow->auth_flow_result.i = 2;
+        userAuth->auth_flow->auth_flow_result.code = 2;
         pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
                 &userAuth->auth_flow->auth_flow_event, userAuth->auth_flow->auth_flow_result);
     }
@@ -77,7 +87,7 @@ void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android*
 
 void XboxLoginBrowserApp::ContinueLogIn() {
     std::string username = externalInterfaceHandler->properties["Username"];
-    std::string cid = externalInterfaceHandler->properties["CID"];
+    cid = externalInterfaceHandler->properties["CID"];
     std::string daToken = externalInterfaceHandler->properties["DAToken"];
     std::string daTokenKey = externalInterfaceHandler->properties["DASessionKey"];
     std::shared_ptr<MSALegacyToken> token (new MSALegacyToken(daToken, Base64::decode(daTokenKey)));

@@ -56,25 +56,25 @@ struct java_rps_ticket {
 
 struct auth_flow_result {
 
-    int i;
-    mcpe::string s1, s2, s3, s4, s5, s6, s7;
+    int code;
+    mcpe::string s1, xbox_user_id, gamertag, age_group, privileges, cid, s7;
 
     auth_flow_result() {}
     auth_flow_result(auth_flow_result const& c) {
-        i = c.i;
+        code = c.code;
         s1 = c.s1;
-        s2 = c.s2;
-        s3 = c.s3;
-        s4 = c.s4;
-        s5 = c.s5;
-        s6 = c.s6;
+        xbox_user_id = c.xbox_user_id;
+        gamertag = c.gamertag;
+        age_group = c.age_group;
+        privileges = c.privileges;
+        cid = c.cid;
         s7 = c.s7;
     }
 
 };
 
 struct token_and_signature_result {
-    mcpe::string token, signature, xbox_user_id, gamertag, xbox_user_hash, age_group, priviledges, web_account_id, reserved;
+    mcpe::string token, signature, xbox_user_id, gamertag, xbox_user_hash, age_group, privileges, web_account_id, reserved;
 };
 
 }
@@ -126,6 +126,9 @@ namespace system {
 enum class token_identity_type { };
 
 struct auth_config {
+
+    char filler[0x3C];
+    std::string* errorDetail;
 
     static void (*auth_config_set_xtoken_composition)(auth_config*, std::vector<xbox::services::system::token_identity_type>);
     static std::string const& (*auth_config_xbox_live_endpoint)(auth_config*);

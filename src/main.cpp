@@ -204,7 +204,7 @@ xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, 
     return ret;
 }
 std::string xboxGetLocalStoragePath() {
-    return "data/xbox/";
+    return "data/";
 }
 xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int requestCode) {
     std::cout << "init_sign_in_activity " << requestCode << "\n";
@@ -233,9 +233,20 @@ void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
 
     XboxLoginBrowserApp::openBrowser(ret);
 }
-std::vector<std::string> getLocaleList() {
+std::vector<std::string> xblGetLocaleList() {
     std::vector<std::string> ret;
     ret.push_back("en-US");
+    return ret;
+}
+void xblRegisterNatives() {
+    std::cout << "register_natives stub\n";
+}
+xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a, std::string const& b, std::string const& c) {
+    std::cout << "log_cll " << a << " " << b << " " << c << "\n";
+    xbox::services::xbox_live_result<void> ret;
+    ret.code = 0;
+    ret.error_code_category = xbox::services::xbox_services_error_code_category();
+    ret.message = " ";
     return ret;
 }
 
@@ -410,7 +421,13 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &xboxInvokeAuthFlow, true);
 
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services5utils15get_locale_listEv");
-    patchCallInstruction((void*) patchOff, (void*) &getLocaleList, true);
+    patchCallInstruction((void*) patchOff, (void*) &xblGetLocaleList, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop16register_nativesEP15JNINativeMethod");
+    patchCallInstruction((void*) patchOff, (void*) &xblRegisterNatives, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
+    patchCallInstruction((void*) patchOff, (void*) &xblLogCLL, true);
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
