@@ -27,6 +27,7 @@
 #include "hook.h"
 #include "../mcpe/Xbox.h"
 #include "browser.h"
+#include "xboxlive.h"
 
 extern "C" {
 
@@ -212,8 +213,20 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
 
-    if (requestCode == 1) { // signin
+    if (requestCode == 1) { // silent signin
+        auto account = XboxLiveHelper::getMSAStorageManager()->getAccount();
         xbox::services::system::java_rps_ticket ticket;
+        if (account) {
+            auto tokens = account->requestTokens({{"user.auth.xboxlive.com", "mbi_ssl"}});
+            auto xboxLiveToken = tokens[{"user.auth.xboxlive.com"}];
+            if (!xboxLiveToken.hasError()) {
+                ticket.token = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
+                ticket.error_code = 0;
+                pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
+                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
+                return ret;
+            }
+        }
         ticket.error_code = 1;
         ticket.error_text = "Must show UI to acquire an account.";
         pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(

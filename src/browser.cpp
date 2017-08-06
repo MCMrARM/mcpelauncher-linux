@@ -112,6 +112,7 @@ void XboxLoginBrowserApp::ContinueLogIn() {
     binaryToken = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
     succeeded = true;
     printf("Binary token: %s\n", binaryToken.c_str());
+    XboxLiveHelper::getMSAStorageManager()->setAccount(account);
     Close(true);
 }
 

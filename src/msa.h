@@ -33,6 +33,11 @@ public:
 
     std::unordered_map<MSASecurityScope, MSATokenResponse> requestTokens(std::vector<MSASecurityScope> const& scopes);
 
+    std::string const& getUsername() const { return username; }
+    std::string const& getCID() const { return cid; }
+    std::shared_ptr<MSALegacyToken> getDaToken() const { return daToken; }
+    std::unordered_map<MSASecurityScope, std::shared_ptr<MSAToken>> const& getCachedTokens() const { return cachedTokens; }
+
 };
 
 class MSATokenResponse {
@@ -84,10 +89,16 @@ public:
 
 class MSALoginManager {
 
-public:
+private:
     std::shared_ptr<MSAStorageManager> storageManager;
     MSADeviceAuth deviceAuth;
+    bool hasReadDeviceAuth = false;
 
+public:
+
+    MSALoginManager(std::shared_ptr<MSAStorageManager> storageManager) : storageManager(storageManager) { }
+
+    std::shared_ptr<MSAStorageManager> getStorageManager() const { return storageManager; }
 
     MSADeviceAuth const& requestDeviceAuth();
 
@@ -98,8 +109,8 @@ class MSAStorageManager {
 
 public:
 
+    virtual void readDeviceAuthInfo(MSALoginManager& manager, MSADeviceAuth& deviceAuth) { }
     virtual void onDeviceAuthChanged(MSALoginManager& manager, MSADeviceAuth& deviceAuth) { }
-    virtual void onAccountAdded(MSALoginManager& manager, MSAAccount& account) { }
     virtual void onAccountTokenListChanged(MSALoginManager& manager, MSAAccount& account) { }
 
 };

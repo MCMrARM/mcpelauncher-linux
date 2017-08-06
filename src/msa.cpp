@@ -6,6 +6,10 @@
 #include "msa_network.h"
 
 MSADeviceAuth const& MSALoginManager::requestDeviceAuth() {
+    if (!hasReadDeviceAuth && storageManager) {
+        storageManager->readDeviceAuthInfo(*this, deviceAuth);
+        hasReadDeviceAuth = true;
+    }
     if (deviceAuth.membername.empty()) {
         deviceAuth = MSADeviceAuth::generateRandom();
         if (storageManager)
@@ -45,8 +49,8 @@ std::unordered_map<MSASecurityScope, MSATokenResponse> MSAAccount::requestTokens
         }
         ret[token.getSecurityScope()] = token;
     }
-    if (hasNewTokens && manager->storageManager)
-        manager->storageManager->onAccountTokenListChanged(*manager, *this);
+    if (hasNewTokens && manager->getStorageManager())
+        manager->getStorageManager()->onAccountTokenListChanged(*manager, *this);
     return ret;
 }
 
