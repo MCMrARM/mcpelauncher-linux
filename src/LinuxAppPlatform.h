@@ -131,7 +131,7 @@ public:
         return "win10";
     }
     int getPlatformUIScalingRules() {
-        return 2;
+        return enablePocketGuis ? 2 : 0;
     }
     long long getAvailableMemory();
 
