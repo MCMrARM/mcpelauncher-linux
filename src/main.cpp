@@ -244,7 +244,7 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
 void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     std::cout << "invoke_auth_flow\n";
 
-    XboxLoginBrowserApp::openBrowser(ret);
+    XboxLoginBrowserApp::OpenBrowser(ret);
 }
 std::vector<std::string> xblGetLocaleList() {
     std::vector<std::string> ret;
@@ -280,7 +280,7 @@ void pshufb_xmm4_xmm0();
 using namespace std;
 int main(int argc, char *argv[]) {
     CefMainArgs cefArgs(argc, argv);
-    int exit_code = CefExecuteProcess(cefArgs, NULL, NULL);
+    int exit_code = CefExecuteProcess(cefArgs, XboxLoginBrowserApp::singleton.get(), NULL);
     if (exit_code >= 0)
         return exit_code;
 
@@ -572,6 +572,8 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9SchedulerD2Ev");
     patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+
+    XboxLoginBrowserApp::Shutdown();
 
     return 0;
 }
