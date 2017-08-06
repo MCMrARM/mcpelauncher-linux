@@ -22,6 +22,7 @@ class XboxLoginBrowserApp : public CefApp, public CefBrowserProcessHandler, publ
 
 private:
 
+    CefRefPtr<SimpleHandler> handler;
     CefRefPtr<XboxLiveV8Handler> externalInterfaceHandler;
     CefRefPtr<CefBrowser> primaryBrowser;
     std::thread cefThread;
