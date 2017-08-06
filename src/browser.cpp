@@ -76,7 +76,9 @@ void XboxLoginBrowserApp::OpenBrowser(xbox::services::system::user_auth_android*
 
 void XboxLoginBrowserApp::Shutdown() {
     if (singleton->cefThread.joinable()) {
-        CefQuitMessageLoop();
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Shutdown");
+        singleton->handler->GetPrimaryBrowser()->SendProcessMessage(PID_BROWSER, msg);
+
         singleton->cefThread.join();
     }
 }
@@ -86,7 +88,7 @@ XboxLoginBrowserApp::XboxLoginBrowserApp() {
 }
 
 void XboxLoginBrowserApp::OnContextInitialized() {
-    CefRefPtr<SimpleHandler> handler(new SimpleHandler(*this));
+    handler = new SimpleHandler(*this);
 
     CefWindowInfo window;
     window.width = 480;
@@ -232,6 +234,9 @@ bool SimpleHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefP
         return true;
     } else if (message->GetName() == "CancelLogIn") {
         CancelLogIn();
+        return true;
+    } else if (message->GetName() == "Shutdown") {
+        CefQuitMessageLoop();
         return true;
     }
     return false;
