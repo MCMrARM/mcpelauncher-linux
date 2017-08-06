@@ -2,6 +2,9 @@
 
 #include <list>
 #include <map>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
 #include "../mcpe/Xbox.h"
@@ -9,21 +12,36 @@
 class SimpleHandler;
 class XboxLiveV8Handler;
 
+struct XboxLoginResult {
+    bool success = false;
+    std::string binaryToken;
+    std::string cid;
+};
+
 class XboxLoginBrowserApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler {
 
 private:
-    static const std::string APPEND_URL_PARAMS;
 
-    CefRefPtr<SimpleHandler> handler;
     CefRefPtr<XboxLiveV8Handler> externalInterfaceHandler;
-    bool succeeded = false;
-    std::string binaryToken;
-    std::string cid;
+    CefRefPtr<CefBrowser> primaryBrowser;
+    std::thread cefThread;
+    std::mutex resultMutex;
+    std::condition_variable resultConditionVariable;
+    bool hasResult = false;
+    XboxLoginResult result;
+
+    static void doCefThread();
 
 public:
-    static CefMainArgs cefMainArgs;
 
-    static void openBrowser(xbox::services::system::user_auth_android* userAuth);
+    static const std::string APPEND_URL_PARAMS;
+
+    static CefMainArgs cefMainArgs;
+    static CefRefPtr<XboxLoginBrowserApp> singleton;
+
+    static void OpenBrowser(xbox::services::system::user_auth_android* userAuth);
+
+    static void Shutdown();
 
     XboxLoginBrowserApp();
 
@@ -36,9 +54,20 @@ public:
     virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                   CefRefPtr<CefV8Context> context) override;
 
-    void Close(bool success);
+    virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                                   CefRefPtr<CefV8Context> context) override;
 
-    void ContinueLogIn();
+    void RequestContinueLogIn(std::map<CefString, CefString> const& properties);
+
+    void RequestCancelLogIn();
+
+    XboxLoginResult GetResult();
+    void SetResult(XboxLoginResult const& result);
+    void ClearResult() {
+        resultMutex.lock();
+        hasResult = false;
+        resultMutex.unlock();
+    }
 
 
 private:
@@ -46,20 +75,20 @@ IMPLEMENT_REFCOUNTING(XboxLoginBrowserApp);
 
 };
 
-class SimpleHandler : public CefClient, public CefDisplayHandler, public CefLifeSpanHandler, public CefLoadHandler {
+class SimpleHandler : public CefClient, public CefLifeSpanHandler, public CefLoadHandler {
+
+private:
+    XboxLoginBrowserApp& app;
 
 public:
-    SimpleHandler() {}
-
-    virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
+    SimpleHandler(XboxLoginBrowserApp& app) : app(app) {}
 
     virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
 
     virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
 
-    // CefDisplayHandler methods:
-    virtual void OnTitleChange(CefRefPtr<CefBrowser> browser,
-                               const CefString& title) override;
+    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
+                                          CefRefPtr<CefProcessMessage> message) override;
 
     // CefLifeSpanHandler methods:
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
@@ -74,6 +103,11 @@ public:
     void CloseAllBrowsers(bool forceClose);
 
     CefRefPtr<CefBrowser> GetPrimaryBrowser() { return browserList.front(); }
+
+    void ContinueLogIn(std::string const& username, std::string const& cid, std::string const& daToken,
+                       std::string const& daTokenKey);
+
+    void CancelLogIn();
 
 private:
 

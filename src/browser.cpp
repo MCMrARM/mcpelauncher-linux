@@ -34,107 +34,78 @@ static int XIOErrorHandlerImpl(Display* display) {
 }
 
 CefMainArgs XboxLoginBrowserApp::cefMainArgs;
+CefRefPtr<XboxLoginBrowserApp> XboxLoginBrowserApp::singleton (new XboxLoginBrowserApp());
 
-void XboxLoginBrowserApp::openBrowser(xbox::services::system::user_auth_android* userAuth) {
-    XSetErrorHandler(XErrorHandlerImpl);
-    XSetIOErrorHandler(XIOErrorHandlerImpl);
-
-    CefRefPtr<XboxLoginBrowserApp> app (new XboxLoginBrowserApp());
-
+void XboxLoginBrowserApp::doCefThread() {
     CefSettings settings;
-    settings.single_process = true;
     settings.no_sandbox = true;
     CefString(&settings.user_agent) = "Dalvik/2.1.0 (Linux; U; Android 6.0.1; ONEPLUS A3003 Build/MMB29M); com.mojang.minecraftpe/0.15.2.1; MsaAndroidSdk/2.1.0504.0524";
     CefString(&settings.resources_dir_path) = getCWD() + "libs/cef/";
     CefString(&settings.locales_dir_path) = getCWD() + "libs/cef/locales/";
-    CefInitialize(cefMainArgs, settings, app.get(), nullptr);
+    CefInitialize(cefMainArgs, settings, singleton.get(), nullptr);
     CefRunMessageLoop();
     CefShutdown();
+}
 
-    if (app->succeeded) {
-        using namespace xbox::services::system;
-        auth_manager::auth_manager_set_rps_ticket(userAuth->auth_mgr, app->binaryToken);
-        auto initTask = auth_manager::auth_manager_initialize_default_nsal(userAuth->auth_mgr);
-        auto initRet = pplx::task::task_xbox_live_result_void_get(&initTask);
-        if (initRet.code != 0)
-            throw std::runtime_error("Failed to initialize default nsal");
-        std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
-                                                  (token_identity_type) 2};
-        auto config = auth_manager::auth_manager_get_auth_config(userAuth->auth_mgr);
-        auth_config::auth_config_set_xtoken_composition(config.get(), types);
-        std::string const& endpoint = auth_config::auth_config_xbox_live_endpoint(config.get());
-        printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
-        auto task = auth_manager::auth_manager_internal_get_token_and_signature(userAuth->auth_mgr, "GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string()); // I'm unsure about the vector (and pretty much only about the vector)
-        printf("Get token and signature task started!\n");
-        auto ret = pplx::task::task_xbox_live_result_token_and_signature_get(&task);
-        printf("User info received! Status: %i\n", ret.code);
-        printf("Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
+void XboxLoginBrowserApp::OpenBrowser(xbox::services::system::user_auth_android* auth) {
+    XSetErrorHandler(XErrorHandlerImpl);
+    XSetIOErrorHandler(XIOErrorHandlerImpl);
 
-        userAuth->auth_flow->auth_flow_result.code = 0;
-        userAuth->auth_flow->auth_flow_result.xbox_user_id = ret.data.xbox_user_id;
-        userAuth->auth_flow->auth_flow_result.gamertag = ret.data.gamertag;
-        userAuth->auth_flow->auth_flow_result.age_group = ret.data.age_group;
-        userAuth->auth_flow->auth_flow_result.privileges = ret.data.privileges;
-        userAuth->auth_flow->auth_flow_result.cid = app->cid;
+    printf("OpenBrowser\n");
+
+    singleton->ClearResult();
+
+    if (!singleton->cefThread.joinable())
+        singleton->cefThread = std::thread(doCefThread);
+    else
+        singleton->OnContextInitialized();
+
+    XboxLoginResult result = singleton->GetResult();
+    if (result.success) {
+        XboxLiveHelper::invokeXbLogin(auth, result.binaryToken);
+        auth->auth_flow->auth_flow_result.code = 0;
+        auth->auth_flow->auth_flow_result.cid = result.cid;
         pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-                &userAuth->auth_flow->auth_flow_event, userAuth->auth_flow->auth_flow_result);
+                &auth->auth_flow->auth_flow_event, auth->auth_flow->auth_flow_result);
     } else {
-        userAuth->auth_flow->auth_flow_result.code = 2;
+        auth->auth_flow->auth_flow_result.code = 2;
         pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-                &userAuth->auth_flow->auth_flow_event, userAuth->auth_flow->auth_flow_result);
+                &auth->auth_flow->auth_flow_event, auth->auth_flow->auth_flow_result);
     }
 }
 
-void XboxLoginBrowserApp::ContinueLogIn() {
-    std::string username = externalInterfaceHandler->properties["Username"];
-    cid = externalInterfaceHandler->properties["CID"];
-    std::string daToken = externalInterfaceHandler->properties["DAToken"];
-    std::string daTokenKey = externalInterfaceHandler->properties["DASessionKey"];
-    std::shared_ptr<MSALegacyToken> token (new MSALegacyToken(daToken, Base64::decode(daTokenKey)));
-    std::shared_ptr<MSAAccount> account (new MSAAccount(XboxLiveHelper::getMSALoginManager(), username, cid, token));
-    auto ret = account->requestTokens({{"http://Passport.NET/tb"}, {"user.auth.xboxlive.com", "mbi_ssl"}});
-    auto xboxLiveToken = ret[{"user.auth.xboxlive.com"}];
-    if (xboxLiveToken.hasError()) {
-        printf("Has error\n");
-        if (xboxLiveToken.getError()->inlineAuthUrl.empty()) {
-            handler->CloseAllBrowsers(true);
-        } else {
-            std::string url = xboxLiveToken.getError()->inlineAuthUrl;
-            if (url.find('?') == std::string::npos)
-                url = url + "?" + APPEND_URL_PARAMS;
-            else
-                url = url + "&" + APPEND_URL_PARAMS;
-            printf("Navigating to URL: %s\n", url.c_str());
-            handler->GetPrimaryBrowser()->GetMainFrame()->LoadURL(url);
-        }
-        return;
+void XboxLoginBrowserApp::Shutdown() {
+    if (singleton->cefThread.joinable()) {
+        CefQuitMessageLoop();
+        singleton->cefThread.join();
     }
-    binaryToken = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
-    succeeded = true;
-    printf("Binary token: %s\n", binaryToken.c_str());
-    XboxLiveHelper::getMSAStorageManager()->setAccount(account);
-    Close(true);
 }
 
-XboxLoginBrowserApp::XboxLoginBrowserApp() : handler(new SimpleHandler()),
-                                             externalInterfaceHandler(new XboxLiveV8Handler(*this)) {
+XboxLoginBrowserApp::XboxLoginBrowserApp() {
 
 }
 
 void XboxLoginBrowserApp::OnContextInitialized() {
+    CefRefPtr<SimpleHandler> handler(new SimpleHandler(*this));
+
     CefWindowInfo window;
     window.width = 480;
     window.height = 640;
     window.x = eglutGetWindowX() + eglutGetWindowWidth() / 2 - window.width / 2;
     window.y = eglutGetWindowY() + eglutGetWindowHeight() / 2 - window.height / 2;
     CefBrowserSettings browserSettings;
-
+    browserSettings.background_color = 0xFF2A2A2A;
     CefBrowserHost::CreateBrowser(window, handler, "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&" + APPEND_URL_PARAMS, browserSettings, NULL);
 }
 
 void XboxLoginBrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                            CefRefPtr<CefV8Context> context) {
     printf("OnContextCreated\n");
+    primaryBrowser = browser;
+
+    if (!externalInterfaceHandler)
+        externalInterfaceHandler = new XboxLiveV8Handler(*this);
+
     CefRefPtr<CefV8Value> global = context->GetGlobal();
     CefRefPtr<CefV8Value> object = CefV8Value::CreateObject(nullptr, nullptr);
     object->SetValue("Property", CefV8Value::CreateFunction("Property", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
@@ -143,24 +114,46 @@ void XboxLoginBrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRef
     global->SetValue("external", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
-void XboxLoginBrowserApp::Close(bool success) {
-    succeeded = success;
-    handler->CloseAllBrowsers(true);
+void XboxLoginBrowserApp::OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                                            CefRefPtr<CefV8Context> context) {
+    primaryBrowser = nullptr;
 }
 
-void SimpleHandler::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
-    CEF_REQUIRE_UI_THREAD();
+void XboxLoginBrowserApp::RequestContinueLogIn(std::map<CefString, CefString> const& properties) {
+    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("ContinueLogIn");
+    CefRefPtr<CefListValue> args = msg->GetArgumentList();
+    args->SetString(0, properties.at("Username"));
+    args->SetString(1, properties.at("CID"));
+    args->SetString(2, properties.at("DAToken"));
+    args->SetString(3, properties.at("DASessionKey"));
+    primaryBrowser->SendProcessMessage(PID_BROWSER, msg);
+}
+
+void XboxLoginBrowserApp::RequestCancelLogIn() {
+    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CancelLogIn");
+    primaryBrowser->SendProcessMessage(PID_BROWSER, msg);
+}
+
+XboxLoginResult XboxLoginBrowserApp::GetResult() {
+    std::unique_lock<std::mutex> lock(resultMutex);
+    resultConditionVariable.wait(lock, [this] { return hasResult; });
+    return result;
+}
+
+void XboxLoginBrowserApp::SetResult(XboxLoginResult const& result) {
+    std::unique_lock<std::mutex> lock(resultMutex);
+    this->result = result;
+    hasResult = true;
+    lock.unlock();
+    resultConditionVariable.notify_all();
+    lock.lock();
 }
 
 void SimpleHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser) {
-    CEF_REQUIRE_UI_THREAD();
-
     browserList.push_back(browser);
 }
 
 void SimpleHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
-    CEF_REQUIRE_UI_THREAD();
-
     for (auto bit = browserList.begin(); bit != browserList.end(); ++bit) {
         if ((*bit)->IsSame(browser)) {
             browserList.erase(bit);
@@ -169,14 +162,14 @@ void SimpleHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
     }
 
     if (browserList.empty()) {
-        // All browser windows have closed. Quit the application message loop.
-        CefQuitMessageLoop();
+        XboxLoginResult result;
+        result.success = false;
+        app.SetResult(result);
     }
 }
 
 void SimpleHandler::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode,
                                 const CefString& errorText, const CefString& failedUrl) {
-    CEF_REQUIRE_UI_THREAD();
     if (errorCode == ERR_ABORTED)
         return;
 
@@ -193,6 +186,55 @@ void SimpleHandler::CloseAllBrowsers(bool forceClose) {
     }
     for (auto it = browserList.begin(); it != browserList.end(); ++it)
         (*it)->GetHost()->CloseBrowser(forceClose);
+}
+
+
+void SimpleHandler::ContinueLogIn(std::string const& username, std::string const& cid, std::string const& daToken,
+                                        std::string const& daTokenKey) {
+    std::shared_ptr<MSALegacyToken> token (new MSALegacyToken(daToken, Base64::decode(daTokenKey)));
+    std::shared_ptr<MSAAccount> account (new MSAAccount(XboxLiveHelper::getMSALoginManager(), username, cid, token));
+    auto ret = account->requestTokens({{"http://Passport.NET/tb"}, {"user.auth.xboxlive.com", "mbi_ssl"}});
+    auto xboxLiveToken = ret[{"user.auth.xboxlive.com"}];
+    if (xboxLiveToken.hasError()) {
+        printf("Has error\n");
+        if (xboxLiveToken.getError()->inlineAuthUrl.empty()) {
+            CloseAllBrowsers(true);
+        } else {
+            std::string url = xboxLiveToken.getError()->inlineAuthUrl;
+            if (url.find('?') == std::string::npos)
+                url = url + "?" + XboxLoginBrowserApp::APPEND_URL_PARAMS;
+            else
+                url = url + "&" + XboxLoginBrowserApp::APPEND_URL_PARAMS;
+            printf("Navigating to URL: %s\n", url.c_str());
+            GetPrimaryBrowser()->GetMainFrame()->LoadURL(url);
+        }
+        return;
+    }
+    XboxLoginResult result;
+    result.success = true;
+    result.binaryToken = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
+    result.cid = cid;
+    printf("Binary token: %s\n", result.binaryToken.c_str());
+    XboxLiveHelper::getMSAStorageManager()->setAccount(account);
+    app.SetResult(result);
+    CloseAllBrowsers(true);
+}
+
+void SimpleHandler::CancelLogIn() {
+    CloseAllBrowsers(true);
+}
+
+bool SimpleHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
+                                             CefRefPtr<CefProcessMessage> message) {
+    if (message->GetName() == "ContinueLogIn") {
+        CefRefPtr<CefListValue> args = message->GetArgumentList();
+        ContinueLogIn(args->GetString(0), args->GetString(1), args->GetString(2), args->GetString(3));
+        return true;
+    } else if (message->GetName() == "CancelLogIn") {
+        CancelLogIn();
+        return true;
+    }
+    return false;
 }
 
 bool XboxLiveV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,
@@ -212,11 +254,11 @@ bool XboxLiveV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> obj
         }
     } else if (name == "FinalBack") {
         // Cancel
-        app.Close(false);
+        app.RequestCancelLogIn();
         return true;
     } else if (name == "FinalNext") {
         // Success!
-        app.ContinueLogIn();
+        app.RequestContinueLogIn(properties);
         return true;
     }
     printf("Invalid Execute: %s\n", name.ToString().c_str());
