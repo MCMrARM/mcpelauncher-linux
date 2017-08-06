@@ -48,8 +48,7 @@ private:
 public:
     void setAccount(std::shared_ptr<MSAAccount> account) {
         this->account = account;
-        if (account)
-            onAccountInfoChanged();
+        onAccountInfoChanged();
     }
 
     std::shared_ptr<MSAAccount> getAccount();
