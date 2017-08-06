@@ -232,6 +232,8 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
         pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
                 xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
     } else if (requestCode == 6) { // sign out
+        XboxLiveHelper::getMSAStorageManager()->setAccount(std::shared_ptr<MSAAccount>());
+
         xbox::services::xbox_live_result<void> arg;
         arg.code = 0;
         arg.error_code_category = xbox::services::xbox_services_error_code_category();

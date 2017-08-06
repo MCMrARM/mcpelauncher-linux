@@ -94,10 +94,10 @@ std::shared_ptr<MSAAccount> SimpleMSAStorageManager::getAccount() {
     if (!stream)
         return std::shared_ptr<MSAAccount>();
     std::map<std::string, std::string> properties = readProperties(stream);
+    if (!properties.count("username"))
+        return std::shared_ptr<MSAAccount>();
     std::shared_ptr<MSALegacyToken> token(new MSALegacyToken(properties["token_xml"], Base64::decode(properties["token_bin_secret"])));
     account = std::shared_ptr<MSAAccount>(new MSAAccount(XboxLiveHelper::getMSALoginManager(), properties["username"], properties["cid"], token));
-    if (account->getUsername().empty()) // this shouldn't happen, but still
-        return std::shared_ptr<MSAAccount>();
     return account;
 }
 
@@ -109,11 +109,13 @@ void SimpleMSAStorageManager::onAccountTokenListChanged(MSALoginManager& manager
 
 void SimpleMSAStorageManager::onAccountInfoChanged() {
     std::map<std::string, std::string> properties;
-    properties["username"] = account->getUsername();
-    properties["cid"] = account->getCID();
-    properties["token_xml"] = account->getDaToken()->getXmlData();
-    properties["token_bin_secret"] = Base64::encode(account->getDaToken()->getBinarySecret());
-    // TODO: Cached tokens
+    if (account) {
+        properties["username"] = account->getUsername();
+        properties["cid"] = account->getCID();
+        properties["token_xml"] = account->getDaToken()->getXmlData();
+        properties["token_bin_secret"] = Base64::encode(account->getDaToken()->getBinarySecret());
+        // TODO: Cached tokens
+    }
     std::ofstream stream (ACCOUNT_INFO_PATH);
     writeProperties(stream, properties);
 }
