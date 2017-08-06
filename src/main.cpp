@@ -28,6 +28,7 @@
 #include "../mcpe/Xbox.h"
 #include "browser.h"
 #include "xboxlive.h"
+#include "cll.h"
 
 extern "C" {
 
@@ -83,6 +84,7 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 
 static MinecraftGame* client;
 static LinuxAppPlatform* platform;
+static std::unique_ptr<CLL> cll;
 
 int winId = 0;
 bool moveMouseToCenter = false;
@@ -258,6 +260,7 @@ void xblRegisterNatives() {
 }
 xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a, std::string const& b, std::string const& c) {
     std::cout << "log_cll " << a << " " << b << " " << c << "\n";
+    cll->addEvent(a, b, c);
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
@@ -330,6 +333,8 @@ int main(int argc, char *argv[]) {
     if (enableStackTracePrinting) {
         registerCrashHandler();
     }
+
+    cll = std::unique_ptr<CLL>(new CLL());
 
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
