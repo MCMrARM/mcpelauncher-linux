@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "../mcpe/string.h"
+#include "minecraft/string.h"
 
 struct StoreListener;
 struct PurchaseInfo;

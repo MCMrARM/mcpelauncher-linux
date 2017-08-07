@@ -10,7 +10,7 @@
 #include "msa.h"
 #include "xboxlive.h"
 #include "base64.h"
-#include "../mcpe/Xbox.h"
+#include "minecraft/Xbox.h"
 
 extern "C" {
 #include "eglut.h"
