@@ -1,95 +1,105 @@
 #pragma once
 
-#include <list>
-#include <map>
 #include <thread>
+#include <list>
+#include <unordered_map>
+#include <functional>
 #include <mutex>
-#include <condition_variable>
+#include <memory>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
-#include "minecraft/Xbox.h"
 
-class SimpleHandler;
-class XboxLiveV8Handler;
+class MyRenderProcessHandler;
 
-struct XboxLoginResult {
-    bool success = false;
-    std::string binaryToken;
-    std::string cid;
-};
-
-class XboxLoginBrowserApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler {
+class BrowserApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler {
 
 private:
+    friend class BrowserClient;
 
-    CefRefPtr<SimpleHandler> handler;
-    CefRefPtr<XboxLiveV8Handler> externalInterfaceHandler;
-    CefRefPtr<CefBrowser> primaryBrowser;
     std::thread cefThread;
-    std::mutex resultMutex;
-    std::condition_variable resultConditionVariable;
-    bool hasResult = false;
-    XboxLoginResult result;
+    std::function<void ()> contextCallback;
+    std::unordered_map<int, CefRefPtr<CefBrowser>> renderProcessBrowsers;
+    std::unordered_map<int, std::shared_ptr<MyRenderProcessHandler>> browserRenderHandlers;
 
-    static void doCefThread();
+    static std::unordered_map<std::string, std::function<std::shared_ptr<MyRenderProcessHandler> (CefRefPtr<CefBrowser> browser)>> knownRenderHandlers;
+
+    static void DoCefThread();
 
 public:
-
-    static const std::string APPEND_URL_PARAMS;
-
     static CefMainArgs cefMainArgs;
-    static CefRefPtr<XboxLoginBrowserApp> singleton;
+    static CefRefPtr<BrowserApp> singleton;
 
-    static void OpenBrowser(xbox::services::system::user_auth_android* userAuth);
+    static void RunWithContext(std::function<void ()> contextCallback);
+
+    template <typename T>
+    static void RegisterRenderProcessHandler() {
+        knownRenderHandlers[T::Name] = [](CefRefPtr<CefBrowser> browser) { return std::shared_ptr<T>(new T(browser)); };
+    }
 
     static void Shutdown();
 
-    XboxLoginBrowserApp();
+    BrowserApp();
+
+    void SetRenderHandler(int browser, std::string const& handler);
 
     virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override { return this; }
 
     virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override { return this; }
 
+    // CefBrowserProcessHandler methods:
     virtual void OnContextInitialized() override;
 
-    virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-                                  CefRefPtr<CefV8Context> context) override;
+    // CefRenderProcessHandler methods:
+    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
+                                          CefRefPtr<CefProcessMessage> message) override;
 
-    virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-                                   CefRefPtr<CefV8Context> context) override;
+    virtual void OnBrowserCreated(CefRefPtr<CefBrowser> browser) override;
 
-    void RequestContinueLogIn(std::map<CefString, CefString> const& properties);
+    virtual void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override;
 
-    void RequestCancelLogIn();
-
-    XboxLoginResult GetResult();
-    void SetResult(XboxLoginResult const& result);
-    void ClearResult() {
-        resultMutex.lock();
-        hasResult = false;
-        resultMutex.unlock();
-    }
-
+    void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                          CefRefPtr<CefV8Context> context) override;
 
 private:
-IMPLEMENT_REFCOUNTING(XboxLoginBrowserApp);
+IMPLEMENT_REFCOUNTING(BrowserApp);
 
 };
 
-class SimpleHandler : public CefClient, public CefLifeSpanHandler, public CefLoadHandler {
+class MyRenderProcessHandler {
 
 private:
-    XboxLoginBrowserApp& app;
+    CefRefPtr<CefBrowser> browser;
 
 public:
-    SimpleHandler(XboxLoginBrowserApp& app) : app(app) {}
+    MyRenderProcessHandler(CefRefPtr<CefBrowser> browser) : browser(browser) {}
+
+    CefRefPtr<CefBrowser> GetBrowser() { return browser; }
+
+    virtual ~MyRenderProcessHandler() { }
+
+    virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                                  CefRefPtr<CefV8Context> context) {}
+
+};
+
+class BrowserClient : public CefClient, public CefLifeSpanHandler, public CefLoadHandler {
+
+private:
+    BrowserApp& app;
+    std::string renderHandlerId;
+
+public:
+    BrowserClient(BrowserApp& app) : app(app) {}
+    BrowserClient() : app(*BrowserApp::singleton) { }
+
+    template <typename T>
+    void SetRenderHandler() {
+        renderHandlerId = T::Name;
+    }
 
     virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
 
     virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
-
-    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
-                                          CefRefPtr<CefProcessMessage> message) override;
 
     // CefLifeSpanHandler methods:
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
@@ -105,34 +115,11 @@ public:
 
     CefRefPtr<CefBrowser> GetPrimaryBrowser() { return browserList.front(); }
 
-    void ContinueLogIn(std::string const& username, std::string const& cid, std::string const& daToken,
-                       std::string const& daTokenKey);
-
-    void CancelLogIn();
-
-private:
+protected:
 
     // List of existing browser windows. Only accessed on the CEF UI thread.
     typedef std::list<CefRefPtr<CefBrowser>> BrowserList;
     BrowserList browserList;
 
-    // Include the default reference counting implementation.
-IMPLEMENT_REFCOUNTING(SimpleHandler);
-};
-
-class XboxLiveV8Handler : public CefV8Handler {
-
-private:
-    XboxLoginBrowserApp& app;
-
-public:
-    std::map<CefString, CefString> properties;
-
-    XboxLiveV8Handler(XboxLoginBrowserApp& app) : app(app) {}
-
-    virtual bool Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,
-                         CefRefPtr<CefV8Value>& retval, CefString& exception) override;
-
-private:
-IMPLEMENT_REFCOUNTING(XboxLiveV8Handler);
+IMPLEMENT_REFCOUNTING(BrowserClient);
 };

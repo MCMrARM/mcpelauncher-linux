@@ -10,6 +10,7 @@
 #include <locale>
 #include <dirent.h>
 #include <fstream>
+#include <X11/Xlib.h>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -28,6 +29,7 @@
 #include "xboxlive.h"
 #ifndef DISABLE_CEF
 #include "browser.h"
+#include "xbox_login_browser.h"
 #endif
 
 extern "C" {
@@ -254,7 +256,7 @@ void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
             &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
 #else
-    XboxLoginBrowserApp::OpenBrowser(ret);
+    XboxLoginBrowserClient::OpenBrowser(ret);
 #endif
 }
 std::vector<std::string> xblGetLocaleList() {
@@ -275,6 +277,21 @@ xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a,
     return ret;
 }
 
+static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
+    LOG(WARNING) << "X error received: "
+                 << "type " << event->type << ", "
+                 << "serial " << event->serial << ", "
+                 << "error_code " << static_cast<int>(event->error_code) << ", "
+                 << "request_code " << static_cast<int>(event->request_code)
+                 << ", "
+                 << "minor_code " << static_cast<int>(event->minor_code);
+    return 0;
+}
+
+static int XIOErrorHandlerImpl(Display* display) {
+    return 0;
+}
+
 extern "C"
 void pshufb(char* dest, char* src) {
     char new_dest[16];
@@ -291,9 +308,13 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
+    XSetErrorHandler(XErrorHandlerImpl);
+    XSetIOErrorHandler(XIOErrorHandlerImpl);
+
 #ifndef DISABLE_CEF
+    BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
     CefMainArgs cefArgs(argc, argv);
-    int exit_code = CefExecuteProcess(cefArgs, XboxLoginBrowserApp::singleton.get(), NULL);
+    int exit_code = CefExecuteProcess(cefArgs, BrowserApp::singleton.get(), NULL);
     if (exit_code >= 0)
         return exit_code;
 #endif
@@ -590,9 +611,9 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
 
 #ifndef DISABLE_CEF
-    XboxLoginBrowserApp::Shutdown();
-    XboxLiveHelper::shutdown();
+    BrowserApp::Shutdown();
 #endif
+    XboxLiveHelper::shutdown();
 
     return 0;
 }
