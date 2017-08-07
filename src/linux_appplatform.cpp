@@ -1,4 +1,4 @@
-#include "LinuxAppPlatform.h"
+#include "linux_appplatform.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>
