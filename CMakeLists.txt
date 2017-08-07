@@ -29,3 +29,7 @@ add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${SOURCE_FILES})
 target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} rt libEGL.so libGLESv2.so ${X11_X11_LIB} z curl crypto uuid libcef.so libcef_dll_wrapper.a)
 target_compile_definitions(mcpelauncher PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 set_target_properties(mcpelauncher PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/libs/cef/runtime/ $<TARGET_FILE_DIR:mcpelauncher>)
