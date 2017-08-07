@@ -579,6 +579,7 @@ int main(int argc, char *argv[]) {
     patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
 
     XboxLoginBrowserApp::Shutdown();
+    XboxLiveHelper::shutdown();
 
     return 0;
 }

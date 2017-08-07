@@ -244,8 +244,9 @@ void CLL::runThread() {
         }
         uploadEvents();
         {
+            std::unique_lock<std::mutex> lock(threadMutex);
             if (shouldStopThread)
-                return;
+                break;
         }
     }
 }

@@ -37,6 +37,8 @@ public:
         return msaStorageManager;
     }
 
+    static void shutdown();
+
     static void invokeXbLogin(xbox::services::system::user_auth_android* auth, std::string const& binaryToken);
 
 };
