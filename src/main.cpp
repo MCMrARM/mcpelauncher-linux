@@ -10,7 +10,6 @@
 #include <locale>
 #include <dirent.h>
 #include <fstream>
-#include "include/cef_app.h"
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -26,8 +25,10 @@
 #include "common.h"
 #include "hook.h"
 #include "minecraft/Xbox.h"
-#include "browser.h"
 #include "xboxlive.h"
+#ifndef DISABLE_CEF
+#include "browser.h"
+#endif
 
 extern "C" {
 
@@ -246,7 +247,15 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
 void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     std::cout << "invoke_auth_flow\n";
 
+#ifdef DISABLE_CEF
+    std::cerr << "This build does not support Xbox Live login.\n";
+    std::cerr << "To log in please build the launcher with CEF support.\n";
+    ret->auth_flow->auth_flow_result.code = 2;
+    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
+            &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
+#else
     XboxLoginBrowserApp::OpenBrowser(ret);
+#endif
 }
 std::vector<std::string> xblGetLocaleList() {
     std::vector<std::string> ret;
@@ -282,10 +291,12 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
+#ifndef DISABLE_CEF
     CefMainArgs cefArgs(argc, argv);
     int exit_code = CefExecuteProcess(cefArgs, XboxLoginBrowserApp::singleton.get(), NULL);
     if (exit_code >= 0)
         return exit_code;
+#endif
 
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
@@ -578,8 +589,10 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9SchedulerD2Ev");
     patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
 
+#ifndef DISABLE_CEF
     XboxLoginBrowserApp::Shutdown();
     XboxLiveHelper::shutdown();
+#endif
 
     return 0;
 }
