@@ -51,9 +51,11 @@ namespace xbox {
 namespace services {
 void* (*xbox_services_error_code_category)();
 std::shared_ptr<xbox::services::java_interop> (*java_interop::get_java_interop_singleton)();
+std::shared_ptr<local_config> (*local_config::local_config_get_local_config_singleton)();
 namespace system {
 pplx::task_completion_event_java_rps_ticket* xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent;
 pplx::task_completion_event_xbox_live_result_void* xbox::services::system::user_auth_android::s_signOutCompleteEvent;
+std::shared_ptr<user_auth_android> (*user_auth_android::user_auth_android_get_instance)();
 void (*auth_manager::auth_manager_set_rps_ticket)(auth_manager*, std::string const&);
 pplx::task (*auth_manager::auth_manager_initialize_default_nsal)(auth_manager*);
 std::shared_ptr<auth_config> (*auth_manager::auth_manager_get_auth_config)(auth_manager*);

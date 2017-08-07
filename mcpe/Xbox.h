@@ -37,6 +37,19 @@ struct java_interop {
 
 };
 
+struct local_config {
+
+    void** vtable;
+
+    std::string get_value_from_local_storage(std::string const& value) {
+        std::string (*func)(void*, std::string const&) = (std::string (*)(void*, std::string const&)) vtable[0x40/4];
+        return func(this, value);
+    }
+
+    static std::shared_ptr<local_config> (*local_config_get_local_config_singleton)();
+
+};
+
 namespace system {
 
 struct java_rps_ticket {
@@ -150,8 +163,12 @@ struct user_auth_android {
     static pplx::task_completion_event_java_rps_ticket* s_rpsTicketCompletionEvent;
     static pplx::task_completion_event_xbox_live_result_void* s_signOutCompleteEvent;
 
+    static std::shared_ptr<user_auth_android> (*user_auth_android_get_instance)();
+
     unknown_auth_flow_class* auth_flow;
-    char filler[0x60 - 4];
+    int filler;
+    mcpe::string xbox_user_id;
+    char filler2[0x60 - 12];
     auth_manager* auth_mgr;
 
 

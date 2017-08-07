@@ -15,11 +15,23 @@
 #include <netinet/in.h>
 #include "base64.h"
 
-std::chrono::milliseconds MSANetwork::serverTimeOffset; // TODO: Update it in ::send
+std::chrono::milliseconds MSANetwork::serverTimeOffset;
 
 static size_t curl_stringstream_write_func(void* ptr, size_t size, size_t nmemb, std::stringstream* s) {
     s->write((char*) ptr, size * nmemb);
     return size * nmemb;
+}
+static size_t curl_header_callback(char* buffer, size_t size, size_t nitems, void* userdata) {
+    // "Date: "
+    if (size * nitems > 6 && memcmp(buffer, "Date: ", 6) == 0) {
+        std::string s (&buffer[6], nitems * size - 6);
+        struct tm tm;
+        strptime(s.c_str(), "%a, %d %b %Y %H:%M:%S", &tm);
+        auto serverTime = std::chrono::system_clock::from_time_t(timegm(&tm));
+        auto localTime = std::chrono::system_clock::now();
+        MSANetwork::serverTimeOffset = std::chrono::duration_cast<std::chrono::milliseconds>(serverTime.time_since_epoch()) - std::chrono::duration_cast<std::chrono::milliseconds>(localTime.time_since_epoch());
+    }
+    return nitems * size;
 }
 
 std::string MSANetwork::send(std::string const& url, std::string const& data) {
@@ -35,6 +47,7 @@ std::string MSANetwork::send(std::string const& url, std::string const& data) {
     headers = curl_slist_append(headers, "Expect:");
     headers = curl_slist_append(headers, "Content-type: application/x-www-form-urlencoded");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_header_callback);
 
     std::stringstream output;
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
@@ -209,7 +222,7 @@ MSATokenResponse MSANetwork::parseTokenResponse(rapidxml::xml_node<char>* node) 
         rapidxml::xml_node<char>* expires = node->first_node("wsu:Expires");
         struct tm tm;
         if (expires != nullptr && strptime(expires->value(), "%FT%TZ", &tm))
-            expire = std::chrono::system_clock::from_time_t(mktime(&tm));
+            expire = std::chrono::system_clock::from_time_t(timegm(&tm));
     }
 
     if (strcmp(tokenType->value(), "urn:passport:legacy") == 0)

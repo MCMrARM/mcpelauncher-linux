@@ -1,12 +1,12 @@
 #include "cll.h"
-#include "base64.h"
 
 #include <sstream>
-#include <ctime>
 #include <cstring>
 #include <functional>
 #include <curl/curl.h>
 #include <zlib.h>
+#include "msa.h"
+#include "xboxlive.h"
 
 std::string const CLL::VORTEX_URL = "https://vortex.data.microsoft.com/collect/v1";
 // TODO: Those are normally fetched from config
@@ -31,6 +31,67 @@ CLL::~CLL() {
 void CLL::addEvent(std::string const& ticket, std::string const& name, std::string const& data) {
     std::unique_lock<std::mutex> lock (eventsMutex);
     events.push_back({ticket, name, data, std::chrono::system_clock::now()});
+}
+
+void CLL::setMSAAccount(std::shared_ptr<MSAAccount> account) {
+    std::unique_lock<std::mutex> lock (accountMutex);
+    this->account = account;
+    this->msaDeviceTicket = std::string();
+    this->authXToken = std::string();
+}
+
+std::string CLL::getMSADeviceTicket() {
+    std::unique_lock<std::mutex> lock (accountMutex);
+    if (!msaDeviceTicket.empty())
+        return msaDeviceTicket;
+    auto account = this->account;
+    lock.unlock();
+    if (!account)
+        return std::string();
+    auto tokens = account->requestTokens({{"vortex.data.microsoft.com", "mbi_ssl"}});
+    auto vortexToken = tokens[{"vortex.data.microsoft.com"}];
+    if (!vortexToken.hasError()) {
+        lock.lock();
+        msaDeviceTicket = std::static_pointer_cast<MSACompactToken>(vortexToken.getToken())->getBinaryToken();
+        return msaDeviceTicket;
+    }
+    return std::string();
+}
+
+std::pair<std::string, std::string> CLL::getXTokenAndTicket() {
+    std::unique_lock<std::mutex> lock (accountMutex);
+    if (!authXToken.empty())
+        return {authXToken, authXTicket};
+    auto account = this->account;
+    lock.unlock();
+    if (!account)
+        return {};
+
+    using namespace xbox::services::system;
+    auto auth = user_auth_android::user_auth_android_get_instance();
+    auto initTask = auth_manager::auth_manager_initialize_default_nsal(auth->auth_mgr);
+    auto initRet = pplx::task::task_xbox_live_result_void_get(&initTask);
+    if (initRet.code != 0)
+        throw std::runtime_error("Failed to initialize default nsal");
+    std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
+                                              (token_identity_type) 2};
+    auto config = auth_manager::auth_manager_get_auth_config(auth->auth_mgr);
+    auth_config::auth_config_set_xtoken_composition(config.get(), types);
+    std::string const& endpoint = "https://test.vortex.data.microsoft.com";
+    printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
+    auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth->auth_mgr, "GET", endpoint, endpoint,
+                                                                            std::string(), std::vector<unsigned char>(),
+                                                                            false, false,
+                                                                            std::string()); // I'm unsure about the vector (and pretty much only about the vector)
+    auto ret = pplx::task::task_xbox_live_result_token_and_signature_get(&task);
+
+    std::string xuid = auth->xbox_user_id.std();
+    auto local_conf = xbox::services::local_config::local_config_get_local_config_singleton();
+    std::string ticket = local_conf->get_value_from_local_storage(xuid);
+    lock.lock();
+    authXToken = ret.data.token.std();
+    authXTicket = "\"" + xuid + "\"=\"x:" + ticket + "\"";
+    return {authXToken, authXTicket};
 }
 
 void CLL::uploadEvents() {
@@ -134,13 +195,17 @@ void CLL::sendEvent(std::string const& data, bool compress) {
         headers = curl_slist_append(headers, "Accept-Encoding: gzip, deflate");
         headers = curl_slist_append(headers, "Content-Encoding: deflate");
     }
+    headers = curl_slist_append(headers, ("X-AuthMsaDeviceTicket: " + getMSADeviceTicket()).c_str());
+    auto xtoken = getXTokenAndTicket();
+    headers = curl_slist_append(headers, ("X-AuthXToken: " + xtoken.first).c_str());
+    headers = curl_slist_append(headers, ("X-Tickets: " + xtoken.second).c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
     std::stringstream output;
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_stringstream_write_func);
     curl_easy_perform(curl);
-    printf("Response: %i %s\n", (int)output.str().length(), output.str().c_str());
+    printf("Response: %s\n", output.str().c_str());
 }
 
 std::string CLL::compress(std::string const& data) {
@@ -175,7 +240,7 @@ void CLL::runThread() {
     while (true) {
         {
             std::unique_lock<std::mutex> lock(threadMutex);
-            threadLock.wait_for(lock, std::chrono::milliseconds(10));
+            threadLock.wait_for(lock, std::chrono::seconds(10));
         }
         uploadEvents();
         {
