@@ -9,9 +9,11 @@
 #include <uuid/uuid.h>
 #include <sys/types.h>
 #include <sys/sysinfo.h>
+#include <sys/statvfs.h>
 #include "../mcpe/ImagePickingCallback.h"
 #include "../mcpe/FilePickerSettings.h"
 #include "../hybris/src/jb/linker.h"
+#include "common.h"
 
 extern "C" {
 #include <eglut.h>
@@ -177,6 +179,12 @@ void LinuxAppPlatform::setFullscreenMode(int mode) {
     int newMode = mode == 1 ? EGLUT_FULLSCREEN : EGLUT_WINDOWED;
     if (eglutGet(EGLUT_FULLSCREEN_MODE) != newMode)
         eglutToggleFullscreen();
+}
+
+long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
+    struct statvfs buf;
+    statvfs(getCWD().c_str(), &buf);
+    return (long long int) buf.f_bsize * buf.f_bfree;
 }
 
 std::string LinuxAppPlatform::createUUID() {

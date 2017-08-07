@@ -135,9 +135,7 @@ public:
     }
     long long getAvailableMemory();
 
-    long long calculateAvailableDiskFreeSpace() {
-        return 100000000L;
-    }
+    long long calculateAvailableDiskFreeSpace();
 
     std::string &getPlatformTempPath() {
         return tmpPath;
