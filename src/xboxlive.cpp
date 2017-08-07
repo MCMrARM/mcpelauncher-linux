@@ -16,6 +16,10 @@ void XboxLiveHelper::initMSALoginManager() {
     msaLoginManager = std::shared_ptr<MSALoginManager>(new MSALoginManager(msaStorageManager));
 }
 
+void XboxLiveHelper::shutdown() {
+    cll.reset();
+}
+
 void XboxLiveHelper::invokeXbLogin(xbox::services::system::user_auth_android* auth, std::string const& binaryToken) {
     using namespace xbox::services::system;
     auth_manager::auth_manager_set_rps_ticket(auth->auth_mgr, binaryToken);
