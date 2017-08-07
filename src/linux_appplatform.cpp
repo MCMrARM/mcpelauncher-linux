@@ -165,7 +165,11 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
         ss << "'";
     }
     std::string file = _pickFile(ss.str());
-    settings.pickedCallback(settings, file);
+    if (file.empty()) {
+        settings.cancelCallback(settings);
+    } else {
+        settings.pickedCallback(settings, file);
+    }
 }
 
 void LinuxAppPlatform::setFullscreenMode(int mode) {
