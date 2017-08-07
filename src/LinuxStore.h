@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include "../mcpe/string.h"
 
 struct StoreListener;
 struct PurchaseInfo;
@@ -13,24 +14,24 @@ struct LinuxStore {
         return false;
     }
     virtual bool allowsSubscriptions() {
-        std::cout << "allows subscriptions: false\n";
-        return false;
+        std::cout << "allows subscriptions: true\n";
+        return true;
     }
-    virtual std::string getStoreId() {
-        std::cout << "get store id: LinuxStore\n";
-        return "LinuxStore";
+    virtual mcpe::string getStoreId() {
+        std::cout << "get store id: android.googleplay\n";
+        return "android.googleplay";
     }
-    virtual std::string getSubPlatformStoreId() {
-        std::cout << "get sub platform store id: LinuxStore\n";
-        return "LinuxStore";
+    virtual mcpe::string getSubPlatformStoreId() {
+        std::cout << "get sub platform store id: \n";
+        return "";
     }
-    virtual std::string getProductSkuPrefix() {
-        std::cout << "get product sku prefix: linux";
-        return "linux";
+    virtual mcpe::string getProductSkuPrefix() {
+        std::cout << "get product sku prefix: \n";
+        return "";
     }
-    virtual std::string getRealmsSkuPrefix() {
-        std::cout << "get product sku prefix: realms";
-        return "realms";
+    virtual mcpe::string getRealmsSkuPrefix() {
+        std::cout << "get product sku prefix: \n";
+        return "";
     }
     virtual void queryProducts(std::vector<std::string> const& arr) {
         std::cout << "query products\n";
