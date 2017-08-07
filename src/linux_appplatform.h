@@ -6,9 +6,9 @@
 #include <sys/param.h>
 #include <vector>
 #include <mutex>
-#include "../mcpe/gl.h"
-#include "../mcpe/AppPlatform.h"
-#include "../mcpe/ImagePickingCallback.h"
+#include "minecraft/gl.h"
+#include "minecraft/AppPlatform.h"
+#include "minecraft/ImagePickingCallback.h"
 
 class ImageData;
 class ImagePickingCallback;

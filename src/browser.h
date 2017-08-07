@@ -7,7 +7,7 @@
 #include <condition_variable>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
-#include "../mcpe/Xbox.h"
+#include "minecraft/Xbox.h"
 
 class SimpleHandler;
 class XboxLiveV8Handler;

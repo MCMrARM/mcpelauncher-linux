@@ -10,8 +10,8 @@
 #include <sys/types.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
-#include "../mcpe/ImagePickingCallback.h"
-#include "../mcpe/FilePickerSettings.h"
+#include "minecraft/ImagePickingCallback.h"
+#include "minecraft/FilePickerSettings.h"
 #include "../hybris/src/jb/linker.h"
 #include "common.h"
 
