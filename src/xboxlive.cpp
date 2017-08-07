@@ -3,6 +3,7 @@
 
 #include <fstream>
 
+std::shared_ptr<CLL> XboxLiveHelper::cll;
 std::shared_ptr<MSALoginManager> XboxLiveHelper::msaLoginManager;
 std::shared_ptr<SimpleMSAStorageManager> XboxLiveHelper::msaStorageManager;
 
@@ -10,6 +11,7 @@ const std::string SimpleMSAStorageManager::DEVICE_AUTH_PATH = "data/msa_device_a
 const std::string SimpleMSAStorageManager::ACCOUNT_INFO_PATH = "data/msa_account.txt";
 
 void XboxLiveHelper::initMSALoginManager() {
+    cll = std::shared_ptr<CLL>(new CLL());
     msaStorageManager = std::shared_ptr<SimpleMSAStorageManager>(new SimpleMSAStorageManager());
     msaLoginManager = std::shared_ptr<MSALoginManager>(new MSALoginManager(msaStorageManager));
 }
@@ -98,7 +100,14 @@ std::shared_ptr<MSAAccount> SimpleMSAStorageManager::getAccount() {
         return std::shared_ptr<MSAAccount>();
     std::shared_ptr<MSALegacyToken> token(new MSALegacyToken(properties["token_xml"], Base64::decode(properties["token_bin_secret"])));
     account = std::shared_ptr<MSAAccount>(new MSAAccount(XboxLiveHelper::getMSALoginManager(), properties["username"], properties["cid"], token));
+    XboxLiveHelper::getCLL()->setMSAAccount(account);
     return account;
+}
+
+void SimpleMSAStorageManager::setAccount(std::shared_ptr<MSAAccount> account) {
+    this->account = account;
+    onAccountInfoChanged();
+    XboxLiveHelper::getCLL()->setMSAAccount(account);
 }
 
 void SimpleMSAStorageManager::onAccountTokenListChanged(MSALoginManager& manager, MSAAccount& account) {

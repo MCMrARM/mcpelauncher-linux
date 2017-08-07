@@ -28,7 +28,6 @@
 #include "../mcpe/Xbox.h"
 #include "browser.h"
 #include "xboxlive.h"
-#include "cll.h"
 
 extern "C" {
 
@@ -84,7 +83,6 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 
 static MinecraftGame* client;
 static LinuxAppPlatform* platform;
-static std::unique_ptr<CLL> cll;
 
 int winId = 0;
 bool moveMouseToCenter = false;
@@ -260,7 +258,7 @@ void xblRegisterNatives() {
 }
 xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a, std::string const& b, std::string const& c) {
     std::cout << "log_cll " << a << " " << b << " " << c << "\n";
-    cll->addEvent(a, b, c);
+    XboxLiveHelper::getCLL()->addEvent(a, b, c);
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
@@ -333,8 +331,6 @@ int main(int argc, char *argv[]) {
     if (enableStackTracePrinting) {
         registerCrashHandler();
     }
-
-    cll = std::unique_ptr<CLL>(new CLL());
 
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
@@ -509,8 +505,10 @@ int main(int argc, char *argv[]) {
     pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set = (void (*)(pplx::task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services16xbox_live_resultIvEEE3setES4_");
     pplx::task::task_xbox_live_result_void_get = (xbox::services::xbox_live_result<void> (*)(pplx::task*)) hybris_dlsym(handle, "_ZNK4pplx4taskIN4xbox8services16xbox_live_resultIvEEE3getEv");
     pplx::task::task_xbox_live_result_token_and_signature_get = (xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*)(pplx::task*)) hybris_dlsym(handle, "_ZNK4pplx4taskIN4xbox8services16xbox_live_resultINS2_6system26token_and_signature_resultEEEE3getEv");
+    xbox::services::local_config::local_config_get_local_config_singleton = (std::shared_ptr<xbox::services::local_config> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12local_config26get_local_config_singletonEv");
     xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
     xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
+    xbox::services::system::user_auth_android::user_auth_android_get_instance = (std::shared_ptr<xbox::services::system::user_auth_android> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android12get_instanceEv");
     xbox::services::system::auth_manager::auth_manager_set_rps_ticket = (void (*)(xbox::services::system::auth_manager*, std::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager14set_rps_ticketERKSs");
     xbox::services::system::auth_manager::auth_manager_initialize_default_nsal = (pplx::task (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager23initialize_default_nsalEv");
     xbox::services::system::auth_manager::auth_manager_get_auth_config = (std::shared_ptr<xbox::services::system::auth_config> (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager15get_auth_configEv");

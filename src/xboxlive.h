@@ -1,6 +1,7 @@
 #pragma once
 
 #include "msa.h"
+#include "cll.h"
 #include "../mcpe/Xbox.h"
 #include <map>
 
@@ -10,12 +11,19 @@ class XboxLiveHelper {
 
 private:
 
+    static std::shared_ptr<CLL> cll;
     static std::shared_ptr<MSALoginManager> msaLoginManager;
     static std::shared_ptr<SimpleMSAStorageManager> msaStorageManager;
 
     static void initMSALoginManager();
 
 public:
+
+    static std::shared_ptr<CLL> getCLL() {
+        if (!msaLoginManager)
+            initMSALoginManager();
+        return cll;
+    }
 
     static std::shared_ptr<MSALoginManager> getMSALoginManager() {
         if (!msaLoginManager)
@@ -46,10 +54,7 @@ private:
     std::shared_ptr<MSAAccount> account;
 
 public:
-    void setAccount(std::shared_ptr<MSAAccount> account) {
-        this->account = account;
-        onAccountInfoChanged();
-    }
+    void setAccount(std::shared_ptr<MSAAccount> account);
 
     std::shared_ptr<MSAAccount> getAccount();
 

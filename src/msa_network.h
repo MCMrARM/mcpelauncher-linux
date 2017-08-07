@@ -9,8 +9,6 @@ class MSANetwork {
 
 private:
 
-    static std::chrono::milliseconds serverTimeOffset;
-
     static std::string escapeText(std::string str);
 
     static std::string escapeURL(std::string str);
@@ -46,6 +44,8 @@ private:
 
 public:
 
+    static std::chrono::milliseconds serverTimeOffset;
+
     static std::chrono::system_clock::time_point getServerTime() {
         return std::chrono::system_clock::now() + serverTimeOffset;
     }
@@ -57,6 +57,5 @@ public:
     static std::vector<MSATokenResponse> requestTokens(std::shared_ptr<MSALegacyToken> daToken,
                                                        std::shared_ptr<MSALegacyToken> deviceToken,
                                                        std::vector<MSASecurityScope> const& scopes);
-
 
 };
