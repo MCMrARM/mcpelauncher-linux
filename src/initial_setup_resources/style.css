@@ -1,0 +1,64 @@
+html, body {
+    background: #303030;
+    color: #fff;
+    text-align: center;
+    user-select: none;
+    cursor: default;
+}
+body {
+    margin-left: 72px;
+    margin-right: 72px;
+    font-size: 13px;
+}
+h1 {
+    margin-top: 72px;
+    margin-bottom: 24px;
+    padding: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+h2 {
+    font-size: 16px;
+    font-weight: normal;
+}
+ul {
+    padding: 0;
+    list-style: none;
+}
+button {
+    background: #00E676;
+    color: white;
+    border: none;
+    border-radius: 2px;
+    padding: 8px 24px;
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    outline: none;
+    cursor: pointer;
+}
+button:active {
+    background: #00B85E;
+}
+.caption {
+    font-size: 12px;
+}
+
+#block-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    opacity: 0.4;
+    display: none;
+}
+
+#methods-list {
+    padding-top: 8px;
+}
+#methods-list > *:not(:first-child) {
+    margin-top: 24px;
+}

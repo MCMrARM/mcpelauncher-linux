@@ -5,17 +5,14 @@
 AsyncResult<GoogleLoginResult> GoogleLoginBrowserClient::resultState;
 std::string const GoogleLoginRenderHandler::Name = "GoogleLoginRenderHandler";
 
-GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser() {
+GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(CefWindowInfo const& windowInfo) {
     printf("GoogleLoginBrowserClient::OpenBrowser\n");
 
-    BrowserApp::RunWithContext([] {
+    BrowserApp::RunWithContext([windowInfo] {
         CefRefPtr<GoogleLoginBrowserClient> client = new GoogleLoginBrowserClient();
 
-        CefWindowInfo window;
-        window.width = 480;
-        window.height = 640;
         CefBrowserSettings browserSettings;
-        CefBrowserHost::CreateBrowser(window, client, "https://accounts.google.com/embedded/setup/v2/android?source=com.android.settings&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&lang=en&langCountry=en_us&hl=en-US&cc=us", browserSettings, NULL);
+        CefBrowserHost::CreateBrowser(windowInfo, client, "https://accounts.google.com/embedded/setup/v2/android?source=com.android.settings&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&lang=en&langCountry=en_us&hl=en-US&cc=us", browserSettings, NULL);
     });
 
     resultState.Clear();

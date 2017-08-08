@@ -37,6 +37,7 @@
 #include "xbox_login_browser.h"
 #include "google_login_browser.h"
 #include "google_play_helper.h"
+#include "initial_setup_browser.h"
 
 #endif
 
@@ -316,6 +317,7 @@ int main(int argc, char *argv[]) {
     XSetIOErrorHandler(XIOErrorHandlerImpl);
 
 #ifndef DISABLE_CEF
+    BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
     BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
     BrowserApp::RegisterRenderProcessHandler<GoogleLoginRenderHandler>();
     CefMainArgs cefArgs(argc, argv);
@@ -328,9 +330,10 @@ int main(int argc, char *argv[]) {
     {
         struct stat stat_buf;
         if (stat("libs/libminecraftpe.so", &stat_buf)) {
-            GooglePlayHelper helper;
-            helper.handleLoginAndApkDownload();
-            return 1;
+            if (!InitialSetupBrowserClient::OpenBrowser()) {
+                BrowserApp::Shutdown();
+                return 1;
+            }
         }
     }
 #endif
