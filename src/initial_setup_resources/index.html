@@ -102,7 +102,24 @@
     document.getElementById("method-google").addEventListener("click", function () {
         setProgressVisible(true);
         setup.startGoogleLogin();
-        closeDialog();
+    });
+    document.getElementById("method-apk").addEventListener("click", function () {
+        setProgressVisible(true);
+        setup.pickFile("Select a Minecraft .apk", "*.apk", function (file, error) {
+            if (error) {
+                setProgressVisible(false);
+                showDialog("dialog-message");
+                document.getElementById("message-text").innerText = error;
+                document.getElementById("message-title").innerText = "Error";
+            } else if (file === null) {
+                setProgressVisible(false);
+                showDialog("dialog-message");
+                document.getElementById("message-text").innerText = "No file was selected";
+                document.getElementById("message-title").innerText = "Error";
+            } else {
+                setup.setupWithFile(file);
+            }
+        });
     });
     document.getElementById("message-close").addEventListener("click", function() {
         setup.setAskResult(true);
