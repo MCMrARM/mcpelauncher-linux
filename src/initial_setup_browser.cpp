@@ -65,6 +65,10 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         bool marketing = message->GetArgumentList()->GetBool(1);
         askTosResult.Set(accepted ? (marketing ? AskTosResult::ACCEPTED_MARKETING : AskTosResult::ACCEPTED) : AskTosResult::DECLINED);
         return true;
+    } else if (message->GetName() == "Finish") {
+        resultState.Set(true);
+        CloseAllBrowsers(true);
+        return true;
     }
     return false;
 }
@@ -128,6 +132,7 @@ void InitialSetupRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, 
     object->SetValue("setAskTosResult", CefV8Value::CreateFunction("setAskTosResult", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setDownloadStatusCallback", CefV8Value::CreateFunction("setDownloadStatusCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setApkSetupCallback", CefV8Value::CreateFunction("setApkSetupCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("finish", CefV8Value::CreateFunction("finish", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("setup", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
@@ -209,6 +214,12 @@ bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value>
             msgArgs->SetBool(1, args[1]->GetBoolValue());
         else
             msgArgs->SetBool(1, false);
+        handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        return true;
+    } else if (name == "finish" && args.size() >= 1 && args[0]->IsBool()) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Finish");
+        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
+        msgArgs->SetBool(0, args[0]->GetBoolValue());
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
     }

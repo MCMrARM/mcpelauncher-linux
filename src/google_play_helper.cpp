@@ -8,6 +8,7 @@
 #include <iostream>
 #include "../gplay_api/src/config.h"
 #include "initial_setup_browser.h"
+#include "extract.h"
 
 std::string const GooglePlayHelper::DOWNLOAD_PACKAGE = "com.mojang.minecraftpe";
 
@@ -146,10 +147,10 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
 
     setup->NotifyDownloadStatus(false, 0LL, 0LL);
 
-    // TODO: Extract the apk
+    ExtractHelper::extractApk(file_name);
 
-    setup->NotifyApkSetupResult(false);
-    return false;
+    setup->NotifyApkSetupResult(true);
+    return true;
 }
 
 void GooglePlayHelper::handleLoginAndApkDownload(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
