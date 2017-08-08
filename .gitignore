@@ -8,3 +8,5 @@ libs/libgnustl_shared.so
 libs/cef
 cmake-build-debug/
 *.apk
+playdl.conf
+device.conf.state
