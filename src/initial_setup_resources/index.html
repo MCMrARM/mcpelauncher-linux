@@ -24,12 +24,137 @@
     </li>
 </ul>
 <div id="block-overlay"></div>
+<div id="loading-progress-ctr">
+    <canvas id="loading-progress" width="48" height="48"></canvas>
+</div>
+<div id="dialog-ctr">
+    <div id="dialog-message" class="dialog">
+        <h1 id="message-title"></h1>
+        <p id="message-text"></p>
+        <div class="dialog-buttons">
+            <button class="flat dialog-button" id="message-close">OK</button>
+        </div>
+    </div>
+    <div id="dialog-confirm" class="dialog">
+        <h1 id="confirm-title"></h1>
+        <p id="confirm-text"></p>
+        <div class="dialog-buttons">
+            <button class="flat dialog-button" id="confirm-yes">Yes</button>
+            <button class="flat dialog-button" id="confirm-no">No</button>
+        </div>
+    </div>
+    <div id="dialog-tos" class="dialog">
+        <h1>Google Play Terms of Service</h1>
+        <p id="tos-text">To continue you have to accept Google Play Terms of Service.</p>
+        <input id="tos-marketing" type="checkbox"> <label for="tos-marketing">I want to receive marketing emails</label><br>
+        <div class="dialog-buttons">
+            <button class="flat dialog-button" id="tos-accept">Accept</button>
+            <button class="flat dialog-button" id="tos-decline">Decline</button>
+        </div>
+    </div>
+    <div id="dialog-download" class="dialog">
+        <h1>Downloading...</h1>
+        <p id="download-text">Downloading Minecraft...</p>
+        <div class="progressbar-ctr"><div id="download-progressbar-val" class="progressbar-active"></div></div>
+        <div id="download-progress">0%</div>
+        <div id="download-progress-detail"></div>
+    </div>
+</div>
+<script src="circular_progress.js"></script>
 <script>
     var overlay = document.getElementById("block-overlay");
-    document.getElementById("method-google").addEventListener("click", function () {
+    var dialogCtr = document.getElementById("dialog-ctr");
+    var loading = new CircularProgressBar(document.getElementById("loading-progress"), "#00E676");
+    var loadingCtr = document.getElementById("loading-progress-ctr");
+    var dialog = null;
+    function hideOverlayIfNeeded() {
+        if (dialog === null && loadingCtr.style.display === "none")
+            overlay.style.display = "none";
+    }
+    function closeDialog() {
+        if (dialog !== null) {
+            dialog.style.display = "none";
+            dialog = null;
+        }
+        dialogCtr.style.display = "none";
+        setProgressVisible(true, true);
+        hideOverlayIfNeeded();
+    }
+    function showDialog(id) {
+        if (dialog !== null)
+            dialog.style.display = "none";
+        setProgressVisible(false, true);
         overlay.style.display = "block";
+        dialogCtr.style.display = "flex";
+        dialog = document.getElementById(id);
+        dialog.style.display = "block";
+    }
+    function setProgressVisible(visible, internal) {
+        if (!internal)
+            loadingCtr.style.display = visible ? "flex" : "none";
+        loading.element.style.display = internal && !visible ? "none" : "flex";
+        loading.setDrawingEnabled(internal ? loadingCtr.style.display !== "none" : visible);
+        if (visible)
+            overlay.style.display = "block";
+        else
+            hideOverlayIfNeeded();
+    }
+    document.getElementById("method-google").addEventListener("click", function () {
+        setProgressVisible(true);
         setup.startGoogleLogin();
+        closeDialog();
     });
+    document.getElementById("message-close").addEventListener("click", function() {
+        setup.setAskResult(true);
+        closeDialog();
+    });
+    document.getElementById("confirm-yes").addEventListener("click", function() {
+        setup.setAskResult(true);
+        closeDialog();
+    });
+    document.getElementById("confirm-no").addEventListener("click", function() {
+        setup.setAskResult(false);
+        closeDialog();
+    });
+    document.getElementById("tos-accept").addEventListener("click", function() {
+        setup.setAskTosResult(true, document.getElementById("tos-marketing").checked);
+        closeDialog();
+    });
+    document.getElementById("tos-decline").addEventListener("click", function() {
+        setup.setAskTosResult(false);
+        closeDialog();
+    });
+
+    setup.setMessageHandler(function (type, text, title) {
+        if (type === "message") {
+            showDialog("dialog-message");
+            document.getElementById("message-text").innerText = text;
+            document.getElementById("message-title").innerText = title;
+        } else if (type === "yesno") {
+            showDialog("dialog-confirm");
+            document.getElementById("confirm-text").innerText = text;
+            document.getElementById("confirm-title").innerText = title;
+        } else if (type === "tos") {
+            showDialog("dialog-tos");
+            document.getElementById("tos-text").innerText = text;
+        }
+    });
+    setup.setDownloadStatusCallback(function (downloading, downloaded, total) {
+        if (!downloading) {
+            if (dialog !== null && dialog.id === "dialog-download")
+                closeDialog();
+            return;
+        }
+        if (dialog === null || dialog.id !== "dialog-download")
+            showDialog("dialog-download");
+        var progress = total === 0 ? 0 : (downloaded / total * 100);
+        document.getElementById("download-progressbar-val").style.width = progress + "%";
+        document.getElementById("download-progress").textContent = Math.round(progress) + "%";
+        downloaded = Math.round(downloaded / 1024 / 1024 * 10) / 10;
+        total = Math.round(total / 1024 / 1024 * 10) / 10;
+        document.getElementById("download-progress-detail").textContent = downloaded + "MB/" + total + "MB";
+    });
+
 </script>
 </body>
 </html>

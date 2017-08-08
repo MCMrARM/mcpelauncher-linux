@@ -15,8 +15,16 @@ class InitialSetupV8Handler;
 
 class InitialSetupBrowserClient : public BrowserClient {
 
+public:
+    enum class AskTosResult {
+        ACCEPTED, ACCEPTED_MARKETING, DECLINED
+    };
+
 private:
     static AsyncResult<bool> resultState;
+
+    AsyncResult<bool> askResult;
+    AsyncResult<AskTosResult> askTosResult;
 
 public:
     static bool OpenBrowser();
@@ -27,6 +35,17 @@ public:
 
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
                                           CefRefPtr<CefProcessMessage> message) override;
+
+    void OnGoogleLoginFinish();
+
+    AsyncResult<bool>& ShowMessage(std::string const& title, std::string const& text);
+
+    AsyncResult<bool>& AskYesNo(std::string const& title, std::string const& text);
+
+    AsyncResult<AskTosResult>& AskAcceptTos(std::string const& tos);
+
+    void NotifyDownloadStatus(bool downloading, long long downloaded = 0, long long downloadTotal = 0);
+
 };
 
 class InitialSetupRenderHandler : public MyRenderProcessHandler {
@@ -42,14 +61,23 @@ public:
     virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                   CefRefPtr<CefV8Context> context) override;
 
+    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
+                                          CefRefPtr<CefProcessMessage> message) override;
+
 };
 
 class InitialSetupV8Handler : public CefV8Handler {
 
 private:
     InitialSetupRenderHandler& handler;
+    std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> messageCallback;
+    std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> downloadStatusCallback;
 
 public:
+
+    void CallMessageCallback(const CefV8ValueList& arguments);
+    void NotifyDownloadStatus(bool downloading, double downloaded, double downloadTotal);
+
     InitialSetupV8Handler(InitialSetupRenderHandler& handler) : handler(handler) {}
 
     virtual bool Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,

@@ -53,6 +53,8 @@ void BrowserApp::OnContextInitialized() {
 
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
                                                       CefRefPtr<CefProcessMessage> message) {
+    if (browserRenderHandlers.count(browser->GetIdentifier()) > 0 && browserRenderHandlers.at(browser->GetIdentifier())->OnProcessMessageReceived(browser, source_process, message))
+        return true;
     if (message->GetName() == "SetRenderHandler") {
         CefRefPtr<CefListValue> args = message->GetArgumentList();
         BrowserApp::singleton->SetRenderHandler(args->GetInt(0), args->GetString(1));

@@ -80,6 +80,11 @@ public:
     virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                   CefRefPtr<CefV8Context> context) {}
 
+    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
+                                          CefRefPtr<CefProcessMessage> message) {
+        return false;
+    }
+
 };
 
 class BrowserClient : public CefClient, public CefLifeSpanHandler, public CefLoadHandler {

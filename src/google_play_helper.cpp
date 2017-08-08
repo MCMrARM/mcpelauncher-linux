@@ -33,6 +33,7 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
     conf.load();
 
     std::string device_path = "device.conf";
+    bool should_save = true;
 
     playapi::device_info device;
     {
@@ -55,9 +56,11 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
         if (!result.success)
             return false;
         login.perform_with_access_token(result.oauthToken, result.email, true);
+        should_save = setup->AskYesNo("Store authentication", "Would you like to save the authentication information for future usage (eg. downloading newer version of Minecraft)?").Get();
         conf.user_email = login.get_email();
         conf.user_token = login.get_token();
-        conf.save();
+        if (should_save)
+            conf.save();
     } else {
         login.set_token(conf.user_email, conf.user_token);
         login.verify();
@@ -88,9 +91,11 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
                    toc.payload().tocresponse().has_cookie());
             play.toc_cookie = toc.payload().tocresponse().cookie();
             if (toc.payload().tocresponse().has_toscontent() && toc.payload().tocresponse().has_tostoken()) {
-                printf("Terms of Service:\n%s\n", toc.payload().tocresponse().toscontent().c_str());
-                bool allow_marketing_emails = false;
-                auto tos = play.accept_tos(toc.payload().tocresponse().tostoken(), allow_marketing_emails);
+                InitialSetupBrowserClient::AskTosResult accepted = setup->AskAcceptTos(toc.payload().tocresponse().toscontent()).Get();
+                if (accepted == InitialSetupBrowserClient::AskTosResult::DECLINED) {
+                    return false;
+                }
+                auto tos = play.accept_tos(toc.payload().tocresponse().tostoken(), accepted == InitialSetupBrowserClient::AskTosResult::ACCEPTED_MARKETING);
                 assert(tos.payload().has_accepttosresponse());
                 dev_state.set_api_data(login.get_email(), play);
                 dev_state.save();
@@ -124,20 +129,20 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
         return size;
     });
 
-    req.set_progress_callback([&req](curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-        if (dltotal > 0) {
-            printf("\rDownloaded %i%% [%li/%li MiB]", (int) (dlnow * 100 / dltotal), (long) (dlnow / 1024 / 1024),
-                   (long) (dltotal / 1024 / 1024));
-            std::cout.flush();
-        }
+    curl_off_t old_dlnow = -1LL;
+    req.set_progress_callback([&req, &old_dlnow, setup](curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+        if (dltotal > 0 && (dlnow >= old_dlnow + 1024L * 100L || dlnow == 0 || dlnow == dltotal))
+            setup->NotifyDownloadStatus(true, dlnow, dltotal);
     });
-    printf("Starting download...\n");
+    setup->NotifyDownloadStatus(true, 0LL, 0LL);
     req.perform();
 
     do_zlib_inflate(zs, file, Z_NULL, 0, Z_FINISH);
     inflateEnd(&zs);
 
     fclose(file);
+
+    setup->NotifyDownloadStatus(false, 0LL, 0LL);
 
     // TODO: Extract the apk
 
