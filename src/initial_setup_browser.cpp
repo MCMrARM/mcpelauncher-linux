@@ -1,7 +1,11 @@
 #include <X11/Xlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 #include "initial_setup_browser.h"
 #include "common.h"
 #include "google_play_helper.h"
+#include "extract.h"
 
 AsyncResult<bool> InitialSetupBrowserClient::resultState;
 std::string const InitialSetupRenderHandler::Name = "InitialSetupRenderHandler";
@@ -25,6 +29,99 @@ bool InitialSetupBrowserClient::OpenBrowser() {
 
 InitialSetupBrowserClient::InitialSetupBrowserClient() {
     SetRenderHandler<InitialSetupRenderHandler>();
+}
+
+void InitialSetupBrowserClient::HandlePickFile(std::string const& title, std::string const& ext) {
+    struct stat sb;
+    if (stat("/usr/bin/zenity", &sb)) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFileResult");
+        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
+        msgArgs->SetString(1, "Could not find zenity.\n\nTo be able to pick files, please install the `zenity` utility.");
+        GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
+        return;
+    }
+
+    char ret[1024];
+
+    int pipes[3][2];
+    static const int PIPE_STDOUT = 0;
+    static const int PIPE_STDERR = 1;
+    static const int PIPE_STDIN = 2;
+    static const int PIPE_READ = 0;
+    static const int PIPE_WRITE = 1;
+
+    pipe(pipes[PIPE_STDOUT]);
+    pipe(pipes[PIPE_STDERR]);
+    pipe(pipes[PIPE_STDIN]);
+
+    int pid;
+    if (!(pid = fork())) {
+        char* argv[] = {"/usr/bin/zenity", "--file-selection", "--title", const_cast<char*>(title.c_str()),
+                        "--file-filter", const_cast<char*>(ext.c_str()), 0};
+
+        dup2(pipes[PIPE_STDOUT][PIPE_WRITE], STDOUT_FILENO);
+        dup2(pipes[PIPE_STDERR][PIPE_WRITE], STDERR_FILENO);
+        dup2(pipes[PIPE_STDIN][PIPE_READ], STDIN_FILENO);
+        close(pipes[PIPE_STDIN][PIPE_WRITE]);
+        close(pipes[PIPE_STDOUT][PIPE_WRITE]);
+        close(pipes[PIPE_STDERR][PIPE_WRITE]);
+        close(pipes[PIPE_STDIN][PIPE_READ]);
+        close(pipes[PIPE_STDOUT][PIPE_READ]);
+        close(pipes[PIPE_STDERR][PIPE_READ]);
+        int r = execv(argv[0], argv);
+        printf("execv() error: %i\n", r);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+        close(STDIN_FILENO);
+        exit(r);
+    } else {
+        close(pipes[PIPE_STDIN][PIPE_WRITE]);
+        close(pipes[PIPE_STDIN][PIPE_READ]);
+
+        close(pipes[PIPE_STDOUT][PIPE_WRITE]);
+        close(pipes[PIPE_STDERR][PIPE_WRITE]);
+
+        std::string outputStdOut;
+        std::string outputStdErr;
+        ssize_t r;
+        if ((r = read(pipes[PIPE_STDOUT][PIPE_READ], ret, 1024)) > 0)
+            outputStdOut += std::string(ret, (size_t) r).c_str();
+        if ((r = read(pipes[PIPE_STDERR][PIPE_READ], ret, 1024)) > 0)
+            outputStdErr += std::string(ret, (size_t) r).c_str();
+
+        close(pipes[PIPE_STDOUT][PIPE_READ]);
+        close(pipes[PIPE_STDERR][PIPE_READ]);
+
+        int status;
+        waitpid(pid, &status, 0);
+        status = WEXITSTATUS(status);
+        printf("Status = %i\n", status);
+
+        printf("Stdout = %s\n", outputStdOut.c_str());
+        printf("Stderr = %s\n", outputStdErr.c_str());
+
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFileResult");
+        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
+        if (status == 0 || status == 1) {
+            auto iof = outputStdOut.find('\n');
+            if (iof != std::string::npos)
+                outputStdOut = outputStdOut.substr(0, iof);
+            msgArgs->SetString(0, outputStdOut);
+        } else {
+            msgArgs->SetString(1, outputStdOut + outputStdErr);
+        }
+        GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
+    }
+}
+
+void InitialSetupBrowserClient::HandleSetupWithFile(std::string const& file) {
+    printf("SetupWithFile %s\n", file.c_str());
+    try {
+        ExtractHelper::extractApk(file);
+        NotifyApkSetupResult(true);
+    } catch (std::runtime_error e) {
+        NotifyApkSetupResult(false);
+    }
 }
 
 void InitialSetupBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
@@ -56,7 +153,14 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         windowInfo.y = y + attrs.height / 2 - windowInfo.height / 2;
         GooglePlayHelper::singleton.handleLoginAndApkDownload(this, windowInfo);
         return true;
-    } else if (message->GetName() == "SetAskResult") {
+    } else if (message->GetName() == "SetupWithFile") {
+        std::string file = message->GetArgumentList()->GetString(0);
+        std::thread t([this, file] {
+            HandleSetupWithFile(file);
+        });
+        t.detach();
+        return true;
+    }  else if (message->GetName() == "SetAskResult") {
         bool result = message->GetArgumentList()->GetBool(0);
         askResult.Set(result);
         return true;
@@ -64,6 +168,14 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         bool accepted = message->GetArgumentList()->GetBool(0);
         bool marketing = message->GetArgumentList()->GetBool(1);
         askTosResult.Set(accepted ? (marketing ? AskTosResult::ACCEPTED_MARKETING : AskTosResult::ACCEPTED) : AskTosResult::DECLINED);
+        return true;
+    } else if (message->GetName() == "PickFile") {
+        std::string title = message->GetArgumentList()->GetString(0);
+        std::string ext = message->GetArgumentList()->GetString(1);
+        std::thread t([this, title, ext] {
+            HandlePickFile(title, ext);
+        });
+        t.detach();
         return true;
     } else if (message->GetName() == "Finish") {
         resultState.Set(true);
@@ -127,11 +239,13 @@ void InitialSetupRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, 
     CefRefPtr<CefV8Value> global = context->GetGlobal();
     CefRefPtr<CefV8Value> object = CefV8Value::CreateObject(nullptr, nullptr);
     object->SetValue("startGoogleLogin", CefV8Value::CreateFunction("startGoogleLogin", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("setupWithFile", CefV8Value::CreateFunction("setupWithFile", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setMessageHandler", CefV8Value::CreateFunction("setMessageHandler", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setAskResult", CefV8Value::CreateFunction("setAskResult", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setAskTosResult", CefV8Value::CreateFunction("setAskTosResult", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setDownloadStatusCallback", CefV8Value::CreateFunction("setDownloadStatusCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setApkSetupCallback", CefV8Value::CreateFunction("setApkSetupCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("pickFile", CefV8Value::CreateFunction("pickFile", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("finish", CefV8Value::CreateFunction("finish", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("setup", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
@@ -159,6 +273,10 @@ bool InitialSetupRenderHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
     } else if (message->GetName() == "NotifyApkSetupResult") {
         externalInterfaceHandler->NotifyApkSetupResult(message->GetArgumentList()->GetBool(0));
         return true;
+    } else if (message->GetName() == "PickFileResult") {
+        externalInterfaceHandler->CallPickFileCallback(message->GetArgumentList()->GetString(0),
+                                                       message->GetArgumentList()->GetString(1));
+        return true;
     }
     return false;
 }
@@ -185,10 +303,24 @@ void InitialSetupV8Handler::NotifyApkSetupResult(bool success) {
     cb.first->Exit();
 }
 
+void InitialSetupV8Handler::CallPickFileCallback(std::string const& file, std::string const& error) {
+    CefRefPtr<CefV8Value> fileVal = file.empty() ? CefV8Value::CreateNull() : CefV8Value::CreateString(file);
+    CefRefPtr<CefV8Value> errorVal = error.empty() ? CefV8Value::CreateNull() : CefV8Value::CreateString(error);
+    auto& cb = pickFileCallback;
+    cb.first->Enter();
+    cb.second->ExecuteFunction(nullptr, {fileVal, errorVal});
+    cb.first->Exit();
+}
+
 bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,
                                     CefRefPtr<CefV8Value>& retval, CefString& exception) {
     if (name == "startGoogleLogin") {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("StartGoogleLogin");
+        handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        return true;
+    } else if (name == "setupWithFile" && args.size() == 1 && args[0]->IsString()) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SetupWithFile");
+        msg->GetArgumentList()->SetString(0, args[0]->GetStringValue());
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
     } else if (name == "setMessageHandler" && args.size() == 1 && args[0]->IsFunction()) {
@@ -216,7 +348,15 @@ bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value>
             msgArgs->SetBool(1, false);
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
-    } else if (name == "finish" && args.size() >= 1 && args[0]->IsBool()) {
+    } else if (name == "pickFile" && args.size() == 3 && args[0]->IsString() && args[1]->IsString() && args[2]->IsFunction()) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFile");
+        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
+        msgArgs->SetString(0, args[0]->GetStringValue());
+        msgArgs->SetString(1, args[1]->GetStringValue());
+        pickFileCallback = {CefV8Context::GetCurrentContext(), args[2]};
+        handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        return true;
+    } else if (name == "finish" && args.size() == 1 && args[0]->IsBool()) {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Finish");
         CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
         msgArgs->SetBool(0, args[0]->GetBoolValue());

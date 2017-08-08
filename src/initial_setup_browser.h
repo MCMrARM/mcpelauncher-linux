@@ -26,6 +26,10 @@ private:
     AsyncResult<bool> askResult;
     AsyncResult<AskTosResult> askTosResult;
 
+    void HandleSetupWithFile(std::string const& file);
+
+    void HandlePickFile(std::string const& title, std::string const& ext);
+
 public:
     static bool OpenBrowser();
 
@@ -73,12 +77,14 @@ private:
     std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> messageCallback;
     std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> downloadStatusCallback;
     std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> apkSetupResultCallback;
+    std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> pickFileCallback;
 
 public:
 
     void CallMessageCallback(const CefV8ValueList& arguments);
     void NotifyDownloadStatus(bool downloading, double downloaded, double downloadTotal);
     void NotifyApkSetupResult(bool success);
+    void CallPickFileCallback(std::string const& file, std::string const& error);
 
     InitialSetupV8Handler(InitialSetupRenderHandler& handler) : handler(handler) {}
 
