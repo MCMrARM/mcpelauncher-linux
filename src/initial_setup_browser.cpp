@@ -69,11 +69,6 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
     return false;
 }
 
-void InitialSetupBrowserClient::OnGoogleLoginFinish() {
-    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("OnGoogleLoginFinish");
-    GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
-}
-
 AsyncResult<bool>& InitialSetupBrowserClient::ShowMessage(std::string const& title, std::string const& text) {
     CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("ShowMessage");
     CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
@@ -112,6 +107,12 @@ void InitialSetupBrowserClient::NotifyDownloadStatus(bool downloading, long long
     GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
 }
 
+void InitialSetupBrowserClient::NotifyApkSetupResult(bool success) {
+    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("NotifyApkSetupResult");
+    msg->GetArgumentList()->SetBool(0, success);
+    GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
+}
+
 void InitialSetupRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                                  CefRefPtr<CefV8Context> context) {
     printf("InitialSetupRenderHandler::OnContextCreated\n");
@@ -126,6 +127,7 @@ void InitialSetupRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, 
     object->SetValue("setAskResult", CefV8Value::CreateFunction("setAskResult", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setAskTosResult", CefV8Value::CreateFunction("setAskTosResult", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setDownloadStatusCallback", CefV8Value::CreateFunction("setDownloadStatusCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("setApkSetupCallback", CefV8Value::CreateFunction("setApkSetupCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("setup", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
@@ -149,6 +151,9 @@ bool InitialSetupRenderHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         auto args = message->GetArgumentList();
         externalInterfaceHandler->NotifyDownloadStatus(args->GetBool(0), args->GetDouble(1), args->GetDouble(2));
         return true;
+    } else if (message->GetName() == "NotifyApkSetupResult") {
+        externalInterfaceHandler->NotifyApkSetupResult(message->GetArgumentList()->GetBool(0));
+        return true;
     }
     return false;
 }
@@ -168,6 +173,13 @@ void InitialSetupV8Handler::NotifyDownloadStatus(bool downloading, double downlo
     cb.first->Exit();
 }
 
+void InitialSetupV8Handler::NotifyApkSetupResult(bool success) {
+    auto& cb = apkSetupResultCallback;
+    cb.first->Enter();
+    cb.second->ExecuteFunction(nullptr, {CefV8Value::CreateBool(success)});
+    cb.first->Exit();
+}
+
 bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,
                                     CefRefPtr<CefV8Value>& retval, CefString& exception) {
     if (name == "startGoogleLogin") {
@@ -179,6 +191,9 @@ bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value>
         return true;
     } else if (name == "setDownloadStatusCallback" && args.size() == 1 && args[0]->IsFunction()) {
         downloadStatusCallback = {CefV8Context::GetCurrentContext(), args[0]};
+        return true;
+    } else if (name == "setApkSetupCallback" && args.size() == 1 && args[0]->IsFunction()) {
+        apkSetupResultCallback = {CefV8Context::GetCurrentContext(), args[0]};
         return true;
     } else if (name == "setAskResult" && args.size() == 1 && args[0]->IsBool()) {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SetAskResult");

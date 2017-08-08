@@ -36,8 +36,6 @@ public:
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
                                           CefRefPtr<CefProcessMessage> message) override;
 
-    void OnGoogleLoginFinish();
-
     AsyncResult<bool>& ShowMessage(std::string const& title, std::string const& text);
 
     AsyncResult<bool>& AskYesNo(std::string const& title, std::string const& text);
@@ -45,6 +43,8 @@ public:
     AsyncResult<AskTosResult>& AskAcceptTos(std::string const& tos);
 
     void NotifyDownloadStatus(bool downloading, long long downloaded = 0, long long downloadTotal = 0);
+
+    void NotifyApkSetupResult(bool success);
 
 };
 
@@ -72,11 +72,13 @@ private:
     InitialSetupRenderHandler& handler;
     std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> messageCallback;
     std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> downloadStatusCallback;
+    std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> apkSetupResultCallback;
 
 public:
 
     void CallMessageCallback(const CefV8ValueList& arguments);
     void NotifyDownloadStatus(bool downloading, double downloaded, double downloadTotal);
+    void NotifyApkSetupResult(bool success);
 
     InitialSetupV8Handler(InitialSetupRenderHandler& handler) : handler(handler) {}
 
