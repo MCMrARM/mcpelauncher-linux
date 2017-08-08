@@ -32,13 +32,13 @@
 #include "hook.h"
 #include "minecraft/Xbox.h"
 #include "xboxlive.h"
+#include "extract.h"
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
 #include "google_login_browser.h"
 #include "google_play_helper.h"
 #include "initial_setup_browser.h"
-
 #endif
 
 extern "C" {
@@ -313,6 +313,12 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
+    if (argc == 3 && strcmp(argv[1], "extract") == 0) {
+        ExtractHelper::extractApk(argv[2]);
+        return 0;
+    }
+
+
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
 
