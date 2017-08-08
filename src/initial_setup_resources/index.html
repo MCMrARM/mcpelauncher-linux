@@ -156,6 +156,8 @@
     });
     setup.setApkSetupCallback(function (success) {
         setProgressVisible(false);
+        if (success)
+            setup.finish(true);
     });
 
 </script>
