@@ -154,6 +154,9 @@
         total = Math.round(total / 1024 / 1024 * 10) / 10;
         document.getElementById("download-progress-detail").textContent = downloaded + "MB/" + total + "MB";
     });
+    setup.setApkSetupCallback(function (success) {
+        setProgressVisible(false);
+    });
 
 </script>
 </body>

@@ -53,8 +53,10 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
     login.set_checkin_data(dev_state.checkin_data);
     if (conf.user_token.empty()) {
         auto result = GoogleLoginBrowserClient::OpenBrowser(windowInfo);
-        if (!result.success)
+        if (!result.success) {
+            setup->NotifyApkSetupResult(false);
             return false;
+        }
         login.perform_with_access_token(result.oauthToken, result.email, true);
         should_save = setup->AskYesNo("Store authentication", "Would you like to save the authentication information for future usage (eg. downloading newer version of Minecraft)?").Get();
         conf.user_email = login.get_email();
@@ -146,9 +148,12 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
 
     // TODO: Extract the apk
 
+    setup->NotifyApkSetupResult(false);
     return false;
 }
 
 void GooglePlayHelper::handleLoginAndApkDownload(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
+    if (thread.joinable())
+        thread.join();
     thread = std::thread(std::bind(&GooglePlayHelper::handleLoginAndApkDownloadSync, this, setup, windowInfo));
 }
