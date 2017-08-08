@@ -15,7 +15,7 @@ extern "C" {
 #include "eglut.h"
 }
 
-std::string const XboxLoginRenderHandler::Name = "XboxLoginBrowserHandler";
+std::string const XboxLoginRenderHandler::Name = "XboxLoginRenderHandler";
 std::string const XboxLoginBrowserClient::APPEND_URL_PARAMS = "platform=android2.1.0504.0524&client_id=android-app%3A%2F%2Fcom.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y&cobrandid=90023&mkt=en-US&phone=&email=";
 AsyncResult<XboxLoginResult> XboxLoginBrowserClient::resultState;
 

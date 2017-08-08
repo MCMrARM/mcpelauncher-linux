@@ -11,6 +11,11 @@
 #include <dirent.h>
 #include <fstream>
 #include <X11/Xlib.h>
+#include <functional>
+#include <sys/mman.h>
+#include <EGL/egl.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -30,6 +35,9 @@
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
+#include "google_login_browser.h"
+#include "google_play_helper.h"
+
 #endif
 
 extern "C" {
@@ -301,10 +309,6 @@ void pshufb(char* dest, char* src) {
 }
 extern "C"
 void pshufb_xmm4_xmm0();
-#include <functional>
-#include <sys/mman.h>
-#include <EGL/egl.h>
-#include <stdlib.h>
 
 using namespace std;
 int main(int argc, char *argv[]) {
@@ -313,10 +317,22 @@ int main(int argc, char *argv[]) {
 
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
+    BrowserApp::RegisterRenderProcessHandler<GoogleLoginRenderHandler>();
     CefMainArgs cefArgs(argc, argv);
     int exit_code = CefExecuteProcess(cefArgs, BrowserApp::singleton.get(), NULL);
     if (exit_code >= 0)
         return exit_code;
+#endif
+
+#ifndef DISABLE_PLAYAPI
+    {
+        struct stat stat_buf;
+        if (stat("libs/libminecraftpe.so", &stat_buf)) {
+            GooglePlayHelper helper;
+            helper.handleLoginAndApkDownload();
+            return 1;
+        }
+    }
 #endif
 
     bool enableStackTracePrinting = true;
