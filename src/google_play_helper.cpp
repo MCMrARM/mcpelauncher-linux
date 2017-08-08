@@ -7,8 +7,11 @@
 #include <zlib.h>
 #include <iostream>
 #include "../gplay_api/src/config.h"
+#include "initial_setup_browser.h"
 
 std::string const GooglePlayHelper::DOWNLOAD_PACKAGE = "com.mojang.minecraftpe";
+
+GooglePlayHelper GooglePlayHelper::singleton;
 
 static void do_zlib_inflate(z_stream& zs, FILE* file, char* data, size_t len, int flags) {
     char buf[4096];
@@ -25,7 +28,7 @@ static void do_zlib_inflate(z_stream& zs, FILE* file, char* data, size_t len, in
     }
 }
 
-bool GooglePlayHelper::handleLoginAndApkDownload() {
+bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
     app_config conf;
     conf.load();
 
@@ -48,7 +51,7 @@ bool GooglePlayHelper::handleLoginAndApkDownload() {
     playapi::login_api login(device);
     login.set_checkin_data(dev_state.checkin_data);
     if (conf.user_token.empty()) {
-        auto result = GoogleLoginBrowserClient::OpenBrowser();
+        auto result = GoogleLoginBrowserClient::OpenBrowser(windowInfo);
         if (!result.success)
             return false;
         login.perform_with_access_token(result.oauthToken, result.email, true);
@@ -139,4 +142,8 @@ bool GooglePlayHelper::handleLoginAndApkDownload() {
     // TODO: Extract the apk
 
     return false;
+}
+
+void GooglePlayHelper::handleLoginAndApkDownload(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
+    thread = std::thread(std::bind(&GooglePlayHelper::handleLoginAndApkDownloadSync, this, setup, windowInfo));
 }

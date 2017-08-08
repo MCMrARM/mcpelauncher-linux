@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+    <title>Minecraft Launcher</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body>
+<h1 id="header">Linux Minecraft Launcher</h1>
+<p>This is an unofficial project that can launch the C++-based Minecraft on Linux,<br>using an Android .apk.<br><br></p>
+<h2 id="subheader">Select method to start:</h2>
+<ul id="methods-list">
+    <li>
+        <button id="method-google">Log in to Google account</button>
+        <p class="caption">
+            You will need to have Minecraft: Pocket Edition purchased on the Google Account.<br>
+            Recommended only if you have compiled the launcher on your own.
+        </p>
+    </li>
+    <li>
+        <button id="method-apk">Select .apk</button>
+        <p class="caption">
+            You will need a X86 variant of Minecraft: Pocket Edition.
+        </p>
+    </li>
+</ul>
+<div id="block-overlay"></div>
+<script>
+    var overlay = document.getElementById("block-overlay");
+    document.getElementById("method-google").addEventListener("click", function () {
+        overlay.style.display = "block";
+        setup.startGoogleLogin();
+    });
+</script>
+</body>
+</html>

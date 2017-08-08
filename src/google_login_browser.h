@@ -29,7 +29,7 @@ private:
     GoogleLoginResult result;
 
 public:
-    static GoogleLoginResult OpenBrowser();
+    static GoogleLoginResult OpenBrowser(CefWindowInfo const& windowInfo);
 
     GoogleLoginBrowserClient();
 
