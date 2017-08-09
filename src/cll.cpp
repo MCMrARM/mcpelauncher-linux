@@ -87,7 +87,7 @@ std::pair<std::string, std::string> CLL::getXTokenAndTicket() {
 
     std::string xuid = auth->xbox_user_id.std();
     auto local_conf = xbox::services::local_config::local_config_get_local_config_singleton();
-    std::string ticket = local_conf->get_value_from_local_storage(xuid);
+    std::string ticket = local_conf->get_value_from_local_storage(xuid).std();
     lock.lock();
     authXToken = ret.data.token.std();
     authXTicket = "\"" + xuid + "\"=\"x:" + ticket + "\"";

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "string.h"
 #include <vector>
 #include <functional>
 
@@ -19,7 +19,7 @@ struct FilePickerSettings {
     std::vector<FileDescription> fileDescriptions; // 3c
     int filler3; // 40
     PickerType type; // 44
-    std::string defaultFileName; // 48
-    std::string pickerTitle; // 52
+    mcpe::string defaultFileName; // 48
+    mcpe::string pickerTitle; // 52
 
 };

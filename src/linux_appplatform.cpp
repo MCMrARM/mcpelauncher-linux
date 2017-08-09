@@ -151,7 +151,7 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
         std::cout << " - " << d.ext << " " << d.desc << "\n";
     }
     std::stringstream ss;
-    ss << "zenity --file-selection --title '" << replaceAll(settings.pickerTitle, "'", "\\'") << "'";
+    ss << "zenity --file-selection --title '" << replaceAll(settings.pickerTitle.std(), "'", "\\'") << "'";
     if (settings.type == FilePickerSettings::PickerType::SAVE)
         ss << " --save";
     if (settings.fileDescriptions.size() > 0) {
@@ -187,7 +187,7 @@ long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     return (long long int) buf.f_bsize * buf.f_bfree;
 }
 
-std::string LinuxAppPlatform::createUUID() {
+mcpe::string LinuxAppPlatform::createUUID() {
     srand(time(NULL));
 
     uuid_t id;

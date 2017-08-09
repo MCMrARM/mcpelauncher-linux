@@ -30,24 +30,24 @@ public:
 
     static bool mousePointerHidden;
 
-    std::string region;
-    std::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
+    mcpe::string region;
+    mcpe::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
 
     std::vector<std::function<void ()>> runOnMainThreadQueue;
     std::mutex runOnMainThreadMutex;
 
     LinuxAppPlatform();
 
-    std::string getDataUrl() { // this is used only for sounds
+    mcpe::string getDataUrl() { // this is used only for sounds
         printf("get data url: assets/\n");
         return "assets/";
     }
-    std::string getUserDataUrl() { // this is used only for sounds
+    mcpe::string getUserDataUrl() { // this is used only for sounds
         printf("get user data url: data/user/\n");
         return "data/user/";
     }
 
-    std::string getPackagePath() {
+    mcpe::string getPackagePath() {
         return "assets/";
     }
 
@@ -57,7 +57,7 @@ public:
     void swapBuffers() {
         //printf("swap buffers\n");
     }
-    std::string const& getSystemRegion() {
+    mcpe::string const& getSystemRegion() {
         printf("get system region: %s\n", region.c_str());
         return region;
     }
@@ -71,29 +71,29 @@ public:
     bool supportsFilePicking() {
         return true;
     }
-    std::string& getExternalStoragePath() {
+    mcpe::string& getExternalStoragePath() {
         printf("external storage path = %s\n", externalStorage.c_str());
         return externalStorage;
     }
-    std::string& getInternalStoragePath() {
+    mcpe::string& getInternalStoragePath() {
         printf("internal storage path = %s\n", internalStorage.c_str());
         return internalStorage;
     }
-    std::string& getCurrentStoragePath() {
+    mcpe::string& getCurrentStoragePath() {
         printf("current storage path = %s\n", currentStorage.c_str());
         return currentStorage;
     }
-    std::string& getUserdataPath() {
+    mcpe::string& getUserdataPath() {
         printf("userdata path = %s\n", userdata.c_str());
         return userdata;
     }
-    std::string& getUserdataPathForLevels() {
+    mcpe::string& getUserdataPathForLevels() {
         printf("userdata path for levels = %s\n", userdata.c_str());
         return userdataPathForLevels;
     }
-    std::string getAssetFileFullPath(std::string const& s) {
+    mcpe::string getAssetFileFullPath(mcpe::string const& s) {
         printf("get assert full path: %s\n", s.c_str());
-        return "assets/" + s;
+        return mcpe::string("assets/") + s;
     }
     int getScreenType() {
         if (enablePocketGuis)
@@ -103,15 +103,15 @@ public:
     bool useCenteredGUI() {
         return (enablePocketGuis ? false : true);
     }
-    std::string getApplicationId() {
+    mcpe::string getApplicationId() {
         printf("application id = com.mojang.minecraftpe\n");
         return "com.mojang.minecraftpe";
     }
-    std::string getDeviceId() {
+    mcpe::string getDeviceId() {
         printf("device id = linux\n");
         return "linux";
     }
-    std::string createUUID();
+    mcpe::string createUUID();
     bool isFirstSnoopLaunch() {
         printf("is first snoop launch = true\n");
         return true;
@@ -125,7 +125,7 @@ public:
         return true;
     }
     void setFullscreenMode(int mode);
-    std::string getEdition() {
+    mcpe::string getEdition() {
         if (enablePocketGuis)
             return "pocket";
         return "win10";
@@ -137,11 +137,11 @@ public:
 
     long long calculateAvailableDiskFreeSpace();
 
-    std::string &getPlatformTempPath() {
+    mcpe::string &getPlatformTempPath() {
         return tmpPath;
     }
 
-    std::string createDeviceID() {
+    mcpe::string createDeviceID() {
         return "linux";
     }
 

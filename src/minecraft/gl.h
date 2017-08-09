@@ -1,10 +1,12 @@
 #pragma once
 
+#include "string.h"
+
 struct gl {
-    static std::string (*getOpenGLVendor)();
-    static std::string (*getOpenGLRenderer)();
-    static std::string (*getOpenGLVersion)();
-    static std::string (*getOpenGLExtensions)();
+    static mcpe::string (*getOpenGLVendor)();
+    static mcpe::string (*getOpenGLRenderer)();
+    static mcpe::string (*getOpenGLVersion)();
+    static mcpe::string (*getOpenGLExtensions)();
 };
 
 namespace mce {

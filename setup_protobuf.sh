@@ -24,7 +24,7 @@ rm -rf "${TARGET_BASE_DIR}"
     --build=i386-pc-linux-gnu \
     --prefix=${TARGET_BASE_DIR} \
     CFLAGS="-m32 -DNDEBUG" \
-    CXXFLAGS="-m32 -DNDEBUG -D_GLIBCXX_USE_CXX11_ABI=0" \
+    CXXFLAGS="-m32 -DNDEBUG" \
     LDFLAGS=-m32
 make -j${CPU_CORE_COUNT}
 make install

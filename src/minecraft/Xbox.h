@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <memory>
 #include "string.h"
 
@@ -41,8 +40,8 @@ struct local_config {
 
     void** vtable;
 
-    std::string get_value_from_local_storage(std::string const& value) {
-        std::string (*func)(void*, std::string const&) = (std::string (*)(void*, std::string const&)) vtable[0x40/4];
+    mcpe::string get_value_from_local_storage(mcpe::string const& value) {
+        mcpe::string (*func)(void*, mcpe::string const&) = (mcpe::string (*)(void*, mcpe::string const&)) vtable[0x40/4];
         return func(this, value);
     }
 
@@ -141,19 +140,19 @@ enum class token_identity_type { };
 struct auth_config {
 
     char filler[0x3C];
-    std::string* errorDetail;
+    mcpe::string* errorDetail;
 
     static void (*auth_config_set_xtoken_composition)(auth_config*, std::vector<xbox::services::system::token_identity_type>);
-    static std::string const& (*auth_config_xbox_live_endpoint)(auth_config*);
+    static mcpe::string const& (*auth_config_xbox_live_endpoint)(auth_config*);
 
 };
 
 struct auth_manager {
 
 
-    static void (*auth_manager_set_rps_ticket)(auth_manager*, std::string const&);
+    static void (*auth_manager_set_rps_ticket)(auth_manager*, mcpe::string const&);
     static pplx::task (*auth_manager_initialize_default_nsal)(auth_manager*);
-    static pplx::task (*auth_manager_internal_get_token_and_signature)(auth_manager*, std::string, std::string const&, std::string const&, std::string, std::vector<unsigned char> const&, bool, bool, std::string const&);
+    static pplx::task (*auth_manager_internal_get_token_and_signature)(auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&);
     static std::shared_ptr<auth_config> (*auth_manager_get_auth_config)(auth_manager*);
 
 };
