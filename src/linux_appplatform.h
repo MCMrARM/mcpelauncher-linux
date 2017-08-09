@@ -9,6 +9,7 @@
 #include "minecraft/gl.h"
 #include "minecraft/AppPlatform.h"
 #include "minecraft/ImagePickingCallback.h"
+#include "path_helper.h"
 
 class ImageData;
 class ImagePickingCallback;
@@ -33,6 +34,8 @@ public:
     mcpe::string region;
     mcpe::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
 
+    std::string assetsDir, dataDir;
+
     std::vector<std::function<void ()>> runOnMainThreadQueue;
     std::mutex runOnMainThreadMutex;
 
@@ -42,13 +45,13 @@ public:
         printf("get data url: assets/\n");
         return "assets/";
     }
-    mcpe::string getUserDataUrl() { // this is used only for sounds
-        printf("get user data url: data/user/\n");
-        return "data/user/";
+    mcpe::string getUserDataUrl() {
+        printf("get user data url: %s\n", dataDir.c_str());
+        return dataDir;
     }
 
     mcpe::string getPackagePath() {
-        return "assets/";
+        return assetsDir;
     }
 
     void hideMousePointer();
@@ -93,7 +96,7 @@ public:
     }
     mcpe::string getAssetFileFullPath(mcpe::string const& s) {
         printf("get assert full path: %s\n", s.c_str());
-        return mcpe::string("assets/") + s;
+        return mcpe::string(assetsDir) + s;
     }
     int getScreenType() {
         if (enablePocketGuis)

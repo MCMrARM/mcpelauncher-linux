@@ -2,7 +2,6 @@
 
 #include <string>
 
-std::string getCWD();
 bool loadLibrary(std::string path);
 void* loadLibraryOS(std::string path, const char** symbols);
 void* loadMod(std::string path);

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "path_helper.h"
 
 #include <cstdio>
 #include <cstdarg>
@@ -14,14 +15,8 @@ extern "C" {
 #include "../hybris/include/hybris/dlfcn.h"
 }
 
-std::string getCWD() {
-    char _cwd[MAXPATHLEN];
-    getcwd(_cwd, MAXPATHLEN);
-    return std::string(_cwd) + "/";
-}
-
 bool loadLibrary(std::string path) {
-    void* handle = hybris_dlopen((getCWD() + "libs/" + path).c_str(), RTLD_LAZY);
+    void* handle = hybris_dlopen(PathHelper::findDataFile("libs/hybris/" + path).c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         printf("failed to load library %s: %s\n", path.c_str(), hybris_dlerror());
         return false;
@@ -49,7 +44,7 @@ void* loadLibraryOS(std::string path, const char** symbols) {
 }
 
 void* loadMod(std::string path) {
-    void* handle = hybris_dlopen((getCWD() + "mods/" + path).c_str(), RTLD_LAZY);
+    void* handle = hybris_dlopen(path.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         printf("failed to load mod: %s\n", path.c_str());
         return nullptr;

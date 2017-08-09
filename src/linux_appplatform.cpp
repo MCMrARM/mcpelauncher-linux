@@ -14,6 +14,7 @@
 #include "minecraft/FilePickerSettings.h"
 #include "../hybris/src/jb/linker.h"
 #include "common.h"
+#include "path_helper.h"
 
 extern "C" {
 #include <eglut.h>
@@ -26,13 +27,15 @@ bool enablePocketGuis = false;
 
 LinuxAppPlatform::LinuxAppPlatform() : AppPlatform() {
     this->vtable = myVtable;
-    internalStorage = "data/private/";
-    externalStorage = "data/public/";
-    currentStorage = "data/current/";
-    userdata = "data/user/";
-    userdataPathForLevels = "data/user/";
+    dataDir = PathHelper::getPrimaryDataDirectory();
+    assetsDir = PathHelper::findDataFile("assets/");
+    tmpPath = PathHelper::getCacheDirectory();
+    internalStorage = dataDir;
+    externalStorage = dataDir;
+    currentStorage = dataDir;
+    userdata = dataDir;
+    userdataPathForLevels = dataDir;
     region = "0xdeadbeef";
-    tmpPath = "tmp/";
 }
 
 #include <execinfo.h>
@@ -183,7 +186,7 @@ void LinuxAppPlatform::setFullscreenMode(int mode) {
 
 long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     struct statvfs buf;
-    statvfs(getCWD().c_str(), &buf);
+    statvfs(PathHelper::findDataFile(dataDir).c_str(), &buf);
     return (long long int) buf.f_bsize * buf.f_bfree;
 }
 
