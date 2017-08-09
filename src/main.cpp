@@ -36,9 +36,10 @@
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
-#include "google_login_browser.h"
-#include "google_play_helper.h"
 #include "initial_setup_browser.h"
+#endif
+#ifndef DISABLE_PLAYAPI
+#include "google_login_browser.h"
 #endif
 
 extern "C" {
@@ -324,14 +325,14 @@ int main(int argc, char *argv[]) {
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
     BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
+#ifndef DISABLE_PLAYAPI
     BrowserApp::RegisterRenderProcessHandler<GoogleLoginRenderHandler>();
+#endif
     CefMainArgs cefArgs(argc, argv);
     int exit_code = CefExecuteProcess(cefArgs, BrowserApp::singleton.get(), NULL);
     if (exit_code >= 0)
         return exit_code;
-#endif
 
-#ifndef DISABLE_PLAYAPI
     {
         struct stat stat_buf;
         if (stat("libs/libminecraftpe.so", &stat_buf)) {
