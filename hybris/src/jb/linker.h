@@ -200,6 +200,7 @@ extern soinfo libdl_info;
 #define DT_PREINIT_ARRAYSZ 33
 #endif
 
+soinfo *load_empty_library(const char *name);
 soinfo *find_library(const char *name);
 unsigned unload_library(soinfo *si);
 Elf32_Sym *lookup_in_library(soinfo *si, const char *name);
