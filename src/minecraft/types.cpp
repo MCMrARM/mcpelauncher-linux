@@ -29,10 +29,10 @@ void (*Options::Options_setFullscreen)(Options*, bool);
 
 #include "gl.h"
 
-std::string (*gl::getOpenGLVendor)();
-std::string (*gl::getOpenGLRenderer)();
-std::string (*gl::getOpenGLVersion)();
-std::string (*gl::getOpenGLExtensions)();
+mcpe::string (*gl::getOpenGLVendor)();
+mcpe::string (*gl::getOpenGLRenderer)();
+mcpe::string (*gl::getOpenGLVersion)();
+mcpe::string (*gl::getOpenGLExtensions)();
 void (*mce::Platform::OGL::OGL_initBindings)();
 
 #include "Mouse.h"
@@ -42,7 +42,7 @@ void (*Mouse::feed)(char, char, short, short, short, short);
 #include "Keyboard.h"
 
 void (*Keyboard::Keyboard_feed)(unsigned char, int);
-void (*Keyboard::Keyboard_feedText)(const std::string&, bool, unsigned char);
+void (*Keyboard::Keyboard_feedText)(const mcpe::string&, bool, unsigned char);
 int* Keyboard::states;
 
 #include "Xbox.h"
@@ -56,12 +56,12 @@ namespace system {
 pplx::task_completion_event_java_rps_ticket* xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent;
 pplx::task_completion_event_xbox_live_result_void* xbox::services::system::user_auth_android::s_signOutCompleteEvent;
 std::shared_ptr<user_auth_android> (*user_auth_android::user_auth_android_get_instance)();
-void (*auth_manager::auth_manager_set_rps_ticket)(auth_manager*, std::string const&);
+void (*auth_manager::auth_manager_set_rps_ticket)(auth_manager*, mcpe::string const&);
 pplx::task (*auth_manager::auth_manager_initialize_default_nsal)(auth_manager*);
 std::shared_ptr<auth_config> (*auth_manager::auth_manager_get_auth_config)(auth_manager*);
-pplx::task (*auth_manager::auth_manager_internal_get_token_and_signature)(auth_manager*, std::string, std::string const&, std::string const&, std::string, std::vector<unsigned char> const&, bool, bool, std::string const&);
+pplx::task (*auth_manager::auth_manager_internal_get_token_and_signature)(auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&);
 void (*auth_config::auth_config_set_xtoken_composition)(auth_config*, std::vector<xbox::services::system::token_identity_type>);
-std::string const& (*auth_config::auth_config_xbox_live_endpoint)(auth_config*);
+mcpe::string const& (*auth_config::auth_config_xbox_live_endpoint)(auth_config*);
 }
 }
 }

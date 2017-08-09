@@ -31,7 +31,7 @@ void XboxLiveHelper::invokeXbLogin(xbox::services::system::user_auth_android* au
                                               (token_identity_type) 2};
     auto config = auth_manager::auth_manager_get_auth_config(auth->auth_mgr);
     auth_config::auth_config_set_xtoken_composition(config.get(), types);
-    std::string const& endpoint = auth_config::auth_config_xbox_live_endpoint(config.get());
+    std::string const& endpoint = auth_config::auth_config_xbox_live_endpoint(config.get()).std();
     printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
     auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth->auth_mgr, "GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string()); // I'm unsure about the vector (and pretty much only about the vector)
     printf("Get token and signature task started!\n");

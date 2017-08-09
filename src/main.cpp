@@ -59,7 +59,7 @@ void eglStub() {
     std::cout << "warn: egl call\n";
 }
 
-std::unique_ptr<LinuxStore> createStoreHookFunc(const std::string& idk, StoreListener& listener) {
+std::unique_ptr<LinuxStore> createStoreHookFunc(const mcpe::string& idk, StoreListener& listener) {
     std::cout << "creating fake store <" << idk << ">\n";
     return std::unique_ptr<LinuxStore>(new LinuxStore());
 }
@@ -199,7 +199,7 @@ bool verifyCertChainStub() {
     std::cout << "verifycertchain\n";
     return true;
 }
-std::string xboxReadConfigFile(void* th) {
+mcpe::string xboxReadConfigFile(void* th) {
     std::cout << "xbox read config file\n";
     std::ifstream f("assets/xboxservices.config");
     std::stringstream s;
@@ -209,15 +209,15 @@ std::string xboxReadConfigFile(void* th) {
 void workerPoolDestroy(void* th) {
     std::cout << "worker pool-related class destroy " << (unsigned long)th << "\n";
 }
-xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, std::string const& s) {
-    std::cout << "log_telemetry_signin " << b << " " << s << "\n";
+xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, mcpe::string const& s) {
+    std::cout << "log_telemetry_signin " << b << " " << s.std() << "\n";
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
     ret.message = " ";
     return ret;
 }
-std::string xboxGetLocalStoragePath() {
+mcpe::string xboxGetLocalStoragePath() {
     return "data/";
 }
 xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int requestCode) {
@@ -269,17 +269,17 @@ void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     XboxLoginBrowserClient::OpenBrowser(ret);
 #endif
 }
-std::vector<std::string> xblGetLocaleList() {
-    std::vector<std::string> ret;
+std::vector<mcpe::string> xblGetLocaleList() {
+    std::vector<mcpe::string> ret;
     ret.push_back("en-US");
     return ret;
 }
 void xblRegisterNatives() {
     std::cout << "register_natives stub\n";
 }
-xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a, std::string const& b, std::string const& c) {
-    std::cout << "log_cll " << a << " " << b << " " << c << "\n";
-    XboxLiveHelper::getCLL()->addEvent(a, b, c);
+xbox::services::xbox_live_result<void> xblLogCLL(void* th, mcpe::string const& a, mcpe::string const& b, mcpe::string const& c) {
+    std::cout << "log_cll " << a.std() << " " << b.std() << " " << c.std() << "\n";
+    XboxLiveHelper::getCLL()->addEvent(a.std(), b.std(), c.std());
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
@@ -520,10 +520,10 @@ int main(int argc, char *argv[]) {
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
     // load symbols for gl
-    gl::getOpenGLVendor = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
-    gl::getOpenGLRenderer = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
-    gl::getOpenGLVersion = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl16getOpenGLVersionEv");
-    gl::getOpenGLExtensions = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl19getOpenGLExtensionsEv");
+    gl::getOpenGLVendor = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
+    gl::getOpenGLRenderer = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
+    gl::getOpenGLVersion = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl16getOpenGLVersionEv");
+    gl::getOpenGLExtensions = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl19getOpenGLExtensionsEv");
     mce::Platform::OGL::OGL_initBindings = (void (*)()) hybris_dlsym(handle, "_ZN3mce8Platform3OGL12InitBindingsEv");
 
     // init linux app platform
@@ -551,7 +551,7 @@ int main(int argc, char *argv[]) {
 
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
     Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
-    Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
+    Keyboard::Keyboard_feedText = (void (*)(const mcpe::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
     Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
@@ -566,12 +566,12 @@ int main(int argc, char *argv[]) {
     xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
     xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
     xbox::services::system::user_auth_android::user_auth_android_get_instance = (std::shared_ptr<xbox::services::system::user_auth_android> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android12get_instanceEv");
-    xbox::services::system::auth_manager::auth_manager_set_rps_ticket = (void (*)(xbox::services::system::auth_manager*, std::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager14set_rps_ticketERKSs");
+    xbox::services::system::auth_manager::auth_manager_set_rps_ticket = (void (*)(xbox::services::system::auth_manager*, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager14set_rps_ticketERKSs");
     xbox::services::system::auth_manager::auth_manager_initialize_default_nsal = (pplx::task (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager23initialize_default_nsalEv");
     xbox::services::system::auth_manager::auth_manager_get_auth_config = (std::shared_ptr<xbox::services::system::auth_config> (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager15get_auth_configEv");
-    xbox::services::system::auth_manager::auth_manager_internal_get_token_and_signature = (pplx::task (*)(xbox::services::system::auth_manager*, std::string, std::string const&, std::string const&, std::string, std::vector<unsigned char> const&, bool, bool, std::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_");
+    xbox::services::system::auth_manager::auth_manager_internal_get_token_and_signature = (pplx::task (*)(xbox::services::system::auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_");
     xbox::services::system::auth_config::auth_config_set_xtoken_composition = (void (*)(xbox::services::system::auth_config*, std::vector<xbox::services::system::token_identity_type>)) hybris_dlsym(handle, "_ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE");
-    xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (std::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
+    xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (mcpe::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
 
     std::cout << "init window\n";
     eglutInitWindowSize(windowWidth, windowHeight);

@@ -15,14 +15,17 @@ public:
 
     string();
     string(const char *str);
-    string(const std::string &str);
+    string(const char *str, size_t len);
     string(const string &str);
+    inline string(const std::string &str) : string(str.c_str(), str.length()) {}
     ~string();
 
     string &operator=(const string &str);
 
     size_t length() const;
     const char *c_str() const;
+
+    string operator+(const string &str);
 
     bool operator==(const string &s) const {
         if (s.ptr == ptr)
@@ -39,10 +42,12 @@ public:
         return false;
     }
 
-    std::string &std() {
-        return *((std::string*) this);
+    inline std::string std() const {
+        return std::string(c_str(), length());
     }
 
 };
 
 }
+
+std::ostream& operator<<(std::ostream&, const mcpe::string&);
