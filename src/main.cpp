@@ -405,9 +405,9 @@ int main(int argc, char *argv[]) {
     if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !loadLibrary("libm.so") || !loadLibrary("libz.so"))
         return -1;
     // load stub libraries
-    if (!loadLibrary("libandroid.so") || !loadLibrary("liblog.so") || !loadLibrary("libEGL.so") || !loadLibrary("libGLESv2.so") || !loadLibrary("libOpenSLES.so") || !loadLibrary("libfmod.so") || !loadLibrary("libGLESv1_CM.so"))
+    if (!load_empty_library("libandroid.so") || !load_empty_library("liblog.so") || !load_empty_library("libEGL.so") || !load_empty_library("libGLESv2.so") || !load_empty_library("libOpenSLES.so") || !load_empty_library("libfmod.so") || !load_empty_library("libGLESv1_CM.so"))
         return -1;
-    if (!loadLibrary("libmcpelauncher_mod.so"))
+    if (!load_empty_library("libmcpelauncher_mod.so"))
         return -1;
     std::cout << "loading MCPE\n";
     std::string mcpePath = getCWD() + "libs/libminecraftpe.so";

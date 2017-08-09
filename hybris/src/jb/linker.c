@@ -387,6 +387,9 @@ static Elf32_Sym *_elf_lookup(soinfo *si, unsigned hash, const char *name)
     const char *strtab = si->strtab;
     unsigned n;
 
+    if (si->nbucket == 0)
+        return NULL;
+
     TRACE_TYPE(LOOKUP, "%5d SEARCH %s in %s@0x%08x %08x %d\n", pid,
                name, si->name, si->base, hash, hash % si->nbucket);
     n = hash % si->nbucket;
@@ -1171,6 +1174,31 @@ load_library(const char *name)
 fail:
     if (si) free_info(si);
     close(fd);
+    return NULL;
+}
+
+soinfo *
+load_empty_library(const char *name)
+{
+    const char *bname;
+    soinfo *si = NULL;
+
+    bname = strrchr(name, '/');
+    si = alloc_info(bname ? bname + 1 : name);
+    if (si == NULL)
+        goto fail;
+
+    si->base = 0;
+    si->size = 0;
+    si->flags = FLAG_LINKED;
+    si->entry = 0;
+    si->dynamic = (unsigned *)-1;
+    si->constructors_called = 1;
+
+    return si;
+
+    fail:
+    if (si) free_info(si);
     return NULL;
 }
 
