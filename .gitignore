@@ -6,6 +6,7 @@ mods/
 libs/libminecraftpe.so
 libs/libgnustl_shared.so
 libs/cef
+libs/protobuf
 cmake-build-debug/
 *.apk
 playdl.conf
