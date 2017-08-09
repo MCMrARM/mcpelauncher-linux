@@ -16,7 +16,7 @@ find_package(ZLIB REQUIRED)
 find_package(X11 REQUIRED)
 
 set(CEF_ENABLED true)
-set(PLAYAPI_ENABLED true)
+set(PLAYAPI_ENABLED false)
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/cef)
     message(WARNING "CEF not found. Xbox Live login and APK download features will be disabled.\nTo set up CEF please run setup_cef.sh in the source directory.")
     set(CEF_ENABLED false)
@@ -67,22 +67,46 @@ else()
 endif()
 
 add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/libs/cef/bin/ $<TARGET_FILE_DIR:mcpelauncher>)
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+        $<TARGET_FILE_DIR:mcpelauncher>/src)
 add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/libs/cef/lib/libcef.so $<TARGET_FILE_DIR:mcpelauncher>)
-
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/src/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/initial_setup_resources)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs/cef/lib/libcef.so $<TARGET_FILE_DIR:mcpelauncher>/libcef.so)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs/cef/bin/natives_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/natives_blob.bin)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
 
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/libs/hybris/ $<TARGET_FILE_DIR:mcpelauncher>/libs/hybris)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/libs/native/ $<TARGET_FILE_DIR:mcpelauncher>/libs/native)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/libs/cef/res $<TARGET_FILE_DIR:mcpelauncher>/libs/cef/res)
+install(TARGETS mcpelauncher
+        RUNTIME DESTINATION share/mcpelauncher/bin/)
+install(FILES libs/cef/lib/libcef.so libs/cef/bin/snapshot_blob.bin libs/cef/bin/natives_blob.bin libs/cef/bin/icudtl.dat start_mcpelauncher.sh
+        DESTINATION share/mcpelauncher/bin
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(DIRECTORY libs/hybris libs/native
+        DESTINATION share/mcpelauncher/libs
+        PATTERN "*"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(DIRECTORY libs/cef/res
+        DESTINATION share/mcpelauncher/libs/cef
+        PATTERN "*"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(DIRECTORY src/initial_setup_resources
+        DESTINATION share/mcpelauncher/src
+        PATTERN "*"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(CODE "
+execute_process(
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_INSTALL_PREFIX}/share/mcpelauncher/bin/start_mcpelauncher.sh ${CMAKE_INSTALL_PREFIX}/bin/mcpelauncher
+)")
