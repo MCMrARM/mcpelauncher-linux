@@ -1,6 +1,7 @@
 html, body {
     background: #303030;
     color: #fff;
+    font-family: sans-serif;
     text-align: center;
     user-select: none;
     cursor: default;
