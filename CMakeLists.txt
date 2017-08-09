@@ -32,6 +32,7 @@ endif()
 
 if (PLAYAPI_ENABLED)
     add_subdirectory(gplay_api)
+    set_target_properties(gplaydl PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
 include_directories(${PNG_INCLUDE_DIRS})
