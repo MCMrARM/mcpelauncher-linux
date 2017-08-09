@@ -9,12 +9,11 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -m32")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_GLIBCXX_USE_CXX11_ABI=0")
+set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(X11 REQUIRED)
-
-include(FindEGL.cmake)
 
 set(CEF_ENABLED true)
 set(PLAYAPI_ENABLED true)
@@ -31,7 +30,6 @@ endif()
 link_directories(${CMAKE_SOURCE_DIR}/libs/cef/)
 
 include_directories(${PNG_INCLUDE_DIRS})
-include_directories(${EGL_INCLUDE_DIRS})
 include_directories(eglut)
 include_directories(libs/rapidxml)
 
