@@ -4,8 +4,10 @@
 #include <sys/stat.h>
 #include "initial_setup_browser.h"
 #include "common.h"
-#include "google_play_helper.h"
 #include "extract.h"
+#ifndef DISABLE_PLAYAPI
+#include "google_play_helper.h"
+#endif
 
 AsyncResult<bool> InitialSetupBrowserClient::resultState;
 std::string const InitialSetupRenderHandler::Name = "InitialSetupRenderHandler";
@@ -135,6 +137,10 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
     if (message->GetName() == "StartGoogleLogin") {
         printf("StartGoogleLogin\n");
 
+#ifdef DISABLE_PLAYAPI
+        ShowMessage("Feature disabled", "Google account login was disabled during compilation.");
+        NotifyApkSetupResult(false);
+#else
         Display* display = cef_get_xdisplay();
         Window window = browser->GetHost()->GetWindowHandle();
 
@@ -152,6 +158,7 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         windowInfo.x = x + attrs.width / 2 - windowInfo.width / 2;
         windowInfo.y = y + attrs.height / 2 - windowInfo.height / 2;
         GooglePlayHelper::singleton.handleLoginAndApkDownload(this, windowInfo);
+#endif
         return true;
     } else if (message->GetName() == "SetupWithFile") {
         std::string file = message->GetArgumentList()->GetString(0);
