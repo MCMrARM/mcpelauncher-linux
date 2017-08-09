@@ -287,13 +287,12 @@ xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a,
 }
 
 static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
-    LOG(WARNING) << "X error received: "
-                 << "type " << event->type << ", "
-                 << "serial " << event->serial << ", "
-                 << "error_code " << static_cast<int>(event->error_code) << ", "
-                 << "request_code " << static_cast<int>(event->request_code)
-                 << ", "
-                 << "minor_code " << static_cast<int>(event->minor_code);
+    std::cerr << "X error received: "
+              << "type " << event->type << ", "
+              << "serial " << event->serial << ", "
+              << "error_code " << static_cast<int>(event->error_code) << ", "
+              << "request_code " << static_cast<int>(event->request_code) << ", "
+              << "minor_code " << static_cast<int>(event->minor_code);
     return 0;
 }
 
