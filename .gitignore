@@ -1,12 +1,7 @@
 .idea/
-assets/
-data/
-tmp/
 mods/
-libs/libminecraftpe.so
-libs/libgnustl_shared.so
+libs/hybris/libminecraftpe.so
 libs/cef
-libs/protobuf
 cmake-build-debug/
 *.apk
 playdl.conf

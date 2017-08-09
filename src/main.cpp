@@ -37,6 +37,8 @@
 #include "browser.h"
 #include "xbox_login_browser.h"
 #include "initial_setup_browser.h"
+#include "path_helper.h"
+
 #endif
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
@@ -393,7 +395,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "loading native libraries\n";
     void* glesLib = loadLibraryOS("libGLESv2.so", gles_symbols);
-    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
+    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
     if (glesLib == nullptr || fmodLib == nullptr)
         return -1;
     std::cout << "loading hybris libraries\n";
@@ -410,7 +412,7 @@ int main(int argc, char *argv[]) {
     if (!load_empty_library("libmcpelauncher_mod.so"))
         return -1;
     std::cout << "loading MCPE\n";
-    std::string mcpePath = getCWD() + "libs/libminecraftpe.so";
+    std::string mcpePath = PathHelper::findDataFile("libs/libminecraftpe.so");
     void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
@@ -421,25 +423,28 @@ int main(int argc, char *argv[]) {
     unsigned int libBase = ((soinfo*) handle)->base;
     std::cout << "loaded MCPE (at " << libBase << ")\n";
 
-    DIR *dir;
-    struct dirent *ent;
     std::vector<void*> mods;
-    if ((dir = opendir ("mods/")) != NULL) {
-        std::cout << "loading mods\n";
-        while ((ent = readdir (dir)) != NULL) {
-            if (ent->d_name[0] == '.')
-                continue;
-            std::string fileName (ent->d_name);
-            int len = fileName.length();
-            if (len < 4 || fileName[len - 3] != '.' || fileName[len - 2] != 's' || fileName[len - 1] != 'o')
-                continue;
-            std::cout << "loading: " << fileName << "\n";
-            void* mod = loadMod(fileName);
-            if (mod != nullptr)
-                mods.push_back(mod);
+    {
+        std::string modsDir = PathHelper::getPrimaryDataDirectory() + "mods/";
+        DIR* dir;
+        struct dirent* ent;
+        if ((dir = opendir(modsDir.c_str())) != NULL) {
+            std::cout << "loading mods\n";
+            while ((ent = readdir(dir)) != NULL) {
+                if (ent->d_name[0] == '.')
+                    continue;
+                std::string fileName(ent->d_name);
+                int len = fileName.length();
+                if (len < 4 || fileName[len - 3] != '.' || fileName[len - 2] != 's' || fileName[len - 1] != 'o')
+                    continue;
+                std::cout << "loading: " << fileName << "\n";
+                void* mod = loadMod(modsDir + fileName);
+                if (mod != nullptr)
+                    mods.push_back(mod);
+            }
+            closedir(dir);
+            std::cout << "loaded " << mods.size() << " mods\n";
         }
-        closedir(dir);
-        std::cout << "loaded " << mods.size() << " mods\n";
     }
 
     std::cout << "apply patches\n";

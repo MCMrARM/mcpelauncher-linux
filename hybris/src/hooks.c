@@ -976,8 +976,6 @@ static void my_clearerr(FILE *fp)
 
 static struct aFILE* my_fopen(const char *filename, const char *mode)
 {
-    if (strlen(filename) >= 14 && memcmp(filename, "assets/assets/", 14) == 0)
-        filename = &filename[strlen("assets/")];
     FILE* file = fopen(filename, mode);
     if (file == NULL)
         return NULL;

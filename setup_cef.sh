@@ -2,7 +2,7 @@
 CEF_DOWNLOAD_URL="http://opensource.spotify.com/cefbuilds/cef_binary_3.3112.1653.gf69054f_linux32_minimal.tar.bz2"
 CEF_PATH="cef.tar.bz2"
 CEF_TMP_DIR="tmp_cef"
-TARGET_BASE_DIR="${PWD}"
+TARGET_BASE_DIR="${PWD}/libs/cef"
 CPU_CORE_COUNT=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | tail -1)
 
 # Download
@@ -31,29 +31,29 @@ cd ..
 
 # Install
 echo "Moving files around"
-TARGET_RESOURCES="${TARGET_BASE_DIR}/libs/cef"
-TARGET_LIBRARIES="${TARGET_RESOURCES}"
-TARGET_INCLUDE="${TARGET_RESOURCES}/include"
+TARGET_RESOURCES="${TARGET_BASE_DIR}/res"
+TARGET_LIBRARIES="${TARGET_BASE_DIR}/lib"
+TARGET_INCLUDE="${TARGET_BASE_DIR}/include"
 TARGET_LOCALES="${TARGET_RESOURCES}/locales"
-TARGET_RUNTIME="${TARGET_RESOURCES}/runtime"
-echo "Target: ${TARGET_RESOURCES}"
-rm -rf "${TARGET_RESOURCES}"
+TARGET_APPLICATION="${TARGET_BASE_DIR}/bin"
+rm -rf "${TARGET_BASE_DIR}"
 mkdir -p "${TARGET_RESOURCES}"
+mkdir -p "${TARGET_LIBRARIES}"
 mkdir -p "${TARGET_INCLUDE}"
 mkdir -p "${TARGET_LOCALES}"
-mkdir -p "${TARGET_RUNTIME}"
+mkdir -p "${TARGET_APPLICATION}"
 
 cp -r include/. ${TARGET_INCLUDE}
 
 cd Resources/
 cp cef.pak cef_100_percent.pak cef_200_percent.pak cef_extensions.pak "${TARGET_RESOURCES}"
 cp -r locales "${TARGET_RESOURCES}"
-cp icudtl.dat "${TARGET_RUNTIME}"
+cp icudtl.dat "${TARGET_APPLICATION}"
 cd ..
 
 cd Release
 cp libcef.so "${TARGET_LIBRARIES}"
-cp natives_blob.bin snapshot_blob.bin "${TARGET_RUNTIME}"
+cp natives_blob.bin snapshot_blob.bin "${TARGET_APPLICATION}"
 cd ..
 
 cd build/libcef_dll_wrapper

@@ -5,6 +5,8 @@
 #include "initial_setup_browser.h"
 #include "common.h"
 #include "extract.h"
+#include "path_helper.h"
+
 #ifndef DISABLE_PLAYAPI
 #include "google_play_helper.h"
 #endif
@@ -22,7 +24,7 @@ bool InitialSetupBrowserClient::OpenBrowser() {
         window.width = 720;
         window.height = 576;
         CefBrowserSettings browserSettings;
-        CefBrowserHost::CreateBrowser(window, client, "file://" + getCWD() + "/src/initial_setup_resources/index.html", browserSettings, NULL);
+        CefBrowserHost::CreateBrowser(window, client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/index.html"), browserSettings, NULL);
     });
 
     resultState.Clear();

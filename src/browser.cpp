@@ -1,6 +1,6 @@
 #include "browser.h"
 
-#include "common.h"
+#include "path_helper.h"
 #include "include/cef_app.h"
 
 #include "include/base/cef_bind.h"
@@ -14,8 +14,8 @@ std::unordered_map<std::string, std::function<std::shared_ptr<MyRenderProcessHan
 void BrowserApp::DoCefThread() {
     CefSettings settings;
     settings.no_sandbox = true;
-    CefString(&settings.resources_dir_path) = getCWD() + "libs/cef/";
-    CefString(&settings.locales_dir_path) = getCWD() + "libs/cef/locales/";
+    CefString(&settings.resources_dir_path) = PathHelper::findDataFile("libs/cef/res");
+    CefString(&settings.locales_dir_path) = PathHelper::findDataFile("libs/cef/res/locales/");
     CefInitialize(cefMainArgs, settings, singleton.get(), nullptr);
     CefRunMessageLoop();
     CefShutdown();
