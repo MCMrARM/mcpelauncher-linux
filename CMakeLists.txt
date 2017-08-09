@@ -16,7 +16,7 @@ find_package(ZLIB REQUIRED)
 find_package(X11 REQUIRED)
 
 set(CEF_ENABLED true)
-set(PLAYAPI_ENABLED false)
+set(PLAYAPI_ENABLED true)
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/cef)
     message(WARNING "CEF not found. Xbox Live login and APK download features will be disabled.\nTo set up CEF please run setup_cef.sh in the source directory.")
     set(CEF_ENABLED false)
@@ -111,3 +111,5 @@ execute_process(
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_INSTALL_PREFIX}/share/mcpelauncher/bin/start_mcpelauncher.sh ${CMAKE_INSTALL_PREFIX}/bin/mcpelauncher
 )")
+install(FILES mcpelauncher.desktop DESTINATION share/applications/)
+install(FILES mcpelauncher-icon.png DESTINATION share/pixmaps/)
