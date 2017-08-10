@@ -588,7 +588,7 @@ int main(int argc, char *argv[]) {
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
 
-    winId = eglutCreateWindow("Minecraft");
+    winId = eglutCreateWindow("Minecraft", PathHelper::getIconPath().c_str());
 
     // init MinecraftGame
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
