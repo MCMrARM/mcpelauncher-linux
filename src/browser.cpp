@@ -54,7 +54,10 @@ BrowserApp::BrowserApp() {
 }
 
 void BrowserApp::SetRenderHandler(int browser, std::string const& handler) {
-    browserRenderHandlers[browser] = knownRenderHandlers.at(handler)(renderProcessBrowsers.at(browser));
+    if (handler.empty())
+        browserRenderHandlers[browser] = std::shared_ptr<MyRenderProcessHandler>(new MyRenderProcessHandler(renderProcessBrowsers.at(browser)));
+    else
+        browserRenderHandlers[browser] = knownRenderHandlers.at(handler)(renderProcessBrowsers.at(browser));
 }
 
 void BrowserApp::OnContextInitialized() {
@@ -139,6 +142,25 @@ void BrowserClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser, const std:
 
 void BrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
     GetPrimaryWindow()->SetTitle(title);
+}
+
+bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& target_url,
+                                  const CefString& target_frame_name,
+                                  CefLifeSpanHandler::WindowOpenDisposition target_disposition, bool user_gesture,
+                                  const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo,
+                                  CefRefPtr<CefClient>& client, CefBrowserSettings& settings,
+                                  bool* no_javascript_access) {
+    CefRefPtr<BrowserClient> c = new BrowserClient();
+
+    MyWindowDelegate::Options options;
+    options.w = 1024;
+    options.h = 640;
+    options.visible = true;
+
+    CefBrowserSettings browserSettings;
+    CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(c, target_url, browserSettings, NULL, NULL);
+    c->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
+    return true;
 }
 
 void FaviconDownloadCallback::OnDownloadImageFinished(const CefString& image_url, int http_status_code,
