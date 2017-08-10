@@ -1,11 +1,11 @@
 #include "browser.h"
 
+#include <X11/Xutil.h>
 #include "path_helper.h"
-#include "include/cef_app.h"
 
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
-#include "include/wrapper/cef_helpers.h"
+#include "include/views/cef_window.h"
 
 CefMainArgs BrowserApp::cefMainArgs;
 CefRefPtr<BrowserApp> BrowserApp::singleton (new BrowserApp());
@@ -118,4 +118,19 @@ void BrowserClient::CloseAllBrowsers(bool forceClose) {
     }
     for (auto it = browserList.begin(); it != browserList.end(); ++it)
         (*it)->GetHost()->CloseBrowser(forceClose);
+}
+
+void MyWindowDelegate::OnWindowCreated(CefRefPtr<CefWindow> window) {
+    window->AddChildView(browserView);
+    window->SetPosition({options.x, options.y});
+    window->SetSize({options.w, options.h});
+    window->Show();
+    if (options.centerScreen) {
+        XSizeHints sizehints;
+        sizehints.win_gravity = CenterGravity;
+        sizehints.flags = PWinGravity;
+        XSetNormalHints(cef_get_xdisplay(), window->GetWindowHandle(), &sizehints);
+    }
+
+    browserView->RequestFocus();
 }
