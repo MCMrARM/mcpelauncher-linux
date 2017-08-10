@@ -42,7 +42,6 @@ std::string MSANetwork::send(std::string const& url, std::string const& data) {
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long) data.length());
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Dalvik/2.1.0 (Linux; U; Android 6.0.1; ONEPLUS A3003 Build/MMB29M); com.mojang.minecraftpe/0.15.2.1; MsaAndroidSdk/2.1.0504.0524");
     struct curl_slist* headers = NULL;
     headers = curl_slist_append(headers, "Expect:");
     headers = curl_slist_append(headers, "Content-type: application/x-www-form-urlencoded");
