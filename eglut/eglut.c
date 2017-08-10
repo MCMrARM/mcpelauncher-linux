@@ -315,7 +315,7 @@ eglutCreateWindow(const char *title)
 {
     struct eglut_window *win;
 
-    win = _eglutCreateWindow(title, 0, 0,
+    win = _eglutCreateWindow(title, -1, -1,
                              _eglut->window_width, _eglut->window_height);
 
     win->index = _eglut->num_windows++;

@@ -97,7 +97,12 @@ _eglutNativeInitWindow(struct eglut_window *win, const char *title,
         sizehints.y = y;
         sizehints.width  = w;
         sizehints.height = h;
-        sizehints.flags = USSize | USPosition;
+        if (x == -1 && y == -1) {
+            sizehints.win_gravity = CenterGravity;
+            sizehints.flags = USSize | PWinGravity;
+        } else {
+            sizehints.flags = USSize | USPosition;
+        }
         XSetNormalHints(_eglut->native_dpy, xwin, &sizehints);
         XSetStandardProperties(_eglut->native_dpy, xwin,
                                title, title, None, (char **) NULL, 0, &sizehints);
