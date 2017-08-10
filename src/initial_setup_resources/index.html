@@ -109,13 +109,13 @@
             if (error) {
                 setProgressVisible(false);
                 showDialog("dialog-message");
-                document.getElementById("message-text").innerText = error;
-                document.getElementById("message-title").innerText = "Error";
+                document.getElementById("message-text").textContent = error;
+                document.getElementById("message-title").textContent = "Error";
             } else if (file === null) {
                 setProgressVisible(false);
                 showDialog("dialog-message");
-                document.getElementById("message-text").innerText = "No file was selected";
-                document.getElementById("message-title").innerText = "Error";
+                document.getElementById("message-text").textContent = "No file was selected";
+                document.getElementById("message-title").textContent = "Error";
             } else {
                 setup.setupWithFile(file);
             }
@@ -145,15 +145,18 @@
     setup.setMessageHandler(function (type, text, title) {
         if (type === "message") {
             showDialog("dialog-message");
-            document.getElementById("message-text").innerText = text;
-            document.getElementById("message-title").innerText = title;
+            document.getElementById("message-text").textContent = text;
+            document.getElementById("message-title").textContent = title;
         } else if (type === "yesno") {
             showDialog("dialog-confirm");
-            document.getElementById("confirm-text").innerText = text;
-            document.getElementById("confirm-title").innerText = title;
+            document.getElementById("confirm-text").textContent = text;
+            document.getElementById("confirm-title").textContent = title;
         } else if (type === "tos") {
             showDialog("dialog-tos");
-            document.getElementById("tos-text").innerText = text;
+            document.getElementById("tos-text").innerHTML = text;
+            var aa = document.getElementById("tos-text").getElementsByTagName("a");
+            for (var i = 0; i < aa.length; i++)
+                aa[i].target = "_blank";
         }
     });
     setup.setDownloadStatusCallback(function (downloading, downloaded, total) {
