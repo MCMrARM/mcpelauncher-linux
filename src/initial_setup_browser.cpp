@@ -160,11 +160,11 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         Window child;
         XTranslateCoordinates(display, window, rootWindow, 0, 0, &x, &y, &child);
 
-        CefWindowInfo windowInfo;
-        windowInfo.width = 480;
-        windowInfo.height = 640;
-        windowInfo.x = x + attrs.width / 2 - windowInfo.width / 2;
-        windowInfo.y = y + attrs.height / 2 - windowInfo.height / 2;
+        MyWindowDelegate::Options windowInfo;
+        windowInfo.w = 480;
+        windowInfo.h = 640;
+        windowInfo.x = x + attrs.width / 2 - windowInfo.w / 2;
+        windowInfo.y = y + attrs.height / 2 - windowInfo.h / 2;
         GooglePlayHelper::singleton.handleLoginAndApkDownload(this, windowInfo);
 #endif
         return true;

@@ -30,7 +30,8 @@ static void do_zlib_inflate(z_stream& zs, FILE* file, char* data, size_t len, in
     }
 }
 
-bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
+bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* setup,
+                                                     MyWindowDelegate::Options const& windowInfo) {
     app_config conf (PathHelper::getPrimaryDataDirectory() + "playdl.conf");
     conf.load();
 
@@ -154,7 +155,8 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
     return true;
 }
 
-void GooglePlayHelper::handleLoginAndApkDownload(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
+void GooglePlayHelper::handleLoginAndApkDownload(InitialSetupBrowserClient* setup,
+                                                 MyWindowDelegate::Options const& windowInfo) {
     if (thread.joinable())
         thread.join();
     thread = std::thread(std::bind(&GooglePlayHelper::handleLoginAndApkDownloadSync, this, setup, windowInfo));

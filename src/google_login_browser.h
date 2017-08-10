@@ -26,9 +26,10 @@ private:
     static AsyncResult<GoogleLoginResult> resultState;
 
     GoogleLoginResult result;
+    CefRefPtr<CefWindow> window;
 
 public:
-    static GoogleLoginResult OpenBrowser(CefWindowInfo const& windowInfo);
+    static GoogleLoginResult OpenBrowser(MyWindowDelegate::Options const& windowInfo);
 
     GoogleLoginBrowserClient();
 

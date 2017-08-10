@@ -1,18 +1,25 @@
 #include <codecvt>
 #include <locale>
 #include "google_login_browser.h"
+#include "include/views/cef_browser_view.h"
+#include "include/views/cef_window.h"
 
 AsyncResult<GoogleLoginResult> GoogleLoginBrowserClient::resultState;
 std::string const GoogleLoginRenderHandler::Name = "GoogleLoginRenderHandler";
 
-GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(CefWindowInfo const& windowInfo) {
+GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(MyWindowDelegate::Options const& windowInfo) {
     printf("GoogleLoginBrowserClient::OpenBrowser\n");
 
     BrowserApp::RunWithContext([windowInfo] {
         CefRefPtr<GoogleLoginBrowserClient> client = new GoogleLoginBrowserClient();
 
+        MyWindowDelegate::Options options = windowInfo;
+        options.visible = false;
+
         CefBrowserSettings browserSettings;
-        CefBrowserHost::CreateBrowser(windowInfo, client, "https://accounts.google.com/embedded/setup/v2/android?source=com.android.settings&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&lang=en&langCountry=en_us&hl=en-US&cc=us", browserSettings, NULL);
+        CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
+                client, "https://accounts.google.com/embedded/setup/v2/android?source=com.android.settings&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&lang=en&langCountry=en_us&hl=en-US&cc=us", browserSettings, NULL, NULL);
+        client->window = CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options));
     });
 
     resultState.Clear();
@@ -34,6 +41,12 @@ bool GoogleLoginBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> br
     if (message->GetName() == "SetAccountIdentifier") {
         printf("SetAccountIdentifier\n");
         result.email = message->GetArgumentList()->GetString(0).ToString();
+        return true;
+    } else if (message->GetName() == "Show") {
+        printf("Show\n");
+        BrowserApp::RunOnUI([this] {
+            window->Show();
+        });
         return true;
     }
     return false;
@@ -81,6 +94,7 @@ void GoogleLoginRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, C
     CefRefPtr<CefV8Value> object = CefV8Value::CreateObject(nullptr, nullptr);
     object->SetValue("log", CefV8Value::CreateFunction("log", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setAccountIdentifier", CefV8Value::CreateFunction("setAccountIdentifier", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("showView", CefV8Value::CreateFunction("showView", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("mm", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
@@ -96,6 +110,11 @@ bool GoogleLoginV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> 
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SetAccountIdentifier");
         CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
         msgArgs->SetString(0, prop);
+        handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        return true;
+    }
+    if (name == "showView" && args.size() == 0) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Show");
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
     }
