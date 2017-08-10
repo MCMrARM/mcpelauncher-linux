@@ -336,9 +336,13 @@ int main(int argc, char *argv[]) {
         return exit_code;
 
     {
+        bool found = true;
         try {
             PathHelper::findDataFile("libs/libminecraftpe.so");
         } catch (std::exception e) {
+            found = false;
+        }
+        if (!found || (argc > 1 && strcmp(argv[1], "setup") == 0)) {
             if (!InitialSetupBrowserClient::OpenBrowser()) {
                 BrowserApp::Shutdown();
                 return 1;
