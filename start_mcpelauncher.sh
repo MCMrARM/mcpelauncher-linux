@@ -9,4 +9,4 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export LD_LIBRARY_PATH="${DIR}:${LD_LIBRARY_PATH}"
-exec "$DIR/mcpelauncher"
+exec "$DIR/mcpelauncher" "$@"
