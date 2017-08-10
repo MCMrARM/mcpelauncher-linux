@@ -76,7 +76,10 @@ bool PathHelper::fileExists(std::string const& path) {
 }
 
 std::string PathHelper::findDataFile(std::string const& path) {
-    std::string p = pathInfo.dataHome + "/" + appDirName + "/" + path;
+    std::string p = pathInfo.appDir + "/" + path;
+    if (fileExists(p))
+        return p;
+    p = pathInfo.dataHome + "/" + appDirName + "/" + path;
     if (fileExists(p))
         return p;
     for (const auto& dir : pathInfo.dataDirs) {
@@ -84,8 +87,5 @@ std::string PathHelper::findDataFile(std::string const& path) {
         if (fileExists(p))
             return p;
     }
-    p = pathInfo.appDir + "/" + path;
-    if (fileExists(p))
-        return p;
     throw std::runtime_error("Failed to find data file: " + path);
 }

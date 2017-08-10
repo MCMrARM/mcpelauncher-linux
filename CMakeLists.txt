@@ -84,6 +84,9 @@ add_custom_command(TARGET mcpelauncher POST_BUILD
         ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs/cef/bin/snapshot_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/snapshot_blob.bin)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/bin/natives_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/natives_blob.bin)
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
