@@ -42,6 +42,8 @@
 #endif
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
+#include "minecraft/Common.h"
+
 #endif
 
 extern "C" {
@@ -528,6 +530,11 @@ int main(int argc, char *argv[]) {
     std::cout << "patches applied!\n";
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
+
+    Common::Common_getGameVersionStringNet = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN6Common23getGameVersionStringNetEv");
+
+    printf("Version: %s\n", Common::Common_getGameVersionStringNet().c_str());
+    XboxLiveHelper::getCLL()->setAppVersion(Common::Common_getGameVersionStringNet().std());
 
     // load symbols for gl
     gl::getOpenGLVendor = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");

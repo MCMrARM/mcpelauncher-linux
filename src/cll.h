@@ -26,6 +26,7 @@ private:
         std::chrono::system_clock::time_point time;
     };
 
+    std::string appVersion;
     std::vector<Event> events;
     std::mutex eventsMutex;
     std::thread thread;
@@ -61,5 +62,9 @@ public:
     void setMSAAccount(std::shared_ptr<MSAAccount> account);
 
     void addEvent(std::string const& ticket, std::string const& name, std::string const& data);
+
+    void setAppVersion(std::string const& ver) {
+        this->appVersion = ver;
+    }
 
 };

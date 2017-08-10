@@ -130,7 +130,7 @@ void CLL::uploadEvents() {
            << "\"os\":\"Android\","
            << "\"osVer\":\"7.1.1\","
            << "\"appId\":\"A:com.mojang.minecraftpe\","
-           << "\"appVer\":\"1.2.0.7\"," // TODO: This one should be somehow based off MCPE itself
+           << "\"appVer\":\"" << appVersion << "\","
            << "\"ext\":{"
            << "\"user\":{\"ver\":\"1.0\",\"localId\":\"\"},"
            << "\"os\":{\"ver\":\"1.0\",\"locale\":\"en-US\"},"
