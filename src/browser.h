@@ -11,6 +11,7 @@
 #include "include/cef_client.h"
 #include "include/views/cef_window_delegate.h"
 #include "include/views/cef_browser_view.h"
+#include "include/views/cef_window.h"
 
 class MyRenderProcessHandler;
 
@@ -92,11 +93,12 @@ public:
 
 };
 
-class BrowserClient : public CefClient, public CefLifeSpanHandler, public CefLoadHandler {
+class BrowserClient : public CefClient, public CefLifeSpanHandler, public CefLoadHandler, public CefDisplayHandler {
 
 private:
     BrowserApp& app;
     std::string renderHandlerId;
+    CefRefPtr<CefWindow> window;
 
 public:
     BrowserClient(BrowserApp& app) : app(app) {}
@@ -111,6 +113,8 @@ public:
 
     virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
 
+    virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
+
     // CefLifeSpanHandler methods:
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
 
@@ -120,10 +124,17 @@ public:
     virtual void OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode,
                              const CefString& errorText, const CefString& failedUrl) override;
 
+    // CefDisplayHandler methods:
+    virtual void OnFaviconURLChange(CefRefPtr<CefBrowser> browser, const std::vector<CefString>& icon_urls) override;
+
+    virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) override;
+
     // Request that all existing browser windows close.
     void CloseAllBrowsers(bool forceClose);
 
     CefRefPtr<CefBrowser> GetPrimaryBrowser() { return browserList.front(); }
+
+    CefRefPtr<CefWindow> GetPrimaryWindow() { return window; }
 
 protected:
 
@@ -131,7 +142,24 @@ protected:
     typedef std::list<CefRefPtr<CefBrowser>> BrowserList;
     BrowserList browserList;
 
+    void SetPrimaryWindow(CefRefPtr<CefWindow> window) {
+        this->window = window;
+    }
+
 IMPLEMENT_REFCOUNTING(BrowserClient);
+};
+
+class FaviconDownloadCallback : public CefDownloadImageCallback {
+public:
+    explicit FaviconDownloadCallback(CefRefPtr<BrowserClient> client) : client(client) {}
+
+    virtual void OnDownloadImageFinished(const CefString& image_url, int http_status_code, CefRefPtr<CefImage> image) override;
+
+private:
+    CefRefPtr<BrowserClient> client;
+
+IMPLEMENT_REFCOUNTING(FaviconDownloadCallback);
+DISALLOW_COPY_AND_ASSIGN(FaviconDownloadCallback);
 };
 
 class MyWindowDelegate : public CefWindowDelegate {
@@ -144,6 +172,7 @@ public:
         bool visible = true;
         bool modal = false;
         Window modalParent;
+        std::string title;
     };
 
     MyWindowDelegate(CefRefPtr<CefBrowserView> browserView, Options options) : browserView(browserView), options(options) {}

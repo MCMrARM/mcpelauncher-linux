@@ -38,4 +38,8 @@ public:
         return pathInfo.cacheHome + "/" + appDirName + "/";
     }
 
+    static std::string getIconPath() {
+        return findDataFile("mcpelauncher-icon.png");
+    }
+
 };

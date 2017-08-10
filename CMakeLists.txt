@@ -91,11 +91,17 @@ add_custom_command(TARGET mcpelauncher POST_BUILD
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
+add_custom_command(TARGET mcpelauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/mcpelauncher-icon.png $<TARGET_FILE_DIR:mcpelauncher>/mcpelauncher-icon.png)
 
 install(TARGETS mcpelauncher
         RUNTIME DESTINATION share/mcpelauncher/bin/)
 install(FILES libs/cef/lib/libcef.so libs/cef/bin/snapshot_blob.bin libs/cef/bin/natives_blob.bin libs/cef/bin/icudtl.dat start_mcpelauncher.sh
         DESTINATION share/mcpelauncher/bin
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(FILES mcpelauncher-icon.png
+        DESTINATION share/mcpelauncher
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 install(DIRECTORY libs/hybris libs/native
         DESTINATION share/mcpelauncher/libs

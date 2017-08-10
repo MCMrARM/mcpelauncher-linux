@@ -26,8 +26,6 @@ private:
 
     static AsyncResult<XboxLoginResult> resultState;
 
-    CefRefPtr<CefWindow> window;
-
 public:
 
     static const std::string APPEND_URL_PARAMS;

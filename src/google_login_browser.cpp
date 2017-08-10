@@ -2,7 +2,6 @@
 #include <locale>
 #include "google_login_browser.h"
 #include "include/views/cef_browser_view.h"
-#include "include/views/cef_window.h"
 
 AsyncResult<GoogleLoginResult> GoogleLoginBrowserClient::resultState;
 std::string const GoogleLoginRenderHandler::Name = "GoogleLoginRenderHandler";
@@ -15,11 +14,12 @@ GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(MyWindowDelegate::Option
 
         MyWindowDelegate::Options options = windowInfo;
         options.visible = false;
+        options.title = "Sign in with a Google account";
 
         CefBrowserSettings browserSettings;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
                 client, "https://accounts.google.com/embedded/setup/v2/android?source=com.android.settings&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&lang=en&langCountry=en_us&hl=en-US&cc=us", browserSettings, NULL, NULL);
-        client->window = CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options));
+        client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 
     resultState.Clear();
@@ -45,7 +45,7 @@ bool GoogleLoginBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> br
     } else if (message->GetName() == "Show") {
         printf("Show\n");
         BrowserApp::RunOnUI([this] {
-            window->Show();
+            GetPrimaryWindow()->Show();
         });
         return true;
     }
