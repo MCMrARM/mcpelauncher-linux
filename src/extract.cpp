@@ -1,4 +1,5 @@
 #include "extract.h"
+#include "path_helper.h"
 #include <zip.h>
 #include <stdexcept>
 #include <cstring>
@@ -30,7 +31,7 @@ static void _rmkdir(char* pathname) {
     }
 }
 
-void ExtractHelper::extractFile(zip* za, zip_uint64_t fileId, const char* path, char* buf, size_t bufSize) {
+void ExtractHelper::extractFile(zip* za, zip_uint64_t fileId, std::string const& path, char* buf, size_t bufSize) {
     {
         std::string dir(path);
         dir = dir.substr(0, dir.find_last_of('/'));
@@ -38,7 +39,7 @@ void ExtractHelper::extractFile(zip* za, zip_uint64_t fileId, const char* path, 
     }
 
     zip_file* src = zip_fopen_index(za, fileId, 0);
-    FILE* out = fopen(path, "wb");
+    FILE* out = fopen(path.c_str(), "wb");
     if (!src || !out)
         throw std::runtime_error("Failed to open file");
 
@@ -51,8 +52,10 @@ void ExtractHelper::extractFile(zip* za, zip_uint64_t fileId, const char* path, 
 }
 
 void ExtractHelper::extractApk(std::string const& apk) {
+    std::string basePath = PathHelper::getPrimaryDataDirectory();
+
     printf("Deleting assets/\n");
-    nftw("assets/", removeFile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
+    nftw(std::string(basePath + "assets/").c_str(), removeFile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
 
     printf("Extracting apk: %s\n", apk.c_str());
     int err = 0;
@@ -76,11 +79,11 @@ void ExtractHelper::extractApk(std::string const& apk) {
             printf("Extracting asset: %s\n", zs.name);
             if (zs.name[nameLen - 1] == '/')
                 continue;
-            extractFile(za, (zip_uint64_t) i, zs.name, buf, bufSize);
+            extractFile(za, (zip_uint64_t) i, basePath + zs.name, buf, bufSize);
         } else if (strcmp(zs.name, "res/raw/xboxservices.config") == 0) {
-            extractFile(za, (zip_uint64_t) i, "assets/xboxservices.config", buf, bufSize);
+            extractFile(za, (zip_uint64_t) i, basePath + "assets/xboxservices.config", buf, bufSize);
         } else if (strcmp(zs.name, "lib/x86/libminecraftpe.so") == 0) {
-            extractFile(za, (zip_uint64_t) i, "libs/libminecraftpe.so", buf, bufSize);
+            extractFile(za, (zip_uint64_t) i, basePath + "libs/libminecraftpe.so", buf, bufSize);
         } else {
             printf("Skipping: %s\n", zs.name);
         }

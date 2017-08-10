@@ -336,8 +336,9 @@ int main(int argc, char *argv[]) {
         return exit_code;
 
     {
-        struct stat stat_buf;
-        if (stat("libs/libminecraftpe.so", &stat_buf)) {
+        try {
+            PathHelper::findDataFile("libs/libminecraftpe.so");
+        } catch (std::exception e) {
             if (!InitialSetupBrowserClient::OpenBrowser()) {
                 BrowserApp::Shutdown();
                 return 1;

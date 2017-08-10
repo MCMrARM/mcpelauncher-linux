@@ -1,5 +1,6 @@
 #include "xboxlive.h"
 #include "base64.h"
+#include "path_helper.h"
 
 #include <fstream>
 
@@ -7,8 +8,8 @@ std::shared_ptr<CLL> XboxLiveHelper::cll;
 std::shared_ptr<MSALoginManager> XboxLiveHelper::msaLoginManager;
 std::shared_ptr<SimpleMSAStorageManager> XboxLiveHelper::msaStorageManager;
 
-const std::string SimpleMSAStorageManager::DEVICE_AUTH_PATH = "data/msa_device_auth.txt";
-const std::string SimpleMSAStorageManager::ACCOUNT_INFO_PATH = "data/msa_account.txt";
+const std::string SimpleMSAStorageManager::DEVICE_AUTH_PATH = "msa_device_auth.txt";
+const std::string SimpleMSAStorageManager::ACCOUNT_INFO_PATH = "msa_account.txt";
 
 void XboxLiveHelper::initMSALoginManager() {
     cll = std::shared_ptr<CLL>(new CLL());
@@ -69,7 +70,7 @@ void SimpleMSAStorageManager::writeProperties(std::ostream& stream,
 }
 
 void SimpleMSAStorageManager::readDeviceAuthInfo(MSALoginManager& manager, MSADeviceAuth& deviceAuth) {
-    std::ifstream stream (DEVICE_AUTH_PATH);
+    std::ifstream stream (PathHelper::getPrimaryDataDirectory() + DEVICE_AUTH_PATH);
     if (!stream)
         return;
     std::map<std::string, std::string> properties = readProperties(stream);
@@ -89,14 +90,14 @@ void SimpleMSAStorageManager::onDeviceAuthChanged(MSALoginManager& manager, MSAD
         properties["token_xml"] = deviceAuth.token->getXmlData();
         properties["token_bin_secret"] = Base64::encode(deviceAuth.token->getBinarySecret());
     }
-    std::ofstream stream (DEVICE_AUTH_PATH);
+    std::ofstream stream (PathHelper::getPrimaryDataDirectory() + DEVICE_AUTH_PATH);
     writeProperties(stream, properties);
 }
 
 std::shared_ptr<MSAAccount> SimpleMSAStorageManager::getAccount() {
     if (account)
         return account;
-    std::ifstream stream (ACCOUNT_INFO_PATH);
+    std::ifstream stream (PathHelper::getPrimaryDataDirectory() + ACCOUNT_INFO_PATH);
     if (!stream)
         return std::shared_ptr<MSAAccount>();
     std::map<std::string, std::string> properties = readProperties(stream);
@@ -129,6 +130,6 @@ void SimpleMSAStorageManager::onAccountInfoChanged() {
         properties["token_bin_secret"] = Base64::encode(account->getDaToken()->getBinarySecret());
         // TODO: Cached tokens
     }
-    std::ofstream stream (ACCOUNT_INFO_PATH);
+    std::ofstream stream (PathHelper::getPrimaryDataDirectory() + ACCOUNT_INFO_PATH);
     writeProperties(stream, properties);
 }

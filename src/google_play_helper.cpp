@@ -9,6 +9,7 @@
 #include "../gplay_api/src/config.h"
 #include "initial_setup_browser.h"
 #include "extract.h"
+#include "path_helper.h"
 
 std::string const GooglePlayHelper::DOWNLOAD_PACKAGE = "com.mojang.minecraftpe";
 
@@ -30,10 +31,10 @@ static void do_zlib_inflate(z_stream& zs, FILE* file, char* data, size_t len, in
 }
 
 bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo) {
-    app_config conf;
+    app_config conf (PathHelper::getPrimaryDataDirectory() + "playdl.conf");
     conf.load();
 
-    std::string device_path = "device.conf";
+    std::string device_path = PathHelper::getPrimaryDataDirectory() + "device.conf";
     bool should_save = true;
 
     playapi::device_info device;
