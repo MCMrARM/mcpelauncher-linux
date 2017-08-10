@@ -2,6 +2,8 @@
 #include "xbox_login_browser.h"
 
 #include <iostream>
+#include <include/views/cef_window.h>
+#include <X11/Xlib.h>
 #include "common.h"
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
@@ -13,6 +15,7 @@
 
 extern "C" {
 #include "eglut.h"
+#include "eglut_x11.h"
 }
 
 std::string const XboxLoginRenderHandler::Name = "XboxLoginRenderHandler";
@@ -25,14 +28,21 @@ void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_andro
     BrowserApp::RunWithContext([] {
         CefRefPtr<XboxLoginBrowserClient> client = new XboxLoginBrowserClient();
 
-        CefWindowInfo window;
-        window.width = 480;
-        window.height = 640;
-        window.x = eglutGetWindowX() + eglutGetWindowWidth() / 2 - window.width / 2;
-        window.y = eglutGetWindowY() + eglutGetWindowHeight() / 2 - window.height / 2;
+        XWindowAttributes attrs;
+        XGetWindowAttributes(eglutGetDisplay(), eglutGetWindowHandle(), &attrs);
+
+        MyWindowDelegate::Options window;
+        window.w = 480;
+        window.h = 640;
+        window.x = eglutGetWindowX() - attrs.x + eglutGetWindowWidth() / 2 - window.w / 2;
+        window.y = eglutGetWindowY() - attrs.y + eglutGetWindowHeight() / 2 - window.h / 2;
+        window.modal = true;
+        window.modalParent = eglutGetWindowHandle();
         CefBrowserSettings browserSettings;
         browserSettings.background_color = 0xFF2A2A2A;
-        CefBrowserHost::CreateBrowser(window, client, "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&" + APPEND_URL_PARAMS, browserSettings, NULL);
+        CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
+                client, "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&" + APPEND_URL_PARAMS, browserSettings, NULL, NULL);
+        CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, window));
     });
 
     resultState.Clear();
