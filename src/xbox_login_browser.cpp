@@ -38,11 +38,12 @@ void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_andro
         window.y = eglutGetWindowY() - attrs.y + eglutGetWindowHeight() / 2 - window.h / 2;
         window.modal = true;
         window.modalParent = eglutGetWindowHandle();
+        window.visible = false;
         CefBrowserSettings browserSettings;
         browserSettings.background_color = 0xFF2A2A2A;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
                 client, "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&" + APPEND_URL_PARAMS, browserSettings, NULL, NULL);
-        CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, window));
+        client->window = CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, window));
     });
 
     resultState.Clear();
@@ -120,6 +121,12 @@ bool XboxLoginBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> brow
         return true;
     }
     return false;
+}
+
+void XboxLoginBrowserClient::OnLoadingStateChange(CefRefPtr<CefBrowser> browser, bool isLoading, bool canGoBack,
+                                                  bool canGoForward) {
+    if (!isLoading)
+        window->Show();
 }
 
 void XboxLoginRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,

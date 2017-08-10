@@ -26,6 +26,8 @@ private:
 
     static AsyncResult<XboxLoginResult> resultState;
 
+    CefRefPtr<CefWindow> window;
+
 public:
 
     static const std::string APPEND_URL_PARAMS;
@@ -36,6 +38,8 @@ public:
 
     // CefLifeSpanHandler methods:
     virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
+
+    virtual void OnLoadingStateChange(CefRefPtr<CefBrowser> browser, bool isLoading, bool canGoBack, bool canGoForward) override;
 
     // Message handling:
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
