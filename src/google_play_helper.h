@@ -14,7 +14,6 @@ private:
     static std::string const DOWNLOAD_PACKAGE;
 
     playapi::config config;
-    std::thread thread;
 
 public:
     static GooglePlayHelper singleton;

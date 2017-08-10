@@ -157,7 +157,6 @@ bool GooglePlayHelper::handleLoginAndApkDownloadSync(InitialSetupBrowserClient* 
 
 void GooglePlayHelper::handleLoginAndApkDownload(InitialSetupBrowserClient* setup,
                                                  MyWindowDelegate::Options const& windowInfo) {
-    if (thread.joinable())
-        thread.join();
-    thread = std::thread(std::bind(&GooglePlayHelper::handleLoginAndApkDownloadSync, this, setup, windowInfo));
+    std::thread thread(std::bind(&GooglePlayHelper::handleLoginAndApkDownloadSync, this, setup, windowInfo));
+    thread.detach();
 }
