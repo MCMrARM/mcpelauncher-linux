@@ -136,7 +136,9 @@ public:
     int getPlatformUIScalingRules() {
         return enablePocketGuis ? 2 : 0;
     }
-    long long getAvailableMemory();
+    void _updateUsedMemorySnapshot();
+    void _updateAvailableMemorySnapshot();
+    void _updateTotalMemorySnapshot();
 
     long long calculateAvailableDiskFreeSpace();
 

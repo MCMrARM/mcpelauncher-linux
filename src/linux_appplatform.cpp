@@ -87,7 +87,9 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform20getAssetFileFullPathERKSs", (void*) &LinuxAppPlatform::getAssetFileFullPath);
     replaceVtableEntry(lib, vta, "_ZNK11AppPlatform14useCenteredGUIEv", (void*) &LinuxAppPlatform::useCenteredGUI);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android16getApplicationIdEv", (void*) &LinuxAppPlatform::getApplicationId);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18getAvailableMemoryEv", (void*) &LinuxAppPlatform::getAvailableMemory);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25_updateUsedMemorySnapshotEv", (void*) &LinuxAppPlatform::_updateUsedMemorySnapshot);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android30_updateAvailableMemorySnapshotEv", (void*) &LinuxAppPlatform::_updateAvailableMemorySnapshot);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android26_updateTotalMemorySnapshotEv", (void*) &LinuxAppPlatform::_updateTotalMemorySnapshot);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11getDeviceIdEv", (void*) &LinuxAppPlatform::getDeviceId);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android10createUUIDEv", (void*) &LinuxAppPlatform::createUUID);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", (void*) &LinuxAppPlatform::isFirstSnoopLaunch);
@@ -201,11 +203,31 @@ mcpe::string LinuxAppPlatform::createUUID() {
     return std::string(out);
 }
 
-long long LinuxAppPlatform::getAvailableMemory() {
+void LinuxAppPlatform::_updateUsedMemorySnapshot() {
+    FILE* file = fopen("/proc/self/statm", "r");
+    if (file == nullptr)
+        return;
+    int pageSize = getpagesize();
+    long long pageCount = 0L;
+    fscanf(file, "%lld", &pageCount);
+    fclose(file);
+    usedMemory = pageCount * pageSize;
+}
+
+void LinuxAppPlatform::_updateAvailableMemorySnapshot() {
     struct sysinfo memInfo;
     sysinfo (&memInfo);
-    long long totalVirtualMem = memInfo.totalram;
-    totalVirtualMem += memInfo.totalswap;
-    totalVirtualMem *= memInfo.mem_unit;
-    return totalVirtualMem;
+    long long total = memInfo.freeram;
+    total += memInfo.freeswap;
+    total *= memInfo.mem_unit;
+    availableMemory = total;
+}
+
+void LinuxAppPlatform::_updateTotalMemorySnapshot() {
+    struct sysinfo memInfo;
+    sysinfo (&memInfo);
+    long long total = memInfo.totalram;
+    total += memInfo.totalswap;
+    total *= memInfo.mem_unit;
+    totalMemory = total;
 }
