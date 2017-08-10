@@ -10,7 +10,9 @@ public:
     static void (*AppPlatform__fireAppFocusGained)(AppPlatform*);
 
     void** vtable;
-    char filler [0x1000];
+    char filler[0x9C - sizeof(void**)]; // 9c
+    long long usedMemory, totalMemory, availableMemory; // a4, ac
+    char filler2[0x1000];
 
     AppPlatform() {
         AppPlatform_construct(this);
