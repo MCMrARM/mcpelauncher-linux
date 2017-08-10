@@ -107,7 +107,7 @@ void eglutPostRedisplay(void);
 void eglutMainLoop(void);
 void eglutFini(void);
 
-int eglutCreateWindow(const char *title);
+int eglutCreateWindow(const char *title, const char *icon);
 void eglutDestroyWindow(int win);
 
 int eglutGetWindowX(void);

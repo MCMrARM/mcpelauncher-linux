@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <png.h>
 
 #include "EGL/egl.h"
 #include "EGL/eglext.h"
@@ -129,7 +130,7 @@ _eglutChooseConfig(void)
 }
 
 static struct eglut_window *
-_eglutCreateWindow(const char *title, int x, int y, int w, int h)
+_eglutCreateWindow(const char *title, int x, int y, int w, int h, const char *icon)
 {
     struct eglut_window *win;
     EGLint context_attribs[4];
@@ -166,7 +167,7 @@ _eglutCreateWindow(const char *title, int x, int y, int w, int h)
     if (!win->context)
         _eglutFatal("failed to create context");
 
-    _eglutNativeInitWindow(win, title, x, y, w, h);
+    _eglutNativeInitWindow(win, title, x, y, w, h, icon);
     switch (_eglut->surface_type) {
         case EGL_WINDOW_BIT:
             win->surface = eglCreateWindowSurface(_eglut->dpy,
@@ -310,13 +311,89 @@ _eglutDefaultKeyboard(unsigned char key)
     }
 }
 
+void*
+_eglutReadPNG(char *filename, unsigned int *width, unsigned int *height) {
+    FILE *file;
+    char sig[8];
+    int depth, colorType;
+    png_size_t row_bytes;
+    png_byte **rows;
+    char* data;
+
+    file = fopen(filename, "r");
+    if (!file) {
+        printf("_eglutReadPNG: fopen failed\n");
+        return NULL;
+    }
+    png_struct *png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_ptr) {
+        printf("_eglutReadPNG: png_create_read_struct error\n");
+        return NULL;
+    }
+    png_info *info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        printf("_eglutReadPNG: png_create_info_struct error\n");
+        png_destroy_read_struct(&png_ptr, NULL, NULL);
+        return NULL;
+    }
+
+    png_init_io(png_ptr, file);
+    png_read_info(png_ptr, info_ptr);
+
+    png_get_IHDR(png_ptr, info_ptr, width, height, &depth, &colorType, NULL, NULL, NULL);
+
+    if (colorType == PNG_COLOR_TYPE_RGB) {
+        png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+        png_read_update_info(png_ptr, info_ptr);
+    } else if (colorType != PNG_COLOR_TYPE_RGBA && colorType != PNG_COLOR_TYPE_PALETTE) {
+        printf("_eglutReadPNG: unsupported color type\n");
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        return NULL;
+    }
+    if (colorType == PNG_COLOR_TYPE_PALETTE) {
+        png_set_palette_to_rgb(png_ptr);
+        if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+            png_set_tRNS_to_alpha(png_ptr);
+        else
+            png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+        png_read_update_info(png_ptr, info_ptr);
+    } else if (depth < 8 || png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+        png_set_expand(png_ptr);
+        png_read_update_info(png_ptr, info_ptr);
+    }
+    if (depth == 16) {
+        png_set_strip_16(png_ptr);
+        png_read_update_info(png_ptr, info_ptr);
+    }
+
+    row_bytes = png_get_rowbytes(png_ptr, info_ptr);
+
+    rows = malloc(sizeof(png_byte *) * *height);
+    data = malloc(row_bytes * *height);
+    if (rows == NULL || data == NULL) {
+        printf("_eglutReadPNG: malloc failed\n");
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        if (rows != NULL)
+            free(rows);
+        return NULL;
+    }
+    for (unsigned int i = 0; i < *height; i++)
+        rows[i] = &data[i * row_bytes];
+
+    png_read_image(png_ptr, rows);
+
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    free(rows);
+
+    return data;
+}
+
 int
-eglutCreateWindow(const char *title)
+eglutCreateWindow(const char *title, const char *icon)
 {
     struct eglut_window *win;
 
-    win = _eglutCreateWindow(title, -1, -1,
-                             _eglut->window_width, _eglut->window_height);
+    win = _eglutCreateWindow(title, -1, -1, _eglut->window_width, _eglut->window_height, icon);
 
     win->index = _eglut->num_windows++;
     win->reshape_cb = NULL;

@@ -97,12 +97,15 @@ void
 
 void
         _eglutNativeInitWindow(struct eglut_window *win, const char *title,
-                               int x, int y, int w, int h);
+                               int x, int y, int w, int h, const char *icon);
 
 void
         _eglutNativeFiniWindow(struct eglut_window *win);
 
 void
         _eglutNativeEventLoop(void);
+
+void*
+        _eglutReadPNG(char *filename, unsigned int *width, unsigned int *height);
 
 #endif /* _EGLUTINT_H_ */

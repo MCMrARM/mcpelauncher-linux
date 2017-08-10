@@ -52,7 +52,7 @@ if (PLAYAPI_ENABLED)
     set(SOURCE_FILES ${SOURCE_FILES} gplay_api/src/config.h gplay_api/src/config.cpp src/google_login_browser.h src/google_login_browser.cpp src/google_play_helper.cpp src/google_play_helper.h)
 endif()
 add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${SOURCE_FILES})
-target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z curl zip crypto)
+target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z png curl zip crypto)
 target_compile_definitions(mcpelauncher PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
 if (CEF_ENABLED)
