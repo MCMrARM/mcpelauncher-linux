@@ -11,6 +11,10 @@ CefMainArgs BrowserApp::cefMainArgs;
 CefRefPtr<BrowserApp> BrowserApp::singleton (new BrowserApp());
 std::unordered_map<std::string, std::function<std::shared_ptr<MyRenderProcessHandler> (CefRefPtr<CefBrowser> browser)>> BrowserApp::knownRenderHandlers;
 
+static void RunFunction(std::function<void()> func) {
+    func();
+}
+
 void BrowserApp::DoCefThread() {
     CefSettings settings;
     settings.no_sandbox = true;
@@ -25,9 +29,15 @@ void BrowserApp::RunWithContext(std::function<void()> contextCallback) {
     if (!singleton->cefThread.joinable()) {
         singleton->contextCallback = contextCallback;
         singleton->cefThread = std::thread(DoCefThread);
+    } else if (!CefCurrentlyOn(TID_UI)) {
+        RunOnUI(contextCallback);
     } else {
         contextCallback();
     }
+}
+
+void BrowserApp::RunOnUI(std::function<void()> function) {
+    CefPostTask(TID_UI, base::Bind(&RunFunction, function));
 }
 
 void BrowserApp::Shutdown() {
@@ -124,7 +134,8 @@ void MyWindowDelegate::OnWindowCreated(CefRefPtr<CefWindow> window) {
     window->AddChildView(browserView);
     window->SetPosition({options.x, options.y});
     window->SetSize({options.w, options.h});
-    window->Show();
+    if (options.visible)
+        window->Show();
     if (options.centerScreen) {
         XSizeHints sizehints;
         sizehints.win_gravity = CenterGravity;

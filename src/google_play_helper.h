@@ -4,6 +4,7 @@
 #include <thread>
 #include <playapi/util/config.h>
 #include <include/cef_client.h>
+#include "browser.h"
 
 class InitialSetupBrowserClient;
 
@@ -18,8 +19,8 @@ private:
 public:
     static GooglePlayHelper singleton;
 
-    bool handleLoginAndApkDownloadSync(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo);
+    bool handleLoginAndApkDownloadSync(InitialSetupBrowserClient* setup, MyWindowDelegate::Options const& windowInfo);
 
-    void handleLoginAndApkDownload(InitialSetupBrowserClient* setup, CefWindowInfo const& windowInfo);
+    void handleLoginAndApkDownload(InitialSetupBrowserClient* setup, MyWindowDelegate::Options const& windowInfo);
 
 };

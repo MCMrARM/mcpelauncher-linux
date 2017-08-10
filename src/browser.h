@@ -33,6 +33,8 @@ public:
 
     static void RunWithContext(std::function<void ()> contextCallback);
 
+    static void RunOnUI(std::function<void ()> function);
+
     template <typename T>
     static void RegisterRenderProcessHandler() {
         knownRenderHandlers[T::Name] = [](CefRefPtr<CefBrowser> browser) { return std::shared_ptr<T>(new T(browser)); };
@@ -138,6 +140,7 @@ public:
         int x = 0, y = 0;
         int w, h;
         bool centerScreen = false;
+        bool visible = true;
     };
 
     MyWindowDelegate(CefRefPtr<CefBrowserView> browserView, Options options) : browserView(browserView), options(options) {}
