@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "eglutint.h"
+#include "eglut_x11.h"
 
 void
 _eglutNativeInitDisplay(void)
@@ -354,6 +355,7 @@ void eglutSetMousePointerVisiblity(int visible) {
         XUndefineCursor(_eglut->native_dpy, _eglut->current->native.u.window);
     }
 }
+
 int eglutToggleFullscreen()
 {
     // http://stackoverflow.com/questions/10897503/opening-a-fullscreen-opengl-window
@@ -378,4 +380,12 @@ int eglutToggleFullscreen()
 
     XFlush(_eglut->native_dpy);
     return -1;
+}
+
+Display* eglutGetDisplay() {
+    return _eglut->native_dpy;
+}
+
+Window eglutGetWindowHandle() {
+    return _eglut->current->native.u.window;
 }
