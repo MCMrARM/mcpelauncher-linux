@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include "include/views/cef_browser_view.h"
+#include "include/views/cef_window.h"
 #include "initial_setup_browser.h"
 #include "common.h"
 #include "extract.h"
@@ -20,11 +22,15 @@ bool InitialSetupBrowserClient::OpenBrowser() {
     BrowserApp::RunWithContext([] {
         CefRefPtr<InitialSetupBrowserClient> client = new InitialSetupBrowserClient();
 
-        CefWindowInfo window;
-        window.width = 720;
-        window.height = 576;
+        MyWindowDelegate::Options options;
+        options.w = 720;
+        options.h = 576;
+        options.centerScreen = true;
+
         CefBrowserSettings browserSettings;
-        CefBrowserHost::CreateBrowser(window, client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/index.html"), browserSettings, NULL);
+        CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
+                client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/index.html"), browserSettings, NULL, NULL);
+        CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options));
     });
 
     resultState.Clear();

@@ -8,6 +8,8 @@
 #include <memory>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
+#include "include/views/cef_window_delegate.h"
+#include "include/views/cef_browser_view.h"
 
 class MyRenderProcessHandler;
 
@@ -127,4 +129,29 @@ protected:
     BrowserList browserList;
 
 IMPLEMENT_REFCOUNTING(BrowserClient);
+};
+
+class MyWindowDelegate : public CefWindowDelegate {
+
+public:
+    struct Options {
+        int x = 0, y = 0;
+        int w, h;
+        bool centerScreen = false;
+    };
+
+    MyWindowDelegate(CefRefPtr<CefBrowserView> browserView, Options options) : browserView(browserView), options(options) {}
+
+    virtual void OnWindowCreated(CefRefPtr<CefWindow> window) override;
+
+    virtual void OnWindowDestroyed(CefRefPtr<CefWindow> window) override {
+        browserView = NULL;
+    }
+
+private:
+    CefRefPtr<CefBrowserView> browserView;
+    Options options;
+
+IMPLEMENT_REFCOUNTING(MyWindowDelegate);
+DISALLOW_COPY_AND_ASSIGN(MyWindowDelegate);
 };
