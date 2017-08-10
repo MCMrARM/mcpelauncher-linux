@@ -2,11 +2,11 @@
 
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <sys/stat.h>
 #include "path_helper.h"
 
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
-#include "include/views/cef_window.h"
 
 CefMainArgs BrowserApp::cefMainArgs;
 CefRefPtr<BrowserApp> BrowserApp::singleton (new BrowserApp());
@@ -131,15 +131,47 @@ void BrowserClient::CloseAllBrowsers(bool forceClose) {
         (*it)->GetHost()->CloseBrowser(forceClose);
 }
 
+void BrowserClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser, const std::vector<CefString>& icon_urls) {
+    CefDisplayHandler::OnFaviconURLChange(browser, icon_urls);
+    if (!icon_urls.empty())
+        browser->GetHost()->DownloadImage(icon_urls[0], true, 16, false, new FaviconDownloadCallback(this));
+}
+
+void BrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) {
+    GetPrimaryWindow()->SetTitle(title);
+}
+
+void FaviconDownloadCallback::OnDownloadImageFinished(const CefString& image_url, int http_status_code,
+                                                      CefRefPtr<CefImage> image) {
+    if (image)
+        client->GetPrimaryWindow()->SetWindowIcon(image);
+}
+
 void MyWindowDelegate::OnWindowCreated(CefRefPtr<CefWindow> window) {
     window->AddChildView(browserView);
     window->SetPosition({options.x, options.y});
     window->SetSize({options.w, options.h});
+    window->SetTitle(options.title);
     if (options.modal) {
         Atom wmStateAtom = XInternAtom(cef_get_xdisplay(), "_NET_WM_STATE", False);
         Atom modalAtom = XInternAtom(cef_get_xdisplay(), "_NET_WM_STATE_MODAL", False);
         XChangeProperty(cef_get_xdisplay(), window->GetWindowHandle(), wmStateAtom, XA_ATOM, 32, PropModeAppend, (unsigned char*) &modalAtom, 1);
         XSetTransientForHint(cef_get_xdisplay(), window->GetWindowHandle(), options.modalParent);
+    }
+    struct stat sb;
+    std::string iconPath = PathHelper::getIconPath();
+    if (!stat(iconPath.c_str(), &sb)) {
+        FILE* file = fopen(iconPath.c_str(), "r");
+        char* buf = new char[sb.st_size];
+        size_t o = 0, i;
+        while ((i = fread(buf, sizeof(char), (size_t) sb.st_size - o, file)) > 0)
+            o += i;
+        fclose(file);
+        CefRefPtr<CefImage> image = CefImage::CreateImage();
+        image->AddPNG(1.f, buf, o);
+        delete[] buf;
+        window->SetWindowIcon(image);
+        window->SetWindowAppIcon(image);
     }
     if (options.visible)
         window->Show();

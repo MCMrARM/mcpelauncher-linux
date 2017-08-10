@@ -20,20 +20,17 @@ struct GoogleLoginResult {
     std::string userId;
 };
 
-class GoogleLoginBrowserClient : public BrowserClient, public CefDisplayHandler, public CefCookieVisitor {
+class GoogleLoginBrowserClient : public BrowserClient, public CefCookieVisitor {
 
 private:
     static AsyncResult<GoogleLoginResult> resultState;
 
     GoogleLoginResult result;
-    CefRefPtr<CefWindow> window;
 
 public:
     static GoogleLoginResult OpenBrowser(MyWindowDelegate::Options const& windowInfo);
 
     GoogleLoginBrowserClient();
-
-    CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
 
     // CefLifeSpanHandler methods:
     virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
@@ -43,6 +40,8 @@ public:
                                           CefRefPtr<CefProcessMessage> message) override;
 
     virtual void OnAddressChange(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& url) override;
+
+    virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) override {}
 
     virtual bool Visit(const CefCookie& cookie, int count, int total, bool& deleteCookie) override;
 };

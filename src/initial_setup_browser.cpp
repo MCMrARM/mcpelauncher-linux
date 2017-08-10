@@ -3,7 +3,6 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include "include/views/cef_browser_view.h"
-#include "include/views/cef_window.h"
 #include "initial_setup_browser.h"
 #include "common.h"
 #include "extract.h"
@@ -30,7 +29,7 @@ bool InitialSetupBrowserClient::OpenBrowser() {
         CefBrowserSettings browserSettings;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
                 client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/index.html"), browserSettings, NULL, NULL);
-        client->window = CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options));
+        client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 
     resultState.Clear();

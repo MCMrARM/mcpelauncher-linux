@@ -25,7 +25,6 @@ private:
 
     AsyncResult<bool> askResult;
     AsyncResult<AskTosResult> askTosResult;
-    CefRefPtr<CefWindow> window;
 
     void HandleSetupWithFile(std::string const& file);
 

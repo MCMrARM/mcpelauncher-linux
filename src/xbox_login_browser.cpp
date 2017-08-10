@@ -2,7 +2,6 @@
 #include "xbox_login_browser.h"
 
 #include <iostream>
-#include <include/views/cef_window.h>
 #include <X11/Xlib.h>
 #include "common.h"
 #include "include/base/cef_bind.h"
@@ -43,7 +42,7 @@ void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_andro
         browserSettings.background_color = 0xFF2A2A2A;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
                 client, "https://login.live.com/ppsecure/InlineConnect.srf?id=80604&" + APPEND_URL_PARAMS, browserSettings, NULL, NULL);
-        client->window = CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, window));
+        client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, window)));
     });
 
     resultState.Clear();
@@ -126,7 +125,7 @@ bool XboxLoginBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> brow
 void XboxLoginBrowserClient::OnLoadingStateChange(CefRefPtr<CefBrowser> browser, bool isLoading, bool canGoBack,
                                                   bool canGoForward) {
     if (!isLoading)
-        window->Show();
+        GetPrimaryWindow()->Show();
 }
 
 void XboxLoginRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
