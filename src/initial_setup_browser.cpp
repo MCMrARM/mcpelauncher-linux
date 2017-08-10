@@ -30,7 +30,7 @@ bool InitialSetupBrowserClient::OpenBrowser() {
         CefBrowserSettings browserSettings;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
                 client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/index.html"), browserSettings, NULL, NULL);
-        CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options));
+        client->window = CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options));
     });
 
     resultState.Clear();
@@ -163,8 +163,10 @@ bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> b
         MyWindowDelegate::Options windowInfo;
         windowInfo.w = 480;
         windowInfo.h = 640;
-        windowInfo.x = x + attrs.width / 2 - windowInfo.w / 2;
-        windowInfo.y = y + attrs.height / 2 - windowInfo.h / 2;
+        windowInfo.x = x - attrs.x + attrs.width / 2 - windowInfo.w / 2;
+        windowInfo.y = y - attrs.y + attrs.height / 2 - windowInfo.h / 2;
+        windowInfo.modal = true;
+        windowInfo.modalParent = browser->GetHost()->GetWindowHandle();
         GooglePlayHelper::singleton.handleLoginAndApkDownload(this, windowInfo);
 #endif
         return true;

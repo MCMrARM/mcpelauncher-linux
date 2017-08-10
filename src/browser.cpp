@@ -1,6 +1,7 @@
 #include "browser.h"
 
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 #include "path_helper.h"
 
 #include "include/base/cef_bind.h"
@@ -134,6 +135,12 @@ void MyWindowDelegate::OnWindowCreated(CefRefPtr<CefWindow> window) {
     window->AddChildView(browserView);
     window->SetPosition({options.x, options.y});
     window->SetSize({options.w, options.h});
+    if (options.modal) {
+        Atom wmStateAtom = XInternAtom(cef_get_xdisplay(), "_NET_WM_STATE", False);
+        Atom modalAtom = XInternAtom(cef_get_xdisplay(), "_NET_WM_STATE_MODAL", False);
+        XChangeProperty(cef_get_xdisplay(), window->GetWindowHandle(), wmStateAtom, XA_ATOM, 32, PropModeAppend, (unsigned char*) &modalAtom, 1);
+        XSetTransientForHint(cef_get_xdisplay(), window->GetWindowHandle(), options.modalParent);
+    }
     if (options.visible)
         window->Show();
     if (options.centerScreen) {

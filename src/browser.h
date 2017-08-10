@@ -6,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <memory>
+#include <X11/X.h>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
 #include "include/views/cef_window_delegate.h"
@@ -141,6 +142,8 @@ public:
         int w, h;
         bool centerScreen = false;
         bool visible = true;
+        bool modal = false;
+        Window modalParent;
     };
 
     MyWindowDelegate(CefRefPtr<CefBrowserView> browserView, Options options) : browserView(browserView), options(options) {}
