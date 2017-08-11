@@ -468,6 +468,13 @@ eglutSpecialFunc(EGLUTspecialCB func)
 }
 
 void
+eglutPasteFunc(EGLUTpasteCB func)
+{
+    struct eglut_window *win = _eglut->current;
+    win->paste_cb = func;
+}
+
+void
 eglutMouseFunc(EGLUTmouseCB func)
 {
     struct eglut_window *win = _eglut->current;

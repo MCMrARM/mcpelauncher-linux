@@ -52,6 +52,7 @@ struct eglut_window {
     EGLUTdisplayCB display_cb;
     EGLUTkeyboardCB keyboard_cb;
     EGLUTspecialCB special_cb;
+    EGLUTpasteCB paste_cb;
     EGLUTmouseCB mouse_cb;
     EGLUTmouseButtonCB mouse_button_cb;
     EGLUTcloseCB close_cb;

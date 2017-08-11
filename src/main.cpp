@@ -161,7 +161,7 @@ int getKeyMinecraft(int keyCode) {
     return keyCode;
 }
 static void minecraft_keyboard(char str[5], int action) {
-    if (strcmp(str, "\t") == 0 || strcmp(str, "\33") == 0)
+    if (strcmp(str, "\t") == 0 || strcmp(str, "\26") == 0 || strcmp(str, "\33") == 0) // \t, paste, esc
         return;
     if (action == EGLUT_KEY_PRESS || action == EGLUT_KEY_REPEAT) {
         if (str[0] == 13) {
@@ -173,7 +173,13 @@ static void minecraft_keyboard(char str[5], int action) {
         Keyboard::Keyboard_feedText(ss.str(), false, 0);
     }
 }
+bool modCTRL = false;
 static void minecraft_keyboard_special(int key, int action) {
+    if (key == 65507)
+        modCTRL = (action != EGLUT_KEY_RELEASE);
+    if (modCTRL && (key == 86 || key == 118) && action == EGLUT_KEY_PRESS) {
+        eglutRequestPaste();
+    }
     if (key == 65480) {
         if (action == EGLUT_KEY_PRESS) {
             client->getPrimaryUserOptions()->setFullscreen(!client->getPrimaryUserOptions()->getFullscreen());
@@ -188,6 +194,9 @@ static void minecraft_keyboard_special(int key, int action) {
         Keyboard::Keyboard_feed((unsigned char) mKey, 0);
         //Keyboard::states[mKey] = 0;
     }
+}
+static void minecraft_paste(const char* str, int len) {
+    Keyboard::Keyboard_feedText(std::string(str, len), false, 0);
 }
 static void minecraft_close() {
     client->quit();
@@ -637,6 +646,7 @@ int main(int argc, char *argv[]) {
     eglutMouseButtonFunc(minecraft_mouse_button);
     eglutKeyboardFunc(minecraft_keyboard);
     eglutSpecialFunc(minecraft_keyboard_special);
+    eglutPasteFunc(minecraft_paste);
     eglutCloseWindowFunc(minecraft_close);
     std::cout << "initialized display\n";
 
