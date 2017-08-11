@@ -161,7 +161,7 @@ int getKeyMinecraft(int keyCode) {
     return keyCode;
 }
 static void minecraft_keyboard(char str[5], int action) {
-    if (strcmp(str, "\t") == 0)
+    if (strcmp(str, "\t") == 0 || strcmp(str, "\33") == 0)
         return;
     if (action == EGLUT_KEY_PRESS || action == EGLUT_KEY_REPEAT) {
         if (str[0] == 13) {
