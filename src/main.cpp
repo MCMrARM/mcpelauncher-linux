@@ -129,7 +129,12 @@ static void minecraft_draw() {
     client->update();
 }
 float pixelSize = 2.f;
+int oldw = -1, oldh = -1;
 static void minecraft_reshape(int w, int h) {
+    if (oldw == w && oldh == h)
+        return;
+    oldw = w;
+    oldh = h;
     client->setRenderingSize(w, h);
     client->setUISizeAndScale(w, h, pixelSize);
 }
