@@ -336,6 +336,22 @@ next_event(struct eglut_window *win)
                 }
             }
         }
+        case SelectionNotify:
+        {
+            Atom utf8_string = XInternAtom(_eglut->native_dpy, "UTF8_STRING", False);
+            Atom app_cb_atom = XInternAtom(_eglut->native_dpy, "EGLUT_CLIPBOARD", False);
+
+            Atom type;
+            int format;
+            unsigned long length, remaining;
+            unsigned char *data;
+            if (!XGetWindowProperty(_eglut->native_dpy, _eglut->current->native.u.window, app_cb_atom, 0, 65536, False,
+                                    utf8_string, &type, &format, &length, &remaining, &data) && data) {
+                if (win->paste_cb)
+                    win->paste_cb(data, length);
+                XFree(data);
+            }
+        }
         default:
             ; /*no-op*/
     }
@@ -410,6 +426,17 @@ int eglutToggleFullscreen()
 
     XFlush(_eglut->native_dpy);
     return -1;
+}
+
+void eglutRequestPaste()
+{
+    Atom clipboard = XInternAtom(_eglut->native_dpy, "CLIPBOARD", False);
+    Window owner = XGetSelectionOwner(_eglut->native_dpy, clipboard);
+    if (owner == None)
+        return;
+    Atom utf8_string = XInternAtom(_eglut->native_dpy, "UTF8_STRING", False);
+    Atom app_cb_atom = XInternAtom(_eglut->native_dpy, "EGLUT_CLIPBOARD", False);
+    XConvertSelection(_eglut->native_dpy, clipboard, utf8_string, app_cb_atom, _eglut->current->native.u.window, CurrentTime);
 }
 
 Display* eglutGetDisplay() {
