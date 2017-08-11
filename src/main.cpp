@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hookAndroidLog();
-    if (!load_empty_library("libc.so") || !loadLibrary("libstdc++.so") || !load_empty_library("libm.so"))
+    if (!load_empty_library("libc.so") || !load_empty_library("libm.so"))
         return -1;
     // load stub libraries
     if (!load_empty_library("libandroid.so") || !load_empty_library("liblog.so") || !load_empty_library("libEGL.so") || !load_empty_library("libGLESv2.so") || !load_empty_library("libOpenSLES.so") || !load_empty_library("libfmod.so") || !load_empty_library("libGLESv1_CM.so"))
