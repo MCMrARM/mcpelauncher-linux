@@ -42,8 +42,8 @@ public:
     LinuxAppPlatform();
 
     mcpe::string getDataUrl() { // this is used only for sounds
-        printf("get data url: assets/\n");
-        return "assets/";
+        printf("get data url: %s\n", assetsDir.c_str());
+        return assetsDir;
     }
     mcpe::string getUserDataUrl() {
         printf("get user data url: %s\n", dataDir.c_str());
