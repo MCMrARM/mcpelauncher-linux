@@ -206,7 +206,7 @@ bool verifyCertChainStub() {
 }
 mcpe::string xboxReadConfigFile(void* th) {
     std::cout << "xbox read config file\n";
-    std::ifstream f("assets/xboxservices.config");
+    std::ifstream f(PathHelper::findDataFile("assets/xboxservices.config"));
     std::stringstream s;
     s << f.rdbuf();
     return s.str();
