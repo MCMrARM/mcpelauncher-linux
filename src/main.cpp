@@ -404,7 +404,7 @@ int main(int argc, char *argv[]) {
     std::cout << "loading native libraries\n";
     void* glesLib = loadLibraryOS("libGLESv2.so", gles_symbols);
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
-    void* libmLib = loadLibraryOS("libm.so", libm_symbols);
+    void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     if (glesLib == nullptr || fmodLib == nullptr || libmLib == nullptr)
         return -1;
     std::cout << "loading hybris libraries\n";
@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hookAndroidLog();
-    if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !load_empty_library("libm.so") || !loadLibrary("libz.so"))
+    if (!loadLibrary("libc.so") || !loadLibrary("libstdc++.so") || !load_empty_library("libm.so"))
         return -1;
     // load stub libraries
     if (!load_empty_library("libandroid.so") || !load_empty_library("liblog.so") || !load_empty_library("libEGL.so") || !load_empty_library("libGLESv2.so") || !load_empty_library("libOpenSLES.so") || !load_empty_library("libfmod.so") || !load_empty_library("libGLESv1_CM.so"))
