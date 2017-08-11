@@ -1481,6 +1481,91 @@ int my_open(const char *pathname, int flags, ...)
 	return open(target_path, flags, mode);
 }
 
+struct bionic_stat64 {
+    unsigned long long st_dev;
+    unsigned char __pad0[4];
+    unsigned long __st_ino;
+    unsigned int st_mode;
+    nlink_t st_nlink;
+    uid_t st_uid;
+    gid_t st_gid;
+    unsigned long long st_rdev;
+    unsigned char __pad3[4];
+    long long st_size;
+    unsigned long st_blksize;
+    unsigned long long st_blocks;
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+    unsigned long long st_ino;
+};
+
+void stat_to_bionic_stat(struct stat *s, struct bionic_stat64 *b) {
+    b->st_dev = s->st_dev;
+    b->__st_ino = s->st_ino;
+    b->st_mode = s->st_mode;
+    b->st_nlink = s->st_nlink;
+    b->st_uid = s->st_uid;
+    b->st_gid = s->st_gid;
+    b->st_rdev = s->st_rdev;
+    b->st_size = s->st_size;
+    b->st_blksize = (unsigned long) s->st_blksize;
+    b->st_blocks = (unsigned long long) s->st_blocks;
+    b->st_atim = s->st_atim;
+    b->st_mtim = s->st_mtim;
+    b->st_ctim = s->st_ctim;
+    b->st_ino = s->st_ino;
+}
+
+void stat64_to_bionic_stat(struct stat64 *s, struct bionic_stat64 *b) {
+    b->st_dev = s->st_dev;
+    b->__st_ino = s->__st_ino;
+    b->st_mode = s->st_mode;
+    b->st_nlink = s->st_nlink;
+    b->st_uid = s->st_uid;
+    b->st_gid = s->st_gid;
+    b->st_rdev = s->st_rdev;
+    b->st_size = s->st_size;
+    b->st_blksize = (unsigned long) s->st_blksize;
+    b->st_blocks = (unsigned long long) s->st_blocks;
+    b->st_atim = s->st_atim;
+    b->st_mtim = s->st_mtim;
+    b->st_ctim = s->st_ctim;
+    b->st_ino = s->st_ino;
+}
+
+int my_stat(const char* path, struct bionic_stat64 *s)
+{
+    struct stat tmp;
+    int ret = stat(path, &tmp);
+    stat_to_bionic_stat(&tmp, s);
+    return ret;
+}
+
+int my_fstat(int fd, struct bionic_stat64 *s)
+{
+    struct stat tmp;
+    int ret = fstat(fd, &tmp);
+    stat_to_bionic_stat(&tmp, s);
+    return ret;
+}
+
+int my_stat64(const char* path, struct bionic_stat64 *s)
+{
+    struct stat64 tmp;
+    int ret = stat64(path, &tmp);
+    stat64_to_bionic_stat(&tmp, s);
+    return ret;
+}
+
+int my_fstat64(int fd, struct bionic_stat64 *s)
+{
+    struct stat64 tmp;
+    int ret = fstat64(fd, &tmp);
+    stat64_to_bionic_stat(&tmp, s);
+    return ret;
+}
+
 /**
  * NOTE: Normally we don't have to wrap __system_property_get (libc.so) as it is only used
  * through the property_get (libcutils.so) function. However when property_get is used
@@ -1597,6 +1682,7 @@ void _hybris_stack_stack_chk_fail() {
     printf("__stack_chk_fail\n");
     abort();
 }
+
 
 void *get_hooked_symbol(const char *sym);
 void *my_android_dlsym(void *handle, const char *symbol)
@@ -2191,10 +2277,10 @@ static struct _hook hooks[] = {
     {"sigaction", sigaction},
     {"sigprocmask", sigprocmask},
     /* sys/stat.h */
-    {"stat", stat},
-    {"fstat", fstat},
-    {"stat64", stat64},
-    {"fstat64", fstat64},
+    {"stat", my_stat},
+    {"fstat", my_fstat},
+    {"stat64", my_stat64},
+    {"fstat64", my_fstat64},
     {"chmod", chmod},
     {"fchmod", fchmod},
     {"umask", umask},
