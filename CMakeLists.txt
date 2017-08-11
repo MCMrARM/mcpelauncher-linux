@@ -103,10 +103,6 @@ install(FILES libs/cef/lib/libcef.so libs/cef/bin/snapshot_blob.bin libs/cef/bin
 install(FILES mcpelauncher-icon.png
         DESTINATION share/mcpelauncher
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(DIRECTORY libs/hybris libs/native
-        DESTINATION share/mcpelauncher/libs
-        PATTERN "*"
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 install(DIRECTORY libs/cef/res
         DESTINATION share/mcpelauncher/libs/cef
         PATTERN "*"
