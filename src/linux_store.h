@@ -59,8 +59,9 @@ struct LinuxStore {
         std::cout << "is game purchased: true\n";
         return true;
     }
-    virtual void getAppReceipt() {
+    virtual mcpe::string getAppReceipt() {
         std::cout << "get app receipt\n";
+        return mcpe::string();
     }
     virtual void registerLicenseChangeCallback() {
         std::cout << "register license change callback\n";
