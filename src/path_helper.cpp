@@ -87,5 +87,8 @@ std::string PathHelper::findDataFile(std::string const& path) {
         if (fileExists(p))
             return p;
     }
+    p = pathInfo.appDir + "/../" + path;
+    if (fileExists(p))
+        return p;
     throw std::runtime_error("Failed to find data file: " + path);
 }
