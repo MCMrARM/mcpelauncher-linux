@@ -129,7 +129,7 @@ std::string LinuxAppPlatform::_pickFile(std::string commandLine) {
 
 void LinuxAppPlatform::pickImage(ImagePickingCallback &callback) {
     std::cout << "pickImage\n";
-    std::string file = _pickFile("zenity --file-selection --title 'Select image' --file-filter *.png");
+    std::string file = _pickFile("zenity --file-selection --title 'Select image' --file-filter '*.png'");
     if (file.empty()) {
         callback.onImagePickingCanceled();
     } else {
