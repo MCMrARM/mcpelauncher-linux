@@ -24,15 +24,16 @@
 #include "minecraft/gl.h"
 #include "minecraft/AppPlatform.h"
 #include "minecraft/MinecraftGame.h"
-#include "linux_appplatform.h"
-#include "linux_store.h"
 #include "minecraft/Mouse.h"
 #include "minecraft/Keyboard.h"
 #include "minecraft/Options.h"
 #include "minecraft/Common.h"
+#include "minecraft/Xbox.h"
+#include "minecraft/MultiplayerService.h"
+#include "linux_appplatform.h"
+#include "linux_store.h"
 #include "common.h"
 #include "hook.h"
-#include "minecraft/Xbox.h"
 #include "xboxlive.h"
 #include "extract.h"
 #ifndef DISABLE_CEF
@@ -40,7 +41,6 @@
 #include "xbox_login_browser.h"
 #include "initial_setup_browser.h"
 #include "path_helper.h"
-
 #endif
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
@@ -605,6 +605,7 @@ int main(int argc, char *argv[]) {
     xbox::services::system::auth_manager::auth_manager_internal_get_token_and_signature = (pplx::task (*)(xbox::services::system::auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_");
     xbox::services::system::auth_config::auth_config_set_xtoken_composition = (void (*)(xbox::services::system::auth_config*, std::vector<xbox::services::system::token_identity_type>)) hybris_dlsym(handle, "_ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE");
     xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (mcpe::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
+    Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL = (void (*)(Social::MultiplayerXBL*)) hybris_dlsym(handle, "_ZN6Social14MultiplayerXBLC2Ev");
 
     std::cout << "init window\n";
     eglutInitWindowSize(windowWidth, windowHeight);

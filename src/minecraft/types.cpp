@@ -73,6 +73,10 @@ xbox::services::xbox_live_result<void> (*task::task_xbox_live_result_void_get)(t
 xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*task::task_xbox_live_result_token_and_signature_get)(task*);
 }
 
+#include "MultiplayerService.h"
+
+void (*Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL)(Social::MultiplayerXBL*);
+
 #include "Common.h"
 
 mcpe::string (*Common::Common_getGameVersionStringNet)();

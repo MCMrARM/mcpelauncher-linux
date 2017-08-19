@@ -6,10 +6,12 @@
 #include <sys/param.h>
 #include <vector>
 #include <mutex>
+#include <memory>
 #include "minecraft/gl.h"
 #include "minecraft/AppPlatform.h"
 #include "minecraft/ImagePickingCallback.h"
 #include "path_helper.h"
+#include "minecraft/MultiplayerService.h"
 
 class ImageData;
 class ImagePickingCallback;
@@ -148,6 +150,12 @@ public:
 
     mcpe::string createDeviceID() {
         return "linux";
+    }
+
+    std::vector<std::unique_ptr<Social::MultiplayerService>> getMultiplayerServiceListToRegister() {
+        std::vector<std::unique_ptr<Social::MultiplayerService>> ret;
+        ret.push_back(std::unique_ptr<Social::MultiplayerService>(new Social::MultiplayerXBL()));
+        return ret;
     }
 
     void queueForMainThread(std::function<void ()> f) {
