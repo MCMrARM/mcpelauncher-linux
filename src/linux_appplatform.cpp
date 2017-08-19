@@ -102,6 +102,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", (void*) &LinuxAppPlatform::getPlatformTempPath);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDEv", (void*) &LinuxAppPlatform::createDeviceID);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", (void*) &LinuxAppPlatform::queueForMainThread);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", (void*) &LinuxAppPlatform::getMultiplayerServiceListToRegister);
 }
 
 void LinuxAppPlatform::hideMousePointer() {
