@@ -2,6 +2,7 @@
 mods/
 libs/hybris/libminecraftpe.so
 libs/cef
+libs/native
 cmake-build-debug/
 *.apk
 playdl.conf
