@@ -417,7 +417,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "loading native libraries\n";
     void* glesLib = loadLibraryOS("libGLESv2.so.2", gles_symbols);
-    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
+    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6").c_str(), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     if (glesLib == nullptr || fmodLib == nullptr || libmLib == nullptr)
         return -1;
