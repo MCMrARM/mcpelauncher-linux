@@ -80,3 +80,13 @@ void (*Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL)(Social::Multiplaye
 #include "Common.h"
 
 mcpe::string (*Common::Common_getGameVersionStringNet)();
+
+#include "GameControllerManager.h"
+
+
+GameControllerManager* GameControllerManager::sGamePadManager;
+
+void (*GameControllerManager::GameControllerManager_setGameControllerConnected)(GameControllerManager*, int, bool);
+void (*GameControllerManager::GameControllerManager_feedButton)(GameControllerManager*, int, int, int, bool);
+void (*GameControllerManager::GameControllerManager_feedStick)(GameControllerManager*, int, int, int, float, float);
+void (*GameControllerManager::GameControllerManager_feedTrigger)(GameControllerManager*, int, int, float);
