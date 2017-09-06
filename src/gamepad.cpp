@@ -58,6 +58,8 @@ void LinuxGamepadManager::Device::assign(int fd, libevdev* edev) {
     mapping.buttons[BTN_Y - BTN_GAMEPAD].button = BUTTON_Y;
     mapping.buttons[BTN_TL - BTN_GAMEPAD].button = BUTTON_LB;
     mapping.buttons[BTN_TR - BTN_GAMEPAD].button = BUTTON_RB;
+    mapping.buttons[BTN_SELECT - BTN_GAMEPAD].button = BUTTON_SELECT;
+    mapping.buttons[BTN_START - BTN_GAMEPAD].button = BUTTON_START;
     mapping.axis[ABS_X].stick = mapping.axis[ABS_Y].stick = 0;
     mapping.axis[ABS_Y].stickY = true;
     mapping.axis[ABS_RX].stick = mapping.axis[ABS_RY].stick = 1;

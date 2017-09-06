@@ -17,6 +17,8 @@ private:
     static const int BUTTON_DPAD_RIGHT = 7;
     static const int BUTTON_LB = 10;
     static const int BUTTON_RB = 11;
+    static const int BUTTON_SELECT = 12;
+    static const int BUTTON_START = 13;
 
     struct MappingInfo {
         struct Entry {
