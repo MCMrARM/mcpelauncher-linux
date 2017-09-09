@@ -9,6 +9,10 @@ struct LinuxStore {
     virtual ~LinuxStore() {
         std::cout << "destroying store\n";
     }
+    virtual bool isReadyToMakePurchases() {
+        std::cout << "is ready to make purchases: false\n";
+        return true;
+    }
     virtual bool requiresRestorePurchasesButton() {
         std::cout << "requires restore purchases button: false\n";
         return false;
@@ -92,5 +96,11 @@ struct LinuxStore {
     }
     virtual void refreshLicenses() {
         std::cout << "refresh licenses\n";
+    }
+    virtual void updateXUID() {
+        std::cout << "update xuid\n";
+    }
+    virtual void onNewPrimaryUser() {
+        std::cout << "on new primary user\n";
     }
 };
