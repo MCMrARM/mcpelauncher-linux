@@ -20,6 +20,11 @@ This app uses cmake so it is enough to do:
 
 ```
     ./setup_cef.sh
+    ./setup_bin_libs.sh
+    mkdir build
+    cd build
+    cmake ..
+    make
 ```
 
 ## Running
