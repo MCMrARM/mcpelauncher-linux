@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <stdarg.h>
 
 #include <sys/ipc.h>
@@ -1777,7 +1778,6 @@ static struct _hook hooks[] = {
     {"calloc", calloc},
     {"realloc", realloc},
     {"free", free},
-    {"cfree", cfree},
     {"valloc", valloc},
     {"posix_memalign", posix_memalign},
     {"aligned_alloc", aligned_alloc},
@@ -2267,7 +2267,7 @@ static struct _hook hooks[] = {
     {"__sysv_signal", __sysv_signal},
     {"sysv_signal", sysv_signal},
     {"signal", signal},
-    {"bsd_signal", bsd_signal},
+    {"bsd_signal", signal},
     {"kill", kill},
     {"killpg", killpg},
     {"raise", raise},
