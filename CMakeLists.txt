@@ -67,15 +67,14 @@ else()
     target_compile_definitions(mcpelauncher PRIVATE DISABLE_PLAYAPI)
 endif()
 
+function (add_non_source_dir_custom_command command...)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND $<$<NOT:$<STREQUAL:$<TARGET_FILE_DIR:mcpelauncher>,${CMAKE_SOURCE_DIR}>>:${command}>)
+endfunction()
+
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory
         $<TARGET_FILE_DIR:mcpelauncher>/src)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/src/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/initial_setup_resources)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/lib/libcef.so $<TARGET_FILE_DIR:mcpelauncher>/libcef.so)
@@ -91,8 +90,11 @@ add_custom_command(TARGET mcpelauncher POST_BUILD
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
+add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/src/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/initial_setup_resources)
+add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
+add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/mcpelauncher-icon.png $<TARGET_FILE_DIR:mcpelauncher>/mcpelauncher-icon.png)
 
 install(TARGETS mcpelauncher
