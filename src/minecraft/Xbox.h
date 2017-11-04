@@ -41,7 +41,7 @@ struct local_config {
     void** vtable;
 
     mcpe::string get_value_from_local_storage(mcpe::string const& value) {
-        mcpe::string (*func)(void*, mcpe::string const&) = (mcpe::string (*)(void*, mcpe::string const&)) vtable[0x40/4];
+        mcpe::string (*func)(void*, mcpe::string const&) = (mcpe::string (*)(void*, mcpe::string const&)) vtable[0x34/4];
         return func(this, value);
     }
 
@@ -149,6 +149,7 @@ struct auth_config {
 
 struct auth_manager {
 
+    static std::shared_ptr<auth_manager> (*auth_manager_get_auth_manager_instance)();
 
     static void (*auth_manager_set_rps_ticket)(auth_manager*, mcpe::string const&);
     static pplx::task (*auth_manager_initialize_default_nsal)(auth_manager*);
@@ -167,8 +168,6 @@ struct user_auth_android {
     unknown_auth_flow_class* auth_flow;
     int filler;
     mcpe::string xbox_user_id;
-    char filler2[0x60 - 12];
-    auth_manager* auth_mgr;
 
 
 };

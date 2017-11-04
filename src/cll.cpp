@@ -69,17 +69,18 @@ std::pair<std::string, std::string> CLL::getXTokenAndTicket() {
 
     using namespace xbox::services::system;
     auto auth = user_auth_android::user_auth_android_get_instance();
-    auto initTask = auth_manager::auth_manager_initialize_default_nsal(auth->auth_mgr);
+    auto auth_mgr = auth_manager::auth_manager_get_auth_manager_instance();
+    auto initTask = auth_manager::auth_manager_initialize_default_nsal(auth_mgr.get());
     auto initRet = pplx::task::task_xbox_live_result_void_get(&initTask);
     if (initRet.code != 0)
         throw std::runtime_error("Failed to initialize default nsal");
     std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
                                               (token_identity_type) 2};
-    auto config = auth_manager::auth_manager_get_auth_config(auth->auth_mgr);
+    auto config = auth_manager::auth_manager_get_auth_config(auth_mgr.get());
     auth_config::auth_config_set_xtoken_composition(config.get(), types);
     std::string const& endpoint = "https://test.vortex.data.microsoft.com";
     printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
-    auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth->auth_mgr, "GET", endpoint, endpoint,
+    auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth_mgr.get(), "GET", endpoint, endpoint,
                                                                             std::string(), std::vector<unsigned char>(),
                                                                             false, false,
                                                                             std::string()); // I'm unsure about the vector (and pretty much only about the vector)
