@@ -1,11 +1,14 @@
 #pragma once
 
 #include <string>
+#include <functional>
 #include <unistd.h>
 #include <sys/param.h>
-#include "../mcpe/gl.h"
-#include "../mcpe/AppPlatform.h"
-#include "../mcpe/ImagePickingCallback.h"
+#include <vector>
+#include <mutex>
+#include "minecraft/gl.h"
+#include "minecraft/AppPlatform.h"
+#include "minecraft/ImagePickingCallback.h"
 
 class ImageData;
 class ImagePickingCallback;
@@ -29,6 +32,9 @@ public:
 
     std::string region;
     std::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
+
+    std::vector<std::function<void ()>> runOnMainThreadQueue;
+    std::mutex runOnMainThreadMutex;
 
     LinuxAppPlatform();
 
@@ -125,13 +131,11 @@ public:
         return "win10";
     }
     int getPlatformUIScalingRules() {
-        return 2;
+        return enablePocketGuis ? 2 : 0;
     }
     long long getAvailableMemory();
 
-    long long calculateAvailableDiskFreeSpace() {
-        return 100000000L;
-    }
+    long long calculateAvailableDiskFreeSpace();
 
     std::string &getPlatformTempPath() {
         return tmpPath;
@@ -139,6 +143,12 @@ public:
 
     std::string createDeviceID() {
         return "linux";
+    }
+
+    void queueForMainThread(std::function<void ()> f) {
+        runOnMainThreadMutex.lock();
+        runOnMainThreadQueue.push_back(f);
+        runOnMainThreadMutex.unlock();
     }
 
 };

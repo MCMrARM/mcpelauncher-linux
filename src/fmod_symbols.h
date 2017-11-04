@@ -38,5 +38,7 @@ const char* fmod_symbols[] = {
     "_ZN4FMOD14ChannelControl11getDSPClockEPyS1_",
     "_ZN4FMOD14ChannelControl12addFadePointEyf",
     "_ZN4FMOD14ChannelControl8setDelayEyyb",
+    "_ZN4FMOD6System17set3DNumListenersEi",
+    "_ZN4FMOD6System13setFileSystemEPF11FMOD_RESULTPKcPjPPvS5_EPFS1_S5_S5_EPFS1_S5_S5_jS4_S5_EPFS1_S5_jS5_EPFS1_P18FMOD_ASYNCREADINFOS5_ESI_i",
     nullptr
 };

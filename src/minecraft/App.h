@@ -19,11 +19,11 @@ public:
     }
 
     void quit() {
-        ((void (*)(App*)) vtable[23])(this);
+        ((void (*)(App*)) vtable[26])(this);
     }
 
     bool wantToQuit() {
-        return ((bool (*)(App*)) vtable[24])(this);
+        return ((bool (*)(App*)) vtable[27])(this);
     }
 
 };

@@ -223,6 +223,9 @@ next_event(struct eglut_window *win)
             redraw = 1;
             break;
         case ConfigureNotify:
+            win->native.x = event.xconfigure.x;
+            win->native.y = event.xconfigure.y;
+            win->native.width = event.xconfigure.border_width;
             win->native.width = event.xconfigure.width;
             win->native.height = event.xconfigure.height;
             if (win->reshape_cb)

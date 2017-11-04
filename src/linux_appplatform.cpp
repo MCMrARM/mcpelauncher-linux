@@ -1,4 +1,4 @@
-#include "LinuxAppPlatform.h"
+#include "linux_appplatform.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -9,9 +9,11 @@
 #include <uuid/uuid.h>
 #include <sys/types.h>
 #include <sys/sysinfo.h>
-#include "../mcpe/ImagePickingCallback.h"
-#include "../mcpe/FilePickerSettings.h"
+#include <sys/statvfs.h>
+#include "minecraft/ImagePickingCallback.h"
+#include "minecraft/FilePickerSettings.h"
 #include "../hybris/src/jb/linker.h"
+#include "common.h"
 
 extern "C" {
 #include <eglut.h>
@@ -89,11 +91,12 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", (void*) &LinuxAppPlatform::hasHardwareInformationChanged);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", (void*) &LinuxAppPlatform::isTablet);
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform17setFullscreenModeE14FullscreenMode", (void*) &LinuxAppPlatform::setFullscreenMode);
-    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform10getEditionEv", (void*) &LinuxAppPlatform::getEdition);
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getEditionEv", (void*) &LinuxAppPlatform::getEdition);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", (void*) &LinuxAppPlatform::calculateAvailableDiskFreeSpace);
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", (void*) &LinuxAppPlatform::getPlatformUIScalingRules);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", (void*) &LinuxAppPlatform::getPlatformTempPath);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDEv", (void*) &LinuxAppPlatform::createDeviceID);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", (void*) &LinuxAppPlatform::queueForMainThread);
 }
 
 void LinuxAppPlatform::hideMousePointer() {
@@ -164,7 +167,11 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
         ss << "'";
     }
     std::string file = _pickFile(ss.str());
-    settings.pickedCallback(settings, file);
+    if (file.empty()) {
+        settings.cancelCallback(settings);
+    } else {
+        settings.pickedCallback(settings, file);
+    }
 }
 
 void LinuxAppPlatform::setFullscreenMode(int mode) {
@@ -172,6 +179,12 @@ void LinuxAppPlatform::setFullscreenMode(int mode) {
     int newMode = mode == 1 ? EGLUT_FULLSCREEN : EGLUT_WINDOWED;
     if (eglutGet(EGLUT_FULLSCREEN_MODE) != newMode)
         eglutToggleFullscreen();
+}
+
+long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
+    struct statvfs buf;
+    statvfs(getCWD().c_str(), &buf);
+    return (long long int) buf.f_bsize * buf.f_bfree;
 }
 
 std::string LinuxAppPlatform::createUUID() {

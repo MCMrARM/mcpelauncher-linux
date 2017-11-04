@@ -9,20 +9,28 @@
 #include <codecvt>
 #include <locale>
 #include <dirent.h>
+#include <fstream>
+#include <X11/Xlib.h>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
 #include "fmod_symbols.h"
-#include "../mcpe/gl.h"
-#include "../mcpe/AppPlatform.h"
-#include "../mcpe/MinecraftGame.h"
-#include "LinuxAppPlatform.h"
-#include "LinuxStore.h"
-#include "../mcpe/Mouse.h"
-#include "../mcpe/Keyboard.h"
-#include "../mcpe/Options.h"
+#include "minecraft/gl.h"
+#include "minecraft/AppPlatform.h"
+#include "minecraft/MinecraftGame.h"
+#include "linux_appplatform.h"
+#include "linux_store.h"
+#include "minecraft/Mouse.h"
+#include "minecraft/Keyboard.h"
+#include "minecraft/Options.h"
 #include "common.h"
 #include "hook.h"
+#include "minecraft/Xbox.h"
+#include "xboxlive.h"
+#ifndef DISABLE_CEF
+#include "browser.h"
+#include "xbox_login_browser.h"
+#endif
 
 extern "C" {
 
@@ -77,12 +85,14 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 
 
 static MinecraftGame* client;
+static LinuxAppPlatform* platform;
 
 int winId = 0;
 bool moveMouseToCenter = false;
 
 static void minecraft_idle() {
     if (client->wantToQuit()) {
+        delete client;
         eglutDestroyWindow(winId);
         eglutFini();
         return;
@@ -96,6 +106,11 @@ static void minecraft_idle() {
     eglutPostRedisplay();
 }
 static void minecraft_draw() {
+    platform->runOnMainThreadMutex.lock();
+    auto queue = std::move(platform->runOnMainThreadQueue);
+    platform->runOnMainThreadMutex.unlock();
+    for (auto const& func : queue)
+        func();
     client->update();
 }
 float pixelSize = 2.f;
@@ -146,17 +161,17 @@ static void minecraft_keyboard(char str[5], int action) {
 static void minecraft_keyboard_special(int key, int action) {
     if (key == 65480) {
         if (action == EGLUT_KEY_PRESS) {
-            client->getOptions()->setFullscreen(!client->getOptions()->getFullscreen());
+            client->getPrimaryUserOptions()->setFullscreen(!client->getPrimaryUserOptions()->getFullscreen());
         }
         return;
     }
     int mKey = getKeyMinecraft(key);
     if (action == EGLUT_KEY_PRESS) {
-        Keyboard::inputs->push_back({1, mKey});
-        Keyboard::states[mKey] = 1;
+        Keyboard::Keyboard_feed((unsigned char) mKey, 1);
+        //Keyboard::states[mKey] = 1;
     } else if (action == EGLUT_KEY_RELEASE) {
-        Keyboard::inputs->push_back({0, mKey});
-        Keyboard::states[mKey] = 0;
+        Keyboard::Keyboard_feed((unsigned char) mKey, 0);
+        //Keyboard::states[mKey] = 0;
     }
 }
 static void minecraft_close() {
@@ -174,18 +189,107 @@ bool verifyCertChainStub() {
     std::cout << "verifycertchain\n";
     return true;
 }
-struct xboxSingleton {
-    char filler[8];
-};
-xboxSingleton xboxGetAppConfigSingleton() {
-    std::cout << "xbox get app config singleton\n";
-    return xboxSingleton();
+std::string xboxReadConfigFile(void* th) {
+    std::cout << "xbox read config file\n";
+    std::ifstream f("assets/xboxservices.config");
+    std::stringstream s;
+    s << f.rdbuf();
+    return s.str();
 }
-void xboxConfigSetSandboxStub() {
-    std::cout << "xbox config: set sandbox (stub)\n";
+void workerPoolDestroy(void* th) {
+    std::cout << "worker pool-related class destroy " << (unsigned long)th << "\n";
 }
-void patchNotesModelStub() {
-    std::cout << "fetch patch notes\n";
+xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, std::string const& s) {
+    std::cout << "log_telemetry_signin " << b << " " << s << "\n";
+    xbox::services::xbox_live_result<void> ret;
+    ret.code = 0;
+    ret.error_code_category = xbox::services::xbox_services_error_code_category();
+    ret.message = " ";
+    return ret;
+}
+std::string xboxGetLocalStoragePath() {
+    return "data/";
+}
+xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int requestCode) {
+    std::cout << "init_sign_in_activity " << requestCode << "\n";
+    xbox::services::xbox_live_result<void> ret;
+    ret.code = 0;
+    ret.error_code_category = xbox::services::xbox_services_error_code_category();
+
+    if (requestCode == 1) { // silent signin
+        auto account = XboxLiveHelper::getMSAStorageManager()->getAccount();
+        xbox::services::system::java_rps_ticket ticket;
+        if (account) {
+            auto tokens = account->requestTokens({{"user.auth.xboxlive.com", "mbi_ssl"}});
+            auto xboxLiveToken = tokens[{"user.auth.xboxlive.com"}];
+            if (!xboxLiveToken.hasError()) {
+                ticket.token = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
+                ticket.error_code = 0;
+                pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
+                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
+                return ret;
+            }
+        }
+        ticket.error_code = 1;
+        ticket.error_text = "Must show UI to acquire an account.";
+        pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
+                xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
+    } else if (requestCode == 6) { // sign out
+        XboxLiveHelper::getMSAStorageManager()->setAccount(std::shared_ptr<MSAAccount>());
+
+        xbox::services::xbox_live_result<void> arg;
+        arg.code = 0;
+        arg.error_code_category = xbox::services::xbox_services_error_code_category();
+        pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set(
+                xbox::services::system::user_auth_android::s_signOutCompleteEvent, arg);
+    }
+
+    return ret;
+}
+void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
+    std::cout << "invoke_auth_flow\n";
+
+#ifdef DISABLE_CEF
+    std::cerr << "This build does not support Xbox Live login.\n";
+    std::cerr << "To log in please build the launcher with CEF support.\n";
+    ret->auth_flow->auth_flow_result.code = 2;
+    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
+            &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
+#else
+    XboxLoginBrowserClient::OpenBrowser(ret);
+#endif
+}
+std::vector<std::string> xblGetLocaleList() {
+    std::vector<std::string> ret;
+    ret.push_back("en-US");
+    return ret;
+}
+void xblRegisterNatives() {
+    std::cout << "register_natives stub\n";
+}
+xbox::services::xbox_live_result<void> xblLogCLL(void* th, std::string const& a, std::string const& b, std::string const& c) {
+    std::cout << "log_cll " << a << " " << b << " " << c << "\n";
+    XboxLiveHelper::getCLL()->addEvent(a, b, c);
+    xbox::services::xbox_live_result<void> ret;
+    ret.code = 0;
+    ret.error_code_category = xbox::services::xbox_services_error_code_category();
+    ret.message = " ";
+    return ret;
+}
+
+static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
+    LOG(WARNING) << "X error received: "
+                 << "type " << event->type << ", "
+                 << "serial " << event->serial << ", "
+                 << "error_code " << static_cast<int>(event->error_code) << ", "
+                 << "request_code " << static_cast<int>(event->request_code)
+                 << ", "
+                 << "minor_code " << static_cast<int>(event->minor_code);
+    return 0;
+}
+
+static int XIOErrorHandlerImpl(Display* display) {
+    return 0;
 }
 
 extern "C"
@@ -204,6 +308,17 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
+    XSetErrorHandler(XErrorHandlerImpl);
+    XSetIOErrorHandler(XIOErrorHandlerImpl);
+
+#ifndef DISABLE_CEF
+    BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
+    CefMainArgs cefArgs(argc, argv);
+    int exit_code = CefExecuteProcess(cefArgs, BrowserApp::singleton.get(), NULL);
+    if (exit_code >= 0)
+        return exit_code;
+#endif
+
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
 
@@ -335,20 +450,32 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat11get_jvm_envEv");
     patchCallInstruction((void*) patchOff, (void*) &getJVMEnvStub, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details22verify_X509_cert_chainERKSt6vectorISsSaISsEERKSs");
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     patchCallInstruction((void*) patchOff, (void*) &verifyCertChainStub, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config24get_app_config_singletonEv");
-    patchCallInstruction((void*) patchOff, (void*) &xboxGetAppConfigSingleton, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop16read_config_fileEv");
+    patchCallInstruction((void*) patchOff, (void*) &xboxReadConfigFile, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config11set_sandboxESs");
-    patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop20log_telemetry_signinEbRKSs");
+    patchCallInstruction((void*) patchOff, (void*) &xboxLogTelemetrySignin, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services20xbox_live_app_config29set_title_telemetry_device_idERKSs");
-    patchCallInstruction((void*) patchOff, (void*) &xboxConfigSetSandboxStub, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop22get_local_storage_pathEv");
+    patchCallInstruction((void*) patchOff, (void*) &xboxGetLocalStoragePath, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN15PatchNotesModel17preloadPatchNotesEv");
-    patchCallInstruction((void*) patchOff, (void*) &patchNotesModelStub, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android21init_sign_in_activityEi");
+    patchCallInstruction((void*) patchOff, (void*) &xboxInitSignInActivity, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android16invoke_auth_flowEv");
+    patchCallInstruction((void*) patchOff, (void*) &xboxInvokeAuthFlow, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services5utils15get_locale_listEv");
+    patchCallInstruction((void*) patchOff, (void*) &xblGetLocaleList, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop16register_nativesEP15JNINativeMethod");
+    patchCallInstruction((void*) patchOff, (void*) &xblRegisterNatives, true);
+
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
+    patchCallInstruction((void*) patchOff, (void*) &xblLogCLL, true);
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -364,6 +491,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "patches applied!\n";
+
+    mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
     // load symbols for gl
     gl::getOpenGLVendor = (std::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
@@ -382,20 +511,42 @@ int main(int argc, char *argv[]) {
     void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
     *ptr = (void*) 1; // this just needs not to be null
 
+    xbox::services::java_interop::get_java_interop_singleton = (std::shared_ptr<xbox::services::java_interop> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
+
+    std::shared_ptr<xbox::services::java_interop> javaInterop = xbox::services::java_interop::get_java_interop_singleton();
+    javaInterop->activity = (void*) 1; // this just needs not to be null as well
+
     std::cout << "init app platform vtable\n";
     LinuxAppPlatform::initVtable(handle);
     std::cout << "init app platform\n";
-    LinuxAppPlatform* platform = new LinuxAppPlatform();
+    platform = new LinuxAppPlatform();
     std::cout << "app platform initialized\n";
 
     Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(handle, "_ZN5Mouse4feedEccssss");
 
-    Keyboard::inputs = (std::vector<KeyboardAction>*) hybris_dlsym(handle, "_ZN8Keyboard7_inputsE");
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
+    Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
     Keyboard::Keyboard_feedText = (void (*)(const std::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
     Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
+
+    xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
+    pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set = (void (*)(pplx::task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system15java_rps_ticketEE3setES4_");
+    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set = (void (*)(pplx::task_completion_event_auth_flow_result*, xbox::services::system::auth_flow_result)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system16auth_flow_resultEE3setES4_");
+    pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set = (void (*)(pplx::task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services16xbox_live_resultIvEEE3setES4_");
+    pplx::task::task_xbox_live_result_void_get = (xbox::services::xbox_live_result<void> (*)(pplx::task*)) hybris_dlsym(handle, "_ZNK4pplx4taskIN4xbox8services16xbox_live_resultIvEEE3getEv");
+    pplx::task::task_xbox_live_result_token_and_signature_get = (xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*)(pplx::task*)) hybris_dlsym(handle, "_ZNK4pplx4taskIN4xbox8services16xbox_live_resultINS2_6system26token_and_signature_resultEEEE3getEv");
+    xbox::services::local_config::local_config_get_local_config_singleton = (std::shared_ptr<xbox::services::local_config> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12local_config26get_local_config_singletonEv");
+    xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
+    xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
+    xbox::services::system::user_auth_android::user_auth_android_get_instance = (std::shared_ptr<xbox::services::system::user_auth_android> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android12get_instanceEv");
+    xbox::services::system::auth_manager::auth_manager_set_rps_ticket = (void (*)(xbox::services::system::auth_manager*, std::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager14set_rps_ticketERKSs");
+    xbox::services::system::auth_manager::auth_manager_initialize_default_nsal = (pplx::task (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager23initialize_default_nsalEv");
+    xbox::services::system::auth_manager::auth_manager_get_auth_config = (std::shared_ptr<xbox::services::system::auth_config> (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager15get_auth_configEv");
+    xbox::services::system::auth_manager::auth_manager_internal_get_token_and_signature = (pplx::task (*)(xbox::services::system::auth_manager*, std::string, std::string const&, std::string const&, std::string, std::vector<unsigned char> const&, bool, bool, std::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_");
+    xbox::services::system::auth_config::auth_config_set_xtoken_composition = (void (*)(xbox::services::system::auth_config*, std::vector<xbox::services::system::token_identity_type>)) hybris_dlsym(handle, "_ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE");
+    xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (std::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
 
     std::cout << "init window\n";
     eglutInitWindowSize(windowWidth, windowHeight);
@@ -407,10 +558,11 @@ int main(int argc, char *argv[]) {
     // init MinecraftGame
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
     MinecraftGame::MinecraftGame_construct = (void (*)(MinecraftGame*, int, char**)) hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
+    MinecraftGame::MinecraftGame_destruct = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
     MinecraftGame::MinecraftGame_update = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
     MinecraftGame::MinecraftGame_setRenderingSize = (void (*)(MinecraftGame*, int, int)) hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
     MinecraftGame::MinecraftGame_setUISizeAndScale = (void (*)(MinecraftGame*, int, int, float)) hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");
-    MinecraftGame::MinecraftGame_getOptions = (Options* (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame10getOptionsEv");
+    MinecraftGame::MinecraftGame_getPrimaryUserOptions = (std::shared_ptr<Options> (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame21getPrimaryUserOptionsEv");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
@@ -425,7 +577,7 @@ int main(int argc, char *argv[]) {
     client->init(ctx);
     std::cout << "initialized lib\n";
 
-    if (client->getOptions()->getFullscreen())
+    if (client->getPrimaryUserOptions()->getFullscreen())
         eglutToggleFullscreen();
 
     for (void* mod : mods) {
@@ -449,6 +601,19 @@ int main(int argc, char *argv[]) {
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     eglutMainLoop();
+
+    // this is an ugly hack to workaround the close app crashes MCPE causes
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9TaskGroupD2Ev");
+    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN10WorkerPoolD2Ev");
+    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9SchedulerD2Ev");
+    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+
+#ifndef DISABLE_CEF
+    BrowserApp::Shutdown();
+#endif
+    XboxLiveHelper::shutdown();
 
     return 0;
 }

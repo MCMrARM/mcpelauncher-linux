@@ -110,6 +110,8 @@ void eglutFini(void);
 int eglutCreateWindow(const char *title);
 void eglutDestroyWindow(int win);
 
+int eglutGetWindowX(void);
+int eglutGetWindowY(void);
 int eglutGetWindowWidth(void);
 int eglutGetWindowHeight(void);
 int eglutToggleFullscreen(void);
