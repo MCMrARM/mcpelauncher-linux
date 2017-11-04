@@ -148,7 +148,12 @@ public:
         return tmpPath;
     }
 
-    mcpe::string createDeviceID() {
+    mcpe::string createDeviceID_old() {
+        return "linux";
+    }
+
+    mcpe::string createDeviceID(std::string const& c) {
+        printf("create device id: %s\n", c.c_str());
         return "linux";
     }
 
