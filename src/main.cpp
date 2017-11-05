@@ -160,6 +160,8 @@ int getKeyMinecraft(int keyCode) {
         return 16;
     if (keyCode >= 97 && keyCode <= 122)
         return (keyCode + 65 - 97);
+    if (keyCode >= 65361 && keyCode <= 65364)
+        return (keyCode + 37 - 65361);
     if (keyCode >= 65470 && keyCode <= 65481)
         return (keyCode + 112 - 65470);
 
