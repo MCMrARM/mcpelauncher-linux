@@ -113,6 +113,10 @@ install(DIRECTORY src/initial_setup_resources
         DESTINATION share/mcpelauncher/src
         PATTERN "*"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(DIRECTORY libs/native
+        DESTINATION share/mcpelauncher/libs
+        PATTERN "*"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 install(DIRECTORY DESTINATION bin/)
 install(CODE "
 execute_process(
