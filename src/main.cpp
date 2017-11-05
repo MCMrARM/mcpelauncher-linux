@@ -201,7 +201,15 @@ static void minecraft_keyboard_special(int key, int action) {
     }
 }
 static void minecraft_paste(const char* str, int len) {
-    Keyboard::Keyboard_feedText(std::string(str, len), false, 0);
+    for (int i = 0; i < len; i++) {
+        char c = str[i];
+        int l = 1;
+        if ((c & 0b11110000) == 0b11100000)
+            l = 3;
+        else if ((c & 0b11100000) == 0b11000000)
+            l = 2;
+        Keyboard::Keyboard_feedText(mcpe::string(&str[i], (size_t) l), false, 0);
+    }
 }
 static void minecraft_close() {
     client->quit();
