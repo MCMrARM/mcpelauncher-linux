@@ -45,6 +45,9 @@ void XboxLiveHelper::invokeXbLogin(xbox::services::system::user_auth_android* au
     auth->auth_flow->auth_flow_result.gamertag = ret.data.gamertag;
     auth->auth_flow->auth_flow_result.age_group = ret.data.age_group;
     auth->auth_flow->auth_flow_result.privileges = ret.data.privileges;
+    auth->auth_flow->auth_flow_result.user_settings_restrictions = ret.data.user_settings_restrictions;
+    auth->auth_flow->auth_flow_result.user_enforcement_restrictions = ret.data.user_enforcement_restrictions;
+    auth->auth_flow->auth_flow_result.user_title_restrictions = ret.data.user_title_restrictions;
 }
 
 std::map<std::string, std::string> SimpleMSAStorageManager::readProperties(std::istream& stream) {
