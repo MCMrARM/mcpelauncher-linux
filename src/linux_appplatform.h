@@ -157,9 +157,9 @@ public:
         return "linux";
     }
 
-    std::vector<std::unique_ptr<Social::MultiplayerService>> getMultiplayerServiceListToRegister() {
-        std::vector<std::unique_ptr<Social::MultiplayerService>> ret;
-        ret.push_back(std::unique_ptr<Social::MultiplayerService>(new Social::MultiplayerXBL()));
+    std::vector<std::shared_ptr<Social::MultiplayerService>> getMultiplayerServiceListToRegister() {
+        std::vector<std::shared_ptr<Social::MultiplayerService>> ret;
+        ret.push_back(std::shared_ptr<Social::MultiplayerService>(new Social::MultiplayerXBL()));
         return ret;
     }
 
