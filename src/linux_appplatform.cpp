@@ -190,7 +190,7 @@ void LinuxAppPlatform::setFullscreenMode(int mode) {
 
 long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     struct statvfs buf;
-    statvfs(PathHelper::findDataFile(dataDir).c_str(), &buf);
+    statvfs(dataDir.c_str(), &buf);
     return (long long int) buf.f_bsize * buf.f_bfree;
 }
 
