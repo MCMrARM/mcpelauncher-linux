@@ -23,14 +23,19 @@ private:
     static const int BUTTON_SELECT = 12; 
     static const int BUTTON_START = 13;
 
-    enum Stick {LEFT_STICK=0, RIGHT_STICK=1};
-    enum Trigger {LEFT_TRIGGER=0, RIGHT_TRIGGER=1};
 
-    int LAXIS_X=0, 
-        LAXIS_Y=1, 
-        MUTUAL_AXIS=-1, 
-        RAXIS_X= 3, 
-        RAXIS_Y=4;
+
+    enum Stick {LEFT_STICK = 0, RIGHT_STICK = 1};
+    enum Trigger {LEFT_TRIGGER = 0, RIGHT_TRIGGER = 1};
+
+    int LAXIS_X,
+        LAXIS_Y, 
+        MUTUAL_AXIS, 
+        RAXIS_X, 
+        RAXIS_Y;
+
+    int DPAD_LR,
+        DPAD_UD;
 
     struct StickValueInfo {
         float x = 0.f, y = 0.f;
