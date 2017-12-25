@@ -3,7 +3,7 @@
 #include <sstream>
 #include <cstring>
 #include <functional>
-#include <curl/curl.h>
+#include "curl/curl.h"
 #include <zlib.h>
 #include "msa.h"
 #include "xboxlive.h"

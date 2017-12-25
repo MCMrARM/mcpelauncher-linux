@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include "msa.h"
+#include "curl/curl.h"
 
 namespace rapidxml { template <typename T> class xml_node; }
 
