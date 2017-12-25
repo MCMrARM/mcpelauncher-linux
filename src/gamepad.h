@@ -24,6 +24,7 @@ private:
     static const int BUTTON_START = 13;
 
     enum Stick {LEFT_STICK=0, RIGHT_STICK=1};
+    enum Trigger {LEFT_TRIGGER=0, RIGHT_TRIGGER=1};
 
     int LAXIS_X=0, 
         LAXIS_Y=1, 

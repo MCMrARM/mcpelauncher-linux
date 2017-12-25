@@ -28,8 +28,8 @@ void LinuxGamepadManager::init() {
     buttons[4] = BUTTON_LB;
     buttons[5] = BUTTON_RB;
     //lower triggers
-    buttons[6] = 0;
-    buttons[7] = 1;
+    buttons[6] = LEFT_TRIGGER;
+    buttons[7] = RIGHT_TRIGGER;
     //start/select
     buttons[8] = BUTTON_SELECT;
     buttons[9] = BUTTON_START;
