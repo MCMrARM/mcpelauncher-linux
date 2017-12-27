@@ -65,6 +65,16 @@
             "mapping": "button:start"
         },
         {
+            "text": ["Press d-pad right", "Press d-pad left"],
+            "highlight": ["button-dpad-right", "button-dpad-left"],
+            "mapping": "axis:dpadx"
+        },
+        {
+            "text": ["Press d-pad up", "Press d-pad down"],
+            "highlight": ["button-dpad-up", "button-dpad-down"],
+            "mapping": "axis:dpady"
+        },
+        {
             "text": ["Move left stick to the right", "Move left stick to the left"],
             "highlight": "stick-left",
             "animation": ["move-right 1s infinite", "move-left 1s infinite"],
@@ -120,8 +130,15 @@
     let mapping = {};
 
     function startStep(stepN, substep) {
+        if (!substep)
+            substep = 0;
+
         if (currentStep !== -1) {
-            let oldEl = svgDoc.getElementById(steps[currentStep].highlight);
+            let oldEl;
+            if (steps[currentStep].highlight instanceof Array)
+                oldEl = svgDoc.getElementById(steps[currentStep].highlight[currentSubstep]);
+            else
+                oldEl = svgDoc.getElementById(steps[currentStep].highlight);
             oldEl.classList.remove("active");
             if ("animation" in steps[currentStep])
                 oldEl.style.animation = "";
@@ -136,13 +153,15 @@
         currentMappingId = stepData.mapping;
         currentMappingType = currentMappingId.split(":")[0];
 
-        let el = svgDoc.getElementById(stepData.highlight);
+        let el;
+        if (stepData.highlight instanceof Array)
+            el = svgDoc.getElementById(stepData.highlight[substep]);
+        else
+            el = svgDoc.getElementById(stepData.highlight);
         let textEl = document.getElementById("action-text");
         el.classList.add("active");
 
         if (stepData.text instanceof Array) {
-            if (!substep)
-                substep = 0;
             currentSubstep = substep;
             if ("animation" in stepData)
                 el.style.animation = stepData.animation[substep];

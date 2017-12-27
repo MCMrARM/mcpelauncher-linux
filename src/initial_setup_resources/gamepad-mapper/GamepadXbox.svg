@@ -29,6 +29,9 @@
       #button-dpad-left, #button-dpad-right, #button-dpad-up, #button-dpad-down {
         display: none;
       }
+      #button-dpad-left.active, #button-dpad-right.active, #button-dpad-up.active, #button-dpad-down.active {
+        display: block;
+      }
 
       .active {
         fill: #3D5AFE;
