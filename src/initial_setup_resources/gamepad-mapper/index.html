@@ -256,7 +256,8 @@
         if (pressed && stepButtonPressed === -1) {
             stepButtonPressed = btn;
         } else if (!pressed && btn === stepButtonPressed) {
-            if (currentMappingType === "button") {
+            if (currentMappingType === "button" || (currentMappingType === "axis" &&
+                    !(steps[currentStep].text instanceof Array))) {
                 mapping[currentMappingId] = {"type": "button", "id": btn};
                 stepFinished();
             } else if (currentMappingType === "axis") {
@@ -275,10 +276,7 @@
             stepStick = stick;
         }
         if (Math.abs(value) < 0.2 && stick === stepStick) {
-            if (currentMappingType === "button") {
-                mapping[currentMappingId] = {"type": "stick", "id": stick, "value": (value > 0 ? 1 : -1)};
-                stepFinished();
-            } else if (currentMappingType === "axis") {
+            if (currentMappingType === "button" || currentMappingType === "axis") {
                 mapping[currentMappingId] = {"type": "stick", "id": stick, "value": (value > 0 ? 1 : -1)};
                 stepFinished();
             }
@@ -289,7 +287,8 @@
             stepHat = hat;
             stepHatVal = value;
         } else if (value === 0 && hat === stepHat) {
-            if (currentMappingType === "button") {
+            if (currentMappingType === "button" || (currentMappingType === "axis" &&
+                    !(steps[currentStep].text instanceof Array))) {
                 mapping[currentMappingId] = {"type": "hat", "id": hat, "value": stepHatVal};
                 stepFinished();
             } else if (currentMappingType === "axis") {
