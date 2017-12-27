@@ -18,19 +18,35 @@
             flex-direction: column;
             height: 100vh;
         }
-        #action-text {
-            padding: 5vh;
-        }
         #gamepad-image {
             flex-grow: 1;
             padding: 5vh;
+        }
+        #action-text-ctr {
+            padding: 5vh;
+            display: flex;
+        }
+        #undo {
+            background: #444;
+            border-radius: 3px;
+            padding: 8px 16px;
+            font-size: 24px;
+            cursor: pointer;
+            align-self: center;
+        }
+        #action-text-ctr h1 {
+            display: inline-block;
+            flex-grow: 1;
         }
     </style>
 </head>
 <body>
 <div id="ctr">
     <object id="gamepad-image" type="image/svg+xml" data="GamepadXbox.svg"></object>
-    <h1 id="action-text">Please wait</h1>
+    <div id="action-text-ctr">
+        <div id="undo">Undo</div>
+        <h1 id="action-text">Please wait</h1>
+    </div>
 </div>
 <script>
     const steps = [
@@ -190,6 +206,15 @@
     window.addEventListener("load", function() {
         svgDoc = document.getElementById("gamepad-image").contentDocument;
         startStep(0);
+        document.getElementById("undo").addEventListener("click", function() {
+            if (currentStep === 0 && currentSubstep <= 0)
+                return;
+            stepClearHighlight();
+            if (currentSubstep > 0)
+                startStep(currentStep, currentSubstep - 1);
+            else
+                startStep(currentStep - 1);
+        });
     });
 
     gamepadMapper.setGamepadButtonCallback(function(gamepad, btn, pressed) {
