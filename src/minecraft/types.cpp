@@ -56,6 +56,7 @@ namespace system {
 pplx::task_completion_event_java_rps_ticket* xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent;
 pplx::task_completion_event_xbox_live_result_void* xbox::services::system::user_auth_android::s_signOutCompleteEvent;
 std::shared_ptr<user_auth_android> (*user_auth_android::user_auth_android_get_instance)();
+std::shared_ptr<auth_manager> (*auth_manager::auth_manager_get_auth_manager_instance)();
 void (*auth_manager::auth_manager_set_rps_ticket)(auth_manager*, mcpe::string const&);
 pplx::task (*auth_manager::auth_manager_initialize_default_nsal)(auth_manager*);
 std::shared_ptr<auth_config> (*auth_manager::auth_manager_get_auth_config)(auth_manager*);
@@ -80,13 +81,3 @@ void (*Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL)(Social::Multiplaye
 #include "Common.h"
 
 mcpe::string (*Common::Common_getGameVersionStringNet)();
-
-#include "GameControllerManager.h"
-
-
-GameControllerManager* GameControllerManager::sGamePadManager;
-
-void (*GameControllerManager::GameControllerManager_setGameControllerConnected)(GameControllerManager*, int, bool);
-void (*GameControllerManager::GameControllerManager_feedButton)(GameControllerManager*, int, int, int, bool);
-void (*GameControllerManager::GameControllerManager_feedStick)(GameControllerManager*, int, int, int, float, float);
-void (*GameControllerManager::GameControllerManager_feedTrigger)(GameControllerManager*, int, int, float);

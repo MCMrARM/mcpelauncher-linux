@@ -148,13 +148,18 @@ public:
         return tmpPath;
     }
 
-    mcpe::string createDeviceID() {
+    mcpe::string createDeviceID_old() {
         return "linux";
     }
 
-    std::vector<std::unique_ptr<Social::MultiplayerService>> getMultiplayerServiceListToRegister() {
-        std::vector<std::unique_ptr<Social::MultiplayerService>> ret;
-        ret.push_back(std::unique_ptr<Social::MultiplayerService>(new Social::MultiplayerXBL()));
+    mcpe::string createDeviceID(std::string const& c) {
+        printf("create device id: %s\n", c.c_str());
+        return "linux";
+    }
+
+    std::vector<std::shared_ptr<Social::MultiplayerService>> getMultiplayerServiceListToRegister() {
+        std::vector<std::shared_ptr<Social::MultiplayerService>> ret;
+        ret.push_back(std::shared_ptr<Social::MultiplayerService>(new Social::MultiplayerXBL()));
         return ret;
     }
 

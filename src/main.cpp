@@ -36,7 +36,6 @@
 #include "hook.h"
 #include "xboxlive.h"
 #include "extract.h"
-#include "gamepad.h"
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
@@ -45,7 +44,6 @@
 #endif
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
-#include "minecraft/GameControllerManager.h"
 
 #endif
 
@@ -120,7 +118,6 @@ static void minecraft_idle() {
         eglutWarpMousePointer(cx, cy);
         moveMouseToCenter = false;
     }
-    LinuxGamepadManager::instance.pool();
     eglutPostRedisplay();
 }
 static void minecraft_draw() {
@@ -145,7 +142,7 @@ static void minecraft_mouse(int x, int y) {
     if (LinuxAppPlatform::mousePointerHidden) {
         int cx = eglutGetWindowWidth() / 2;
         int cy = eglutGetWindowHeight() / 2;
-        if (x != cx || y != cy) {
+        if (x != cy || y != cy) {
             Mouse::feed(0, 0, x, y, x - cx, y - cy);
             moveMouseToCenter = true;
         }
@@ -163,6 +160,8 @@ int getKeyMinecraft(int keyCode) {
         return 16;
     if (keyCode >= 97 && keyCode <= 122)
         return (keyCode + 65 - 97);
+    if (keyCode >= 65361 && keyCode <= 65364)
+        return (keyCode + 37 - 65361);
     if (keyCode >= 65470 && keyCode <= 65481)
         return (keyCode + 112 - 65470);
 
@@ -204,7 +203,15 @@ static void minecraft_keyboard_special(int key, int action) {
     }
 }
 static void minecraft_paste(const char* str, int len) {
-    Keyboard::Keyboard_feedText(std::string(str, len), false, 0);
+    for (int i = 0; i < len; i++) {
+        char c = str[i];
+        int l = 1;
+        if ((c & 0b11110000) == 0b11100000)
+            l = 3;
+        else if ((c & 0b11100000) == 0b11000000)
+            l = 2;
+        Keyboard::Keyboard_feedText(mcpe::string(&str[i], (size_t) l), false, 0);
+    }
 }
 static void minecraft_close() {
     client->quit();
@@ -589,12 +596,6 @@ int main(int argc, char *argv[]) {
     Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
     Keyboard::Keyboard_feedText = (void (*)(const mcpe::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
-    GameControllerManager::sGamePadManager = (GameControllerManager*) hybris_dlsym(handle, "_ZN21GameControllerManager15sGamePadManagerE");
-    GameControllerManager::GameControllerManager_setGameControllerConnected = (void (*)(GameControllerManager*, int, bool)) hybris_dlsym(handle, "_ZN21GameControllerManager26setGameControllerConnectedEib");
-    GameControllerManager::GameControllerManager_feedButton = (void (*)(GameControllerManager*, int, int, int, bool)) hybris_dlsym(handle, "_ZN21GameControllerManager10feedButtonEii25GameControllerButtonStateb");
-    GameControllerManager::GameControllerManager_feedStick = (void (*)(GameControllerManager*, int, int, int, float, float)) hybris_dlsym(handle, "_ZN21GameControllerManager9feedStickEii24GameControllerStickStateff");
-    GameControllerManager::GameControllerManager_feedTrigger = (void (*)(GameControllerManager*, int, int, float)) hybris_dlsym(handle, "_ZN21GameControllerManager11feedTriggerEiif");
-
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
     Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
 
@@ -608,6 +609,7 @@ int main(int argc, char *argv[]) {
     xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
     xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
     xbox::services::system::user_auth_android::user_auth_android_get_instance = (std::shared_ptr<xbox::services::system::user_auth_android> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android12get_instanceEv");
+    xbox::services::system::auth_manager::auth_manager_get_auth_manager_instance = (std::shared_ptr<xbox::services::system::auth_manager> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager25get_auth_manager_instanceEv");
     xbox::services::system::auth_manager::auth_manager_set_rps_ticket = (void (*)(xbox::services::system::auth_manager*, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager14set_rps_ticketERKSs");
     xbox::services::system::auth_manager::auth_manager_initialize_default_nsal = (pplx::task (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager23initialize_default_nsalEv");
     xbox::services::system::auth_manager::auth_manager_get_auth_config = (std::shared_ptr<xbox::services::system::auth_config> (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager15get_auth_configEv");
@@ -644,8 +646,6 @@ int main(int argc, char *argv[]) {
     std::cout << "init minecraft client\n";
     client->init(ctx);
     std::cout << "initialized lib\n";
-
-    LinuxGamepadManager::instance.init();
 
     if (client->getPrimaryUserOptions()->getFullscreen())
         eglutToggleFullscreen();

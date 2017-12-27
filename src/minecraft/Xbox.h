@@ -41,7 +41,7 @@ struct local_config {
     void** vtable;
 
     mcpe::string get_value_from_local_storage(mcpe::string const& value) {
-        mcpe::string (*func)(void*, mcpe::string const&) = (mcpe::string (*)(void*, mcpe::string const&)) vtable[0x40/4];
+        mcpe::string (*func)(void*, mcpe::string const&) = (mcpe::string (*)(void*, mcpe::string const&)) vtable[0x34/4];
         return func(this, value);
     }
 
@@ -69,7 +69,7 @@ struct java_rps_ticket {
 struct auth_flow_result {
 
     int code;
-    mcpe::string s1, xbox_user_id, gamertag, age_group, privileges, cid, s7;
+    mcpe::string s1, xbox_user_id, gamertag, age_group, privileges, user_settings_restrictions, user_enforcement_restrictions, user_title_restrictions, cid, s7;
 
     auth_flow_result() {}
     auth_flow_result(auth_flow_result const& c) {
@@ -79,6 +79,9 @@ struct auth_flow_result {
         gamertag = c.gamertag;
         age_group = c.age_group;
         privileges = c.privileges;
+        user_settings_restrictions = c.user_settings_restrictions;
+        user_enforcement_restrictions = c.user_enforcement_restrictions;
+        user_title_restrictions = c.user_title_restrictions;
         cid = c.cid;
         s7 = c.s7;
     }
@@ -86,7 +89,7 @@ struct auth_flow_result {
 };
 
 struct token_and_signature_result {
-    mcpe::string token, signature, xbox_user_id, gamertag, xbox_user_hash, age_group, privileges, web_account_id, reserved;
+    mcpe::string token, signature, xbox_user_id, gamertag, xbox_user_hash, age_group, privileges, user_settings_restrictions, user_enforcement_restrictions, user_title_restrictions, web_account_id, reserved;
 };
 
 }
@@ -124,9 +127,10 @@ struct task {
 
 struct unknown_auth_flow_class {
 
-    char filler[0x48];
+    // xbox::services::system::user_auth_android::auth_flow_callback
+    char filler[0x58];
     pplx::task_completion_event_auth_flow_result auth_flow_event;
-    char filler2[0x74-0x48-0xc];
+    char filler2[0x8c-0x58-0xc];
     xbox::services::system::auth_flow_result auth_flow_result;
 
 };
@@ -149,6 +153,7 @@ struct auth_config {
 
 struct auth_manager {
 
+    static std::shared_ptr<auth_manager> (*auth_manager_get_auth_manager_instance)();
 
     static void (*auth_manager_set_rps_ticket)(auth_manager*, mcpe::string const&);
     static pplx::task (*auth_manager_initialize_default_nsal)(auth_manager*);
@@ -167,8 +172,6 @@ struct user_auth_android {
     unknown_auth_flow_class* auth_flow;
     int filler;
     mcpe::string xbox_user_id;
-    char filler2[0x60 - 12];
-    auth_manager* auth_mgr;
 
 
 };

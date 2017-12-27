@@ -100,7 +100,8 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", (void*) &LinuxAppPlatform::calculateAvailableDiskFreeSpace);
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", (void*) &LinuxAppPlatform::getPlatformUIScalingRules);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", (void*) &LinuxAppPlatform::getPlatformTempPath);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDEv", (void*) &LinuxAppPlatform::createDeviceID);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDEv", (void*) &LinuxAppPlatform::createDeviceID_old);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDERSs", (void*) &LinuxAppPlatform::createDeviceID);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", (void*) &LinuxAppPlatform::queueForMainThread);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", (void*) &LinuxAppPlatform::getMultiplayerServiceListToRegister);
 }
@@ -189,7 +190,7 @@ void LinuxAppPlatform::setFullscreenMode(int mode) {
 
 long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     struct statvfs buf;
-    statvfs(PathHelper::findDataFile(dataDir).c_str(), &buf);
+    statvfs(dataDir.c_str(), &buf);
     return (long long int) buf.f_bsize * buf.f_bfree;
 }
 

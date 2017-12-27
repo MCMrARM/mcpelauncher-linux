@@ -42,7 +42,7 @@ include_directories(libs/rapidxml)
 set(HYBRIS_SOURCES hybris/src/cache.c hybris/src/dlfcn.c hybris/src/hooks.c hybris/src/hooks_shm.c hybris/src/logging.c hybris/src/properties.c hybris/src/strlcpy.c hybris/src/ctype.c hybris/src/sysconf.c hybris/src/jb/dlfcn.c hybris/src/jb/linker.c hybris/src/jb/linker_environ.c hybris/src/jb/linker_format.c hybris/src/jb/rt.c)
 set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)
 
-set(SOURCE_FILES src/main.cpp src/common.cpp src/hook.cpp src/amdfix.s src/linux_appplatform.cpp src/minecraft/types.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/GameControllerManager.h src/minecraft/string.cpp src/minecraft/string.h src/base64.cpp src/base64.h src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/xboxlive.h src/xboxlive.cpp src/cll.cpp src/cll.h src/async_result_util.h src/extract.cpp src/extract.h src/path_helper.cpp src/path_helper.h src/gamepad.h src/gamepad.cpp eglut/eglut_x11.h)
+set(SOURCE_FILES src/main.cpp src/common.cpp src/hook.cpp src/amdfix.s src/linux_appplatform.cpp src/minecraft/types.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/base64.cpp src/base64.h src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/xboxlive.h src/xboxlive.cpp src/cll.cpp src/cll.h src/async_result_util.h src/extract.cpp src/extract.h src/path_helper.cpp src/path_helper.h eglut/eglut_x11.h)
 set(SOURCE_FILES_CEF)
 if (CEF_ENABLED)
     link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
@@ -52,7 +52,7 @@ if (PLAYAPI_ENABLED)
     set(SOURCE_FILES ${SOURCE_FILES} gplay_api/src/config.h gplay_api/src/config.cpp src/google_login_browser.h src/google_login_browser.cpp src/google_play_helper.cpp src/google_play_helper.h)
 endif()
 add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${SOURCE_FILES})
-target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z png curl zip crypto udev evdev)
+target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z png curl zip crypto)
 target_compile_definitions(mcpelauncher PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
 if (CEF_ENABLED)
@@ -67,15 +67,14 @@ else()
     target_compile_definitions(mcpelauncher PRIVATE DISABLE_PLAYAPI)
 endif()
 
+function (add_non_source_dir_custom_command command...)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND $<$<NOT:$<STREQUAL:$<TARGET_FILE_DIR:mcpelauncher>,${CMAKE_SOURCE_DIR}>>:${command}>)
+endfunction()
+
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory
         $<TARGET_FILE_DIR:mcpelauncher>/src)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/src/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/initial_setup_resources)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/lib/libcef.so $<TARGET_FILE_DIR:mcpelauncher>/libcef.so)
@@ -91,8 +90,11 @@ add_custom_command(TARGET mcpelauncher POST_BUILD
 add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
+add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/src/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/initial_setup_resources)
+add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
+add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/mcpelauncher-icon.png $<TARGET_FILE_DIR:mcpelauncher>/mcpelauncher-icon.png)
 
 install(TARGETS mcpelauncher
@@ -109,6 +111,10 @@ install(DIRECTORY libs/cef/res
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 install(DIRECTORY src/initial_setup_resources
         DESTINATION share/mcpelauncher/src
+        PATTERN "*"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+install(DIRECTORY libs/native
+        DESTINATION share/mcpelauncher/libs
         PATTERN "*"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 install(DIRECTORY DESTINATION bin/)
