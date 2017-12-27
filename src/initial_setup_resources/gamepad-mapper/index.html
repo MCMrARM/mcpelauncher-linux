@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+    <title>Minecraft Launcher</title>
+    <style>
+        html, body {
+            background: #303030;
+            color: #fff;
+            font-family: sans-serif;
+            text-align: center;
+            user-select: none;
+            cursor: default;
+            margin: 0;
+            padding: 0;
+        }
+        #ctr {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #action-text {
+            padding: 5vh;
+        }
+        #gamepad-image {
+            flex-grow: 1;
+            padding: 5vh;
+        }
+    </style>
+</head>
+<body>
+<div id="ctr">
+    <object id="gamepad-image" type="image/svg+xml" data="GamepadXbox.svg"></object>
+    <h1 id="action-text">Please wait</h1>
+</div>
+<script>
+    const steps = [
+        {
+            "text": "Press A",
+            "highlight": "button-a"
+        },
+        {
+            "text": "Press B",
+            "highlight": "button-b"
+        },
+        {
+            "text": "Press X",
+            "highlight": "button-x"
+        },
+        {
+            "text": "Press Y",
+            "highlight": "button-y"
+        }
+    ];
+    let svgDoc;
+    let currentStep = -1;
+
+    function startStep(stepN) {
+        if (currentStep !== -1)
+            svgDoc.getElementById(steps[currentStep].highlight).classList.remove("active");
+        currentStep = stepN;
+        svgDoc.getElementById(steps[stepN].highlight).classList.add("active");
+        document.getElementById("action-text").textContent = steps[stepN].text;
+    }
+
+    window.addEventListener("load", function() {
+        svgDoc = document.getElementById("gamepad-image").contentDocument;
+        startStep(0);
+    });
+</script>
+</body>
+</html>

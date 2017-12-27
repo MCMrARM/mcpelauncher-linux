@@ -29,6 +29,19 @@
       #button-dpad-left, #button-dpad-right, #button-dpad-up, #button-dpad-down {
         display: none;
       }
+
+      #button-a.active {
+        fill: #76FF03;
+      }
+      #button-b.active {
+        fill: #FF3D00;
+      }
+      #button-x.active {
+        fill: #00B0FF;
+      }
+      #button-y.active {
+        fill: #FFEA00;
+      }
     </style>
   </defs>
   <title>GamepadXbox</title>
@@ -44,13 +57,13 @@
     <circle class="cls-2" cx="49" cy="55.24" r="12"/>
   </g>
   <g>
-    <circle class="cls-2" cx="210.5" cy="64.5" r="9"/>
+    <circle class="cls-2" id="button-b" cx="210.5" cy="64.5" r="9"/>
     <text class="cls-3" x="210.5" y="70" text-anchor="middle">B</text>
-    <circle class="cls-2" cx="193.5" cy="82.5" r="9"/>
+    <circle class="cls-2" id="button-a" cx="193.5" cy="82.5" r="9"/>
     <text class="cls-3" x="193.5" y="88" text-anchor="middle">A</text>
-    <circle class="cls-2" cx="193.5" cy="46.5" r="9"/>
+    <circle class="cls-2" id="button-y" cx="193.5" cy="46.5" r="9"/>
     <text class="cls-3" x="193.5" y="52" text-anchor="middle">Y</text>
-    <circle class="cls-2" cx="174.5" cy="64.5" r="9"/>
+    <circle class="cls-2" id="button-x" cx="174.5" cy="64.5" r="9"/>
     <text class="cls-3" x="174.5" y="70" text-anchor="middle">X</text>
   </g>
   <g>
