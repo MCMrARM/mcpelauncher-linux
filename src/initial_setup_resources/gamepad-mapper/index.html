@@ -104,14 +104,14 @@
             "mapping": "button:lb"
         },
         {
-            "text": "Press the left trigger",
-            "highlight": "trigger-left",
-            "mapping": "axis:trleft"
-        },
-        {
             "text": "Press the right top shoulder",
             "highlight": "shoulder-right",
             "mapping": "button:rb"
+        },
+        {
+            "text": "Press the left trigger",
+            "highlight": "trigger-left",
+            "mapping": "axis:trleft"
         },
         {
             "text": "Press the right trigger",
@@ -131,19 +131,10 @@
     let mapping = {};
 
     function startStep(stepN, substep) {
+        stepClearHighlight();
         if (!substep)
             substep = 0;
 
-        if (currentStep !== -1) {
-            let oldEl;
-            if (steps[currentStep].highlight instanceof Array)
-                oldEl = svgDoc.getElementById(steps[currentStep].highlight[currentSubstep]);
-            else
-                oldEl = svgDoc.getElementById(steps[currentStep].highlight);
-            oldEl.classList.remove("active");
-            if ("animation" in steps[currentStep])
-                oldEl.style.animation = "";
-        }
         let stepData = steps[stepN];
         currentStep = stepN;
         currentSubstep = -1;
@@ -174,7 +165,25 @@
             textEl.textContent = stepData.text;
         }
     }
+    function stepClearHighlight() {
+        if (currentStep !== -1) {
+            let oldEl;
+            if (steps[currentStep].highlight instanceof Array)
+                oldEl = svgDoc.getElementById(steps[currentStep].highlight[currentSubstep]);
+            else
+                oldEl = svgDoc.getElementById(steps[currentStep].highlight);
+            oldEl.classList.remove("active");
+            if ("animation" in steps[currentStep])
+                oldEl.style.animation = "";
+        }
+    }
     function stepFinished() {
+        if (currentStep === steps.length - 1) {
+            stepClearHighlight();
+            currentStep++;
+            document.getElementById("action-text").textContent = "Done!";
+            return;
+        }
         startStep(currentStep + 1);
     }
 
