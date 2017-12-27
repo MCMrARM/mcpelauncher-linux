@@ -53,6 +53,14 @@
         from { transform: translateX(0px); }
         to { transform: translateX(-8px); }
       }
+      @keyframes move-up {
+        from { transform: translateY(0px); }
+        to { transform: translateY(-8px); }
+      }
+      @keyframes move-down {
+        from { transform: translateY(0px); }
+        to { transform: translateY(8px); }
+      }
     </style>
   </defs>
   <title>GamepadXbox</title>
