@@ -127,6 +127,7 @@
     let stepButtonPressed = -1;
     let stepStick = -1;
     let stepHat = -1;
+    let stepHatVal = -1;
     let mapping = {};
 
     function startStep(stepN, substep) {
@@ -149,6 +150,7 @@
         stepButtonPressed = -1;
         stepStick = -1;
         stepHat = -1;
+        stepHatVal = -1;
 
         currentMappingId = stepData.mapping;
         currentMappingType = currentMappingId.split(":")[0];
@@ -214,6 +216,24 @@
         }
     });
     gamepadMapper.setGamepadHatCallback(function(gamepad, hat, value) {
+        if (value !== 0) {
+            stepHat = hat;
+            stepHatVal = value;
+        } else if (value === 0 && hat === stepHat) {
+            if (currentMappingType === "button") {
+                mapping[currentMappingId] = {"type": "hat", "id": hat, "value": stepHatVal};
+                stepFinished();
+            } else if (currentMappingType === "axis") {
+                if (currentSubstep === 0) {
+                    mapping[currentMappingId] = {"type": "hat", "left-id": hat, "left-value": stepHatVal};
+                    startStep(currentStep, 1);
+                } else {
+                    mapping[currentMappingId]["right-id"] = hat;
+                    mapping[currentMappingId]["right-value"] = stepHatVal;
+                    stepFinished();
+                }
+            }
+        }
     });
 </script>
 </body>
