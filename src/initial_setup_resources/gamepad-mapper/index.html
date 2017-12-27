@@ -219,7 +219,7 @@
         });
     });
 
-    function testModeHighlight(mapping, substep, pressed) {
+    function testModeHighlight(mapping, substep, pressed, value) {
         for (let i = steps.length - 1; i >= 0; --i) {
             if (steps[i].mapping === mapping) {
                 let el;
@@ -231,6 +231,15 @@
                     el.classList.add("active");
                 else
                     el.classList.remove("active");
+                if (mapping === "axis:leftx" || mapping === "axis:rightx" ||
+                    mapping === "axis:lefty" || mapping === "axis:righty") {
+                    if (mapping === "axis:leftx" || mapping === "axis:rightx")
+                        el._translateX = value;
+                    if (mapping === "axis:lefty" || mapping === "axis:righty")
+                        el._translateY = value;
+                    el.style.transform = "translate(" + ((el._translateX || 0) * 10) + "px," +
+                        ((el._translateY || 0) * 10) + "px)";
+                }
                 return;
             }
         }
@@ -272,6 +281,18 @@
         }
     });
     gamepadMapper.setGamepadStickCallback(function(gamepad, stick, value) {
+        if (mappingTestingMode) {
+            for (let k in mapping) {
+                if (!mapping.hasOwnProperty(k))
+                    continue;
+                let v = mapping[k];
+                if (v.type === "stick") {
+                    if ("id" in v && v.id === stick)
+                        testModeHighlight(k, 0, (value * v.value) > 0.9, value);
+                }
+            }
+            return;
+        }
         if (Math.abs(value) > 0.9) {
             stepStick = stick;
         }
@@ -283,6 +304,22 @@
         }
     });
     gamepadMapper.setGamepadHatCallback(function(gamepad, hat, value) {
+        if (mappingTestingMode) {
+            for (let k in mapping) {
+                if (!mapping.hasOwnProperty(k))
+                    continue;
+                let v = mapping[k];
+                if (v.type === "hat") {
+                    if ("id" in v && v.id === hat)
+                        testModeHighlight(k, 0, v.value === value);
+                    if ("left-id" in v && v["left-id"] === hat)
+                        testModeHighlight(k, 0, v["left-value"] === value);
+                    if ("right-id" in v && v["right-id"] === hat)
+                        testModeHighlight(k, 1, v["right-value"] === value);
+                }
+            }
+            return;
+        }
         if (value !== 0) {
             stepHat = hat;
             stepHatVal = value;
