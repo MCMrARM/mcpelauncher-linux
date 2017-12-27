@@ -35,10 +35,14 @@ GamepadMapperBrowserClient::GamepadMapperBrowserClient() {
     SetRenderHandler<GamepadMapperRenderHandler>();
 
     LinuxGamepadManager::instance.setRawButtonCallback(std::bind(&GamepadMapperBrowserClient::CallbackButtonPressed, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    LinuxGamepadManager::instance.setRawStickCallback(std::bind(&GamepadMapperBrowserClient::CallbackStick, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    LinuxGamepadManager::instance.setRawHatCallback(std::bind(&GamepadMapperBrowserClient::CallbackHat, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
 GamepadMapperBrowserClient::~GamepadMapperBrowserClient() {
     LinuxGamepadManager::instance.setRawButtonCallback(nullptr);
+    LinuxGamepadManager::instance.setRawStickCallback(nullptr);
+    LinuxGamepadManager::instance.setRawHatCallback(nullptr);
 }
 
 bool GamepadMapperBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
@@ -64,6 +68,22 @@ void GamepadMapperBrowserClient::CallbackButtonPressed(int gamepadId, int button
     GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
 }
 
+void GamepadMapperBrowserClient::CallbackStick(int gamepadId, int stick, float value) {
+    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CallbackStick");
+    msg->GetArgumentList()->SetInt(0, gamepadId);
+    msg->GetArgumentList()->SetInt(1, stick);
+    msg->GetArgumentList()->SetDouble(2, value);
+    GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
+}
+
+void GamepadMapperBrowserClient::CallbackHat(int gamepadId, int stick, int value) {
+    CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CallbackHat");
+    msg->GetArgumentList()->SetInt(0, gamepadId);
+    msg->GetArgumentList()->SetInt(1, stick);
+    msg->GetArgumentList()->SetInt(2, value);
+    GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
+}
+
 void GamepadMapperRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                                  CefRefPtr<CefV8Context> context) {
     printf("InitialSetupRenderHandler::OnContextCreated\n");
@@ -74,6 +94,8 @@ void GamepadMapperRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefV8Value> global = context->GetGlobal();
     CefRefPtr<CefV8Value> object = CefV8Value::CreateObject(nullptr, nullptr);
     object->SetValue("setGamepadButtonCallback", CefV8Value::CreateFunction("setGamepadButtonCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("setGamepadStickCallback", CefV8Value::CreateFunction("setGamepadStickCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("setGamepadHatCallback", CefV8Value::CreateFunction("setGamepadHatCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("gamepadMapper", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
@@ -83,6 +105,16 @@ bool GamepadMapperRenderHandler::OnProcessMessageReceived(CefRefPtr<CefBrowser> 
         externalInterfaceHandler->CallGamepadButtonCallback(message->GetArgumentList()->GetInt(0),
                                                             message->GetArgumentList()->GetInt(1),
                                                             message->GetArgumentList()->GetBool(2));
+        return true;
+    } else if (message->GetName() == "CallbackStick") {
+        externalInterfaceHandler->CallGamepadStickCallback(message->GetArgumentList()->GetInt(0),
+                                                           message->GetArgumentList()->GetInt(1),
+                                                           message->GetArgumentList()->GetDouble(2));
+        return true;
+    } else if (message->GetName() == "CallbackHat") {
+        externalInterfaceHandler->CallGamepadHatCallback(message->GetArgumentList()->GetInt(0),
+                                                         message->GetArgumentList()->GetInt(1),
+                                                         message->GetArgumentList()->GetInt(2));
         return true;
     }
     return false;
@@ -96,10 +128,32 @@ void GamepadMapperV8Handler::CallGamepadButtonCallback(int gamepadId, int button
     cb.first->Exit();
 }
 
+void GamepadMapperV8Handler::CallGamepadStickCallback(int gamepadId, int stick, double value) {
+    auto& cb = gamepadStickCallback;
+    cb.first->Enter();
+    cb.second->ExecuteFunction(nullptr, {CefV8Value::CreateInt(gamepadId), CefV8Value::CreateInt(stick),
+                                         CefV8Value::CreateDouble(value)});
+    cb.first->Exit();
+}
+
+void GamepadMapperV8Handler::CallGamepadHatCallback(int gamepadId, int stick, int value) {
+    auto& cb = gamepadHatCallback;
+    cb.first->Enter();
+    cb.second->ExecuteFunction(nullptr, {CefV8Value::CreateInt(gamepadId), CefV8Value::CreateInt(stick),
+                                         CefV8Value::CreateInt(value)});
+    cb.first->Exit();
+}
+
 bool GamepadMapperV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& args,
                                     CefRefPtr<CefV8Value>& retval, CefString& exception) {
     if (name == "setGamepadButtonCallback" && args.size() == 1 && args[0]->IsFunction()) {
         gamepadButtonCallback = {CefV8Context::GetCurrentContext(), args[0]};
+        return true;
+    } else if (name == "setGamepadStickCallback" && args.size() == 1 && args[0]->IsFunction()) {
+        gamepadStickCallback = {CefV8Context::GetCurrentContext(), args[0]};
+        return true;
+    } else if (name == "setGamepadHatCallback" && args.size() == 1 && args[0]->IsFunction()) {
+        gamepadHatCallback = {CefV8Context::GetCurrentContext(), args[0]};
         return true;
     } else if (name == "finish" && args.size() == 1 && args[0]->IsBool()) {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Finish");

@@ -106,6 +106,8 @@ void LinuxGamepadManager::Device::pool() {
                 float value = (float) e.value / axisInfo[e.code].max;
                 if (value >= -0.1f && value <= 0.1f)
                     value = 0.f;
+                if (manager->rawStickCallback != nullptr)
+                    manager->rawStickCallback(index, e.code, value);
                 if (entry.stick != -1 && GameControllerManager::sGamePadManager != nullptr) {
                     StickValueInfo& val = sticks[entry.stick];
                     if (entry.stickY)
@@ -122,6 +124,8 @@ void LinuxGamepadManager::Device::pool() {
                 }
             }
             if (e.code >= ABS_HAT0X && e.code <= ABS_HAT0X + 8) {
+                if (manager->rawHatCallback != nullptr)
+                    manager->rawHatCallback(index, e.code - ABS_HAT0X, e.value);
                 auto const& entries = mapping.hats[e.code - ABS_HAT0X];
                 int oldVal = hatValues[e.code - ABS_HAT0X];
                 if (oldVal != e.value && entries.count(oldVal) > 0) {

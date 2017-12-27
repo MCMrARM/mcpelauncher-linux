@@ -42,19 +42,30 @@
       #button-y.active {
         fill: #FFEA00;
       }
+      .stick.active {
+        fill: #3D5AFE;
+      }
+      @keyframes move-right {
+        from { transform: translateX(0px); }
+        to { transform: translateX(8px); }
+      }
+      @keyframes move-left {
+        from { transform: translateX(0px); }
+        to { transform: translateX(-8px); }
+      }
     </style>
   </defs>
   <title>GamepadXbox</title>
   <polygon class="cls-1" points="132.5 13.74 110.5 13.74 59.5 13.74 59.5 49.74 110.5 49.74 132.5 49.74 183.5 49.74 183.5 13.74 132.5 13.74"/>
-  <path class="cls-2" d="M23.87,15.67A49.87,49.87,0,0,1,26.5,8.74c4-7,11-9,12-8s2,10,2,10Z"/>
-  <path class="cls-2" d="M59.5,7.74c2.42.33,4.66,3.7,7,6l-5,9-42,1.67,1-4.67C26.07,10.49,42.5,4.74,59.5,7.74Z"/>
-  <path class="cls-2" d="M219.13,15.67a49.87,49.87,0,0,0-2.63-6.93c-4-7-11-9-12-8s-2,10-2,10Z"/>
-  <path class="cls-2" d="M183.5,7.74c-2.42.33-4.66,3.7-7,6l5,9,42,1.67-1-4.67C216.93,10.49,200.5,4.74,183.5,7.74Z"/>
+  <path class="cls-2" id="trigger-left" d="M23.87,15.67A49.87,49.87,0,0,1,26.5,8.74c4-7,11-9,12-8s2,10,2,10Z"/>
+  <path class="cls-2" id="shoulder-left" d="M59.5,7.74c2.42.33,4.66,3.7,7,6l-5,9-42,1.67,1-4.67C26.07,10.49,42.5,4.74,59.5,7.74Z"/>
+  <path class="cls-2" id="trigger-right" d="M219.13,15.67a49.87,49.87,0,0,0-2.63-6.93c-4-7-11-9-12-8s-2,10-2,10Z"/>
+  <path class="cls-2" id="shoulder-right" d="M183.5,7.74c-2.42.33-4.66,3.7-7,6l5,9,42,1.67-1-4.67C216.93,10.49,200.5,4.74,183.5,7.74Z"/>
   <path class="cls-1" d="M225.5,27.74c-1-4-5-7-7-9s-16-4-22-5c-5.15-.86-11,1-12,2s-17,19-17,19c-2.35,2.11-10,3-10,3h-72s-7.65-.89-10-3c0,0-16-18-17-19s-6.85-2.86-12-2c-6,1-20,3-22,5s-6,5-7,9-17,86-17,105,9,39,17,43,12,3.25,15,3c12-1,22-46,31-46h116c9,0,19,45,31,46,3,.25,7,1,15-3s17-24,17-43S226.5,31.74,225.5,27.74Z"/>
   <path class="cls-2" d="M104.37,97.57H91.68V84.89c0-2.2-11.33-2.2-11.33,0V97.57H67.66c-2.19,0-2.19,11.34,0,11.34H80.35v12.68c0,2.2,11.33,2.2,11.33,0V108.91h12.69C106.56,108.91,106.56,97.57,104.37,97.57Z"/>
   <g>
     <circle class="cls-1" cx="49" cy="55.24" r="16"/>
-    <circle class="cls-2" cx="49" cy="55.24" r="12"/>
+    <circle class="cls-2 stick" id="stick-left" cx="49" cy="55.24" r="12"/>
   </g>
   <g>
     <circle class="cls-2" id="button-b" cx="210.5" cy="64.5" r="9"/>
@@ -68,7 +79,7 @@
   </g>
   <g>
     <circle class="cls-1" cx="153.5" cy="100.74" r="16"/>
-    <circle class="cls-2" cx="153.5" cy="100.74" r="12"/>
+    <circle class="cls-2 stick" id="stick-right" cx="153.5" cy="100.74" r="12"/>
   </g>
   <rect class="cls-1" x="90.5" y="59.74" width="12" height="8" rx="1" ry="1"/>
   <text class="cls-4" x="96.5" y="56.74" text-anchor="middle">Select</text>

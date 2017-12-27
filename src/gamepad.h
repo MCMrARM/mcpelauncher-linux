@@ -62,6 +62,8 @@ private:
     struct udev* udev = nullptr;
     Device devices[4];
     std::function<void (int, int, bool)> rawButtonCallback;
+    std::function<void (int, int, float)> rawStickCallback;
+    std::function<void (int, int, int)> rawHatCallback;
 
     int getFreeDeviceIndex();
 
@@ -80,6 +82,14 @@ public:
 
     void setRawButtonCallback(std::function<void (int, int, bool)> cb) {
         rawButtonCallback = cb;
+    }
+
+    void setRawStickCallback(std::function<void (int, int, float)> cb) {
+        rawStickCallback = cb;
+    }
+
+    void setRawHatCallback(std::function<void (int, int, int)> cb) {
+        rawHatCallback = cb;
     }
 
 };

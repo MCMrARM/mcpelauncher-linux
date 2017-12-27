@@ -31,6 +31,8 @@ public:
     virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
 
     void CallbackButtonPressed(int gamepadId, int button, bool pressed);
+    void CallbackStick(int gamepadId, int stick, float value);
+    void CallbackHat(int gamepadId, int hat, int value);
 
 };
 
@@ -56,11 +58,14 @@ class GamepadMapperV8Handler : public CefV8Handler {
 
 private:
     GamepadMapperRenderHandler& handler;
-    std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> gamepadButtonCallback;
+    std::pair<CefRefPtr<CefV8Context>, CefRefPtr<CefV8Value>> gamepadButtonCallback, gamepadStickCallback,
+            gamepadHatCallback;
 
 public:
 
     void CallGamepadButtonCallback(int gamepadId, int button, bool pressed);
+    void CallGamepadStickCallback(int gamepadId, int stick, double value);
+    void CallGamepadHatCallback(int gamepadId, int hot, int value);
 
     GamepadMapperV8Handler(GamepadMapperRenderHandler& handler) : handler(handler) {}
 
