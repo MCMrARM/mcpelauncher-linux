@@ -145,6 +145,7 @@
     let stepHat = -1;
     let stepHatVal = -1;
     let mapping = {};
+    let mappingTestingMode = false;
 
     function startStep(stepN, substep) {
         stepClearHighlight();
@@ -198,6 +199,7 @@
             stepClearHighlight();
             currentStep++;
             document.getElementById("action-text").textContent = "Done!";
+            mappingTestingMode = true;
             return;
         }
         startStep(currentStep + 1);
@@ -217,7 +219,40 @@
         });
     });
 
+    function testModeHighlight(mapping, substep, pressed) {
+        for (let i = steps.length - 1; i >= 0; --i) {
+            if (steps[i].mapping === mapping) {
+                let el;
+                if (steps[i].highlight instanceof Array)
+                    el = svgDoc.getElementById(steps[i].highlight[substep]);
+                else
+                    el = svgDoc.getElementById(steps[i].highlight);
+                if (pressed)
+                    el.classList.add("active");
+                else
+                    el.classList.remove("active");
+                return;
+            }
+        }
+    }
+
     gamepadMapper.setGamepadButtonCallback(function(gamepad, btn, pressed) {
+        if (mappingTestingMode) {
+            for (let k in mapping) {
+                if (!mapping.hasOwnProperty(k))
+                    continue;
+                let v = mapping[k];
+                if (v.type === "button") {
+                    if ("id" in v && v.id === btn)
+                        testModeHighlight(k, 0, pressed);
+                    if ("left-id" in v && v["left-id"] === btn)
+                        testModeHighlight(k, 0, pressed);
+                    if ("right-id" in v && v["right-id"] === btn)
+                        testModeHighlight(k, 1, pressed);
+                }
+            }
+            return;
+        }
         if (pressed && stepButtonPressed === -1) {
             stepButtonPressed = btn;
         } else if (!pressed && btn === stepButtonPressed) {
