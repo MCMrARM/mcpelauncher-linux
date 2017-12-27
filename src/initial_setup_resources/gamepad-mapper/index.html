@@ -142,6 +142,7 @@
     let currentMappingId = null;
     let stepButtonPressed = -1;
     let stepStick = -1;
+    let stepStickVal = -1;
     let stepHat = -1;
     let stepHatVal = -1;
     let mapping = {};
@@ -157,6 +158,7 @@
         currentSubstep = -1;
         stepButtonPressed = -1;
         stepStick = -1;
+        stepStickVal = -1;
         stepHat = -1;
         stepHatVal = -1;
 
@@ -227,18 +229,19 @@
                     el = svgDoc.getElementById(steps[i].highlight[substep]);
                 else
                     el = svgDoc.getElementById(steps[i].highlight);
-                if (pressed)
-                    el.classList.add("active");
-                else
-                    el.classList.remove("active");
                 if (mapping === "axis:leftx" || mapping === "axis:rightx" ||
                     mapping === "axis:lefty" || mapping === "axis:righty") {
                     if (mapping === "axis:leftx" || mapping === "axis:rightx")
                         el._translateX = value;
                     if (mapping === "axis:lefty" || mapping === "axis:righty")
-                        el._translateY = value;
+                        el._translateY = -value;
                     el.style.transform = "translate(" + ((el._translateX || 0) * 10) + "px," +
                         ((el._translateY || 0) * 10) + "px)";
+                } else {
+                    if (pressed)
+                        el.classList.add("active");
+                    else
+                        el.classList.remove("active");
                 }
                 return;
             }
@@ -288,17 +291,18 @@
                 let v = mapping[k];
                 if (v.type === "stick") {
                     if ("id" in v && v.id === stick)
-                        testModeHighlight(k, 0, (value * v.value) > 0.9, value);
+                        testModeHighlight(k, 0, (value * v.value) > 0.9, value * v.value);
                 }
             }
             return;
         }
         if (Math.abs(value) > 0.9) {
             stepStick = stick;
+            stepStickVal = value;
         }
         if (Math.abs(value) < 0.2 && stick === stepStick) {
             if (currentMappingType === "button" || currentMappingType === "axis") {
-                mapping[currentMappingId] = {"type": "stick", "id": stick, "value": (value > 0 ? 1 : -1)};
+                mapping[currentMappingId] = {"type": "stick", "id": stick, "value": (stepStickVal > 0 ? 1 : -1)};
                 stepFinished();
             }
         }
