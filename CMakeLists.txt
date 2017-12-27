@@ -46,7 +46,7 @@ set(SOURCE_FILES src/main.cpp src/common.cpp src/hook.cpp src/amdfix.s src/linux
 set(SOURCE_FILES_CEF)
 if (CEF_ENABLED)
     link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
-    set(SOURCE_FILES ${SOURCE_FILES} ${SOURCE_FILES_CEF} src/browser.cpp src/browser.h src/xbox_login_browser.h src/xbox_login_browser.cpp src/initial_setup_browser.cpp src/initial_setup_browser.h)
+    set(SOURCE_FILES ${SOURCE_FILES} ${SOURCE_FILES_CEF} src/browser.cpp src/browser.h src/xbox_login_browser.h src/xbox_login_browser.cpp src/initial_setup_browser.cpp src/initial_setup_browser.h src/gamepad_mapper_browser.cpp src/gamepad_mapper_browser.h)
 endif()
 if (PLAYAPI_ENABLED)
     set(SOURCE_FILES ${SOURCE_FILES} gplay_api/src/config.h gplay_api/src/config.cpp src/google_login_browser.h src/google_login_browser.cpp src/google_play_helper.cpp src/google_play_helper.h)

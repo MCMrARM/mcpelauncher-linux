@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <functional>
 #include <libudev.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 
@@ -40,6 +41,7 @@ private:
     };
 
     struct Device {
+        LinuxGamepadManager* manager;
         int index;
         int fd = -1;
         struct libevdev* edev;
@@ -47,6 +49,7 @@ private:
         AbsInfo axisInfo[16];
         StickValueInfo sticks[2];
         int hatValues[8];
+        bool assignedInMinecraft = false;
 
         void assign(int fd, libevdev* edev);
         void release();
@@ -58,6 +61,7 @@ private:
 
     struct udev* udev = nullptr;
     Device devices[4];
+    std::function<void (int, int, bool)> rawButtonCallback;
 
     int getFreeDeviceIndex();
 
@@ -73,5 +77,9 @@ public:
     void init();
 
     void pool();
+
+    void setRawButtonCallback(std::function<void (int, int, bool)> cb) {
+        rawButtonCallback = cb;
+    }
 
 };

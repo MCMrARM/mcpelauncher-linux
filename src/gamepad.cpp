@@ -13,6 +13,7 @@ LinuxGamepadManager LinuxGamepadManager::instance;
 
 LinuxGamepadManager::LinuxGamepadManager() {
     for (int i = 0; i < 4; i++) {
+        devices[i].manager = this;
         devices[i].index = i;
     }
 }
@@ -78,6 +79,7 @@ void LinuxGamepadManager::Device::release() {
         close(fd);
     fd = -1;
     edev = nullptr;
+    assignedInMinecraft = false;
 }
 
 void LinuxGamepadManager::Device::pool() {
@@ -93,6 +95,8 @@ void LinuxGamepadManager::Device::pool() {
         if (e.type == EV_KEY) {
             int code = e.code - BTN_GAMEPAD;
             if (code >= 0 && code < 16) {
+                if (manager->rawButtonCallback != nullptr)
+                    manager->rawButtonCallback(index, code, e.value != 0);
                 MappingInfo::Entry const& entry = mapping.buttons[code];
                 onButton(entry, e.value != 0);
             }
@@ -102,7 +106,7 @@ void LinuxGamepadManager::Device::pool() {
                 float value = (float) e.value / axisInfo[e.code].max;
                 if (value >= -0.1f && value <= 0.1f)
                     value = 0.f;
-                if (entry.stick != -1) {
+                if (entry.stick != -1 && GameControllerManager::sGamePadManager != nullptr) {
                     StickValueInfo& val = sticks[entry.stick];
                     if (entry.stickY)
                         val.y = value;
@@ -110,10 +114,10 @@ void LinuxGamepadManager::Device::pool() {
                         val.x = value;
                     GameControllerManager::sGamePadManager->feedStick(index, entry.stick, 3, val.x, -val.y);
                 }
-                if (entry.trigger != -1) {
+                if (entry.trigger != -1 && GameControllerManager::sGamePadManager != nullptr) {
                     GameControllerManager::sGamePadManager->feedTrigger(index, entry.trigger, value);
                 }
-                if (entry.button != -1) {
+                if (entry.button != -1 && GameControllerManager::sGamePadManager != nullptr) {
                     GameControllerManager::sGamePadManager->feedButton(index, entry.button, value >= 0.9f, true);
                 }
             }
@@ -135,6 +139,8 @@ void LinuxGamepadManager::Device::pool() {
 }
 
 void LinuxGamepadManager::Device::onButton(MappingInfo::Entry const& mapping, bool pressed) {
+    if (GameControllerManager::sGamePadManager == nullptr)
+        return;
     if (mapping.button != -1)
         GameControllerManager::sGamePadManager->feedButton(index, mapping.button, pressed ? 1 : 0, true);
     // stick is absolutely pointless to assign to a button
@@ -181,7 +187,10 @@ void LinuxGamepadManager::onDeviceAdded(struct udev_device* dev) {
         }
         printf("Joystick #%i added (%s)\n", no, devPath);
         devices[no].assign(fd, edev);
-        GameControllerManager::sGamePadManager->setGameControllerConnected(no, true);
+        if (GameControllerManager::sGamePadManager != nullptr) {
+            devices[no].assignedInMinecraft = true;
+            GameControllerManager::sGamePadManager->setGameControllerConnected(no, true);
+        }
     }
 }
 

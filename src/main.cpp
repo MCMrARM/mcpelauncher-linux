@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <atomic>
 #include <sstream>
 #include <codecvt>
 #include <locale>
@@ -40,6 +41,7 @@
 #include "browser.h"
 #include "xbox_login_browser.h"
 #include "initial_setup_browser.h"
+#include "gamepad_mapper_browser.h"
 #include "path_helper.h"
 #endif
 #ifndef DISABLE_PLAYAPI
@@ -354,6 +356,7 @@ int main(int argc, char *argv[]) {
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
     BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
+    BrowserApp::RegisterRenderProcessHandler<GamepadMapperRenderHandler>();
 #ifndef DISABLE_PLAYAPI
     BrowserApp::RegisterRenderProcessHandler<GoogleLoginRenderHandler>();
 #endif
@@ -362,6 +365,20 @@ int main(int argc, char *argv[]) {
     if (exit_code >= 0)
         return exit_code;
 
+    if (argc > 1 && strcmp(argv[1], "mapGamepad") == 0) {
+        LinuxGamepadManager::instance.init();
+        std::atomic<bool> shouldStop (false);
+        std::thread t([&shouldStop] {
+            while (!shouldStop) {
+                LinuxGamepadManager::instance.pool();
+                usleep(50000L);
+            }
+        });
+        GamepadMapperBrowserClient::OpenBrowser();
+        shouldStop = true;
+        t.join();
+        return 0;
+    }
     {
         bool found = true;
         try {

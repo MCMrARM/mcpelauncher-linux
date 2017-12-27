@@ -53,18 +53,29 @@
     ];
     let svgDoc;
     let currentStep = -1;
+    let stepButtonPressed = -1;
 
     function startStep(stepN) {
         if (currentStep !== -1)
             svgDoc.getElementById(steps[currentStep].highlight).classList.remove("active");
         currentStep = stepN;
+        stepButtonPressed = -1;
         svgDoc.getElementById(steps[stepN].highlight).classList.add("active");
         document.getElementById("action-text").textContent = steps[stepN].text;
     }
 
     window.addEventListener("load", function() {
+        document.getElementById("action-text").textContent = "TEST";
         svgDoc = document.getElementById("gamepad-image").contentDocument;
         startStep(0);
+    });
+
+    gamepadMapper.setGamepadButtonCallback(function(gamepad, btn, pressed) {
+        if (pressed && stepButtonPressed === -1) {
+            stepButtonPressed = btn;
+        } else if (!pressed && btn == stepButtonPressed) {
+            startStep(currentStep + 1);
+        }
     });
 </script>
 </body>
