@@ -26,7 +26,7 @@
             padding: 5vh;
             display: flex;
         }
-        #undo, #done {
+        #undo, #done, #skip {
             background: #444;
             border-radius: 3px;
             padding: 8px 16px;
@@ -50,6 +50,7 @@
     <div id="action-text-ctr">
         <div id="undo">Undo</div>
         <h1 id="action-text">Please wait</h1>
+        <div id="skip">Skip</div>
         <div id="done">Done</div>
     </div>
 </div>
@@ -207,6 +208,7 @@
             currentStep++;
             currentSubstep = -1;
             document.getElementById("action-text").textContent = "Mapping finished.";
+            document.getElementById("skip").style.display = "none";
             document.getElementById("done").style.display = "block";
             mappingTestingMode = true;
             return;
@@ -218,10 +220,13 @@
         for (let k in mapping) {
             if (!mapping.hasOwnProperty(k))
                 continue;
+            let v = mapping[k];
+            if (v.type === "none")
+                continue;
+
             if (str.length > 0)
                 str += ",";
             str += k + "=";
-            let v = mapping[k];
             if (v.type === "button") {
                 str += "b";
                 if ("id" in v)
@@ -247,12 +252,17 @@
         document.getElementById("undo").addEventListener("click", function() {
             if (currentStep === 0 && currentSubstep <= 0)
                 return;
+            document.getElementById("skip").style.display = "block";
             document.getElementById("done").style.display = "none";
             mappingTestingMode = false;
             if (currentSubstep > 0)
                 startStep(currentStep, currentSubstep - 1);
             else
                 startStep(currentStep - 1);
+        });
+        document.getElementById("skip").addEventListener("click", function() {
+            mapping[currentMappingId] = {"type": "none"};
+            stepFinished();
         });
         document.getElementById("done").addEventListener("click", function() {
             document.getElementById("action-text").textContent = createMappingString();
