@@ -37,6 +37,7 @@
 #include "hook.h"
 #include "xboxlive.h"
 #include "extract.h"
+#include "gamepad.h"
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
@@ -121,6 +122,7 @@ static void minecraft_idle() {
         moveMouseToCenter = false;
     }
     eglutPostRedisplay();
+    LinuxGamepadManager::instance.pool();
 }
 static void minecraft_draw() {
     platform->runOnMainThreadMutex.lock();
@@ -663,6 +665,8 @@ int main(int argc, char *argv[]) {
     std::cout << "init minecraft client\n";
     client->init(ctx);
     std::cout << "initialized lib\n";
+
+    LinuxGamepadManager::instance.init();
 
     if (client->getPrimaryUserOptions()->getFullscreen())
         eglutToggleFullscreen();
