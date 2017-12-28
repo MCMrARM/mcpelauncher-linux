@@ -37,6 +37,7 @@
 #include "hook.h"
 #include "xboxlive.h"
 #include "extract.h"
+#include "gamepad.h"
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
@@ -44,9 +45,9 @@
 #include "gamepad_mapper_browser.h"
 #include "path_helper.h"
 #endif
+#include "minecraft/GameControllerManager.h"
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
-
 #endif
 
 extern "C" {
@@ -120,6 +121,7 @@ static void minecraft_idle() {
         eglutWarpMousePointer(cx, cy);
         moveMouseToCenter = false;
     }
+    LinuxGamepadManager::instance.pool();
     eglutPostRedisplay();
 }
 static void minecraft_draw() {
@@ -144,7 +146,7 @@ static void minecraft_mouse(int x, int y) {
     if (LinuxAppPlatform::mousePointerHidden) {
         int cx = eglutGetWindowWidth() / 2;
         int cy = eglutGetWindowHeight() / 2;
-        if (x != cy || y != cy) {
+        if (x != cx || y != cy) {
             Mouse::feed(0, 0, x, y, x - cx, y - cy);
             moveMouseToCenter = true;
         }
@@ -371,12 +373,13 @@ int main(int argc, char *argv[]) {
         std::thread t([&shouldStop] {
             while (!shouldStop) {
                 LinuxGamepadManager::instance.pool();
-                usleep(50000L);
+                usleep(5000L);
             }
         });
         GamepadMapperBrowserClient::OpenBrowser();
         shouldStop = true;
         t.join();
+       
         return 0;
     }
     {
@@ -613,6 +616,12 @@ int main(int argc, char *argv[]) {
     Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
     Keyboard::Keyboard_feedText = (void (*)(const mcpe::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
+    GameControllerManager::sGamePadManager = (GameControllerManager*) hybris_dlsym(handle, "_ZN21GameControllerManager15sGamePadManagerE");
+    GameControllerManager::GameControllerManager_setGameControllerConnected = (void (*)(GameControllerManager*, int, bool)) hybris_dlsym(handle, "_ZN21GameControllerManager26setGameControllerConnectedEib");
+    GameControllerManager::GameControllerManager_feedButton = (void (*)(GameControllerManager*, int, int, int, bool)) hybris_dlsym(handle, "_ZN21GameControllerManager10feedButtonEii25GameControllerButtonStateb");
+    GameControllerManager::GameControllerManager_feedStick = (void (*)(GameControllerManager*, int, int, int, float, float)) hybris_dlsym(handle, "_ZN21GameControllerManager9feedStickEii24GameControllerStickStateff");
+    GameControllerManager::GameControllerManager_feedTrigger = (void (*)(GameControllerManager*, int, int, float)) hybris_dlsym(handle, "_ZN21GameControllerManager11feedTriggerEiif");
+
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
     Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
 
@@ -663,6 +672,8 @@ int main(int argc, char *argv[]) {
     std::cout << "init minecraft client\n";
     client->init(ctx);
     std::cout << "initialized lib\n";
+
+    LinuxGamepadManager::instance.init();
 
     if (client->getPrimaryUserOptions()->getFullscreen())
         eglutToggleFullscreen();
