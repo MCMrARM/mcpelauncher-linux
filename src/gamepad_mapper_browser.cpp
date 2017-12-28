@@ -22,6 +22,7 @@ void GamepadMapperBrowserClient::OpenBrowser() {
 
         CefBrowserSettings browserSettings;
         browserSettings.web_security = STATE_DISABLED;
+        printf("%s", PathHelper::findDataFile("src/initial_setup_resources/gamepad-mapper/index.html") );
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
                 client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/gamepad-mapper/index.html"), browserSettings, NULL, NULL);
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));

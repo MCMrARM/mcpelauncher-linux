@@ -43,34 +43,46 @@ void LinuxGamepadManager::init() {
 void LinuxGamepadManager::Device::assign(int fd, libevdev* edev) {
     this->fd = fd;
     this->edev = edev;
-
+    int axisCounter = 0;
     for (unsigned int i = 0; i < 16; i++) {
         const input_absinfo* absinfo = libevdev_get_abs_info(edev, i);
         if (absinfo == nullptr)
             continue;
         axisInfo[i].min = absinfo->minimum;
         axisInfo[i].max = absinfo->maximum;
+        axisCounter++;
     }
 
     // hardcode a mapping for now
+
+    //tweaked for my gamepad (tracer shogun usb)
     mapping.buttons[BTN_A - BTN_GAMEPAD].button = BUTTON_A;
     mapping.buttons[BTN_B - BTN_GAMEPAD].button = BUTTON_B;
     mapping.buttons[BTN_X - BTN_GAMEPAD].button = BUTTON_X;
     mapping.buttons[BTN_Y - BTN_GAMEPAD].button = BUTTON_Y;
-    mapping.buttons[BTN_TL - BTN_GAMEPAD].button = BUTTON_LB;
-    mapping.buttons[BTN_TR - BTN_GAMEPAD].button = BUTTON_RB;
-    mapping.buttons[BTN_SELECT - BTN_GAMEPAD].button = BUTTON_SELECT;
-    mapping.buttons[BTN_START - BTN_GAMEPAD].button = BUTTON_START;
+    //mapping.buttons[BTN_TL - BTN_GAMEPAD].button = BUTTON_LB;
+    //mapping.buttons[BTN_TR - BTN_GAMEPAD].button = BUTTON_RB;
+    mapping.buttons[BTN_SELECT - BTN_GAMEPAD -1].button = BUTTON_SELECT;
+    mapping.buttons[BTN_START - BTN_GAMEPAD -1].button = BUTTON_START;
     mapping.axis[ABS_X].stick = mapping.axis[ABS_Y].stick = 0;
     mapping.axis[ABS_Y].stickY = true;
-    mapping.axis[ABS_RX].stick = mapping.axis[ABS_RY].stick = 1;
-    mapping.axis[ABS_RY].stickY = true;
-    mapping.axis[ABS_Z].trigger = 0;
-    mapping.axis[ABS_RZ].trigger = 1;
+    mapping.axis[ABS_RX].stick = mapping.axis[ABS_RY+1].stick = 1;
+    mapping.axis[ABS_RY+1].stickY = true;
+    //mapping.axis[ABS_Z].trigger = 0;
+    //mapping.axis[ABS_RZ].trigger = 1;
+
+
     mapping.hats[ABS_HAT0X - ABS_HAT0X][-1].button = BUTTON_DPAD_LEFT;
     mapping.hats[ABS_HAT0X - ABS_HAT0X][1].button = BUTTON_DPAD_RIGHT;
     mapping.hats[ABS_HAT0Y - ABS_HAT0X][-1].button = BUTTON_DPAD_UP;
     mapping.hats[ABS_HAT0Y - ABS_HAT0X][1].button = BUTTON_DPAD_DOWN;
+    
+    mapping.buttons[6].trigger = 0;
+    mapping.buttons[7].trigger = 1;
+    mapping.buttons[10].button = BUTTON_LS;
+    mapping.buttons[11].button = BUTTON_RS;
+    mapping.buttons[BTN_TL - BTN_GAMEPAD -2].button = BUTTON_LB;
+    mapping.buttons[BTN_TR - BTN_GAMEPAD -2].button = BUTTON_RB;
 }
 
 void LinuxGamepadManager::Device::release() {
@@ -92,8 +104,18 @@ void LinuxGamepadManager::Device::pool() {
             printf("LinuxGamepadManager::Device::pool error\n");
             break;
         }
+
+        //probably unneeded but to much spam for debug
+        //if(e.code == 2 && e.type == EV_ABS) break;
+
+        //if(e.type != 0 ) printf("TYPE: %d, CODE %d, VALUE: %d \n",e.type,e.code,e.value);
+
+                
+
         if (e.type == EV_KEY) {
             int code = e.code - BTN_GAMEPAD;
+            if(code >=-16 && code < 0) code+=16;
+
             if (code >= 0 && code < 16) {
                 if (manager->rawButtonCallback != nullptr)
                     manager->rawButtonCallback(index, code, e.value != 0);
@@ -103,7 +125,11 @@ void LinuxGamepadManager::Device::pool() {
         } else if (e.type == EV_ABS) {
             if (e.code >= ABS_X && e.code < ABS_X + 16) {
                 MappingInfo::Entry const& entry = mapping.axis[e.code];
-                float value = (float) e.value / axisInfo[e.code].max;
+                float value;
+                if (axisInfo[e.code].min >= 0) value = (float) (e.value - 128) / ((axisInfo[e.code].max-axisInfo[e.code].min)/2.0);
+                else value = (float) e.value / axisInfo[e.code].max;
+                
+                //printf("Value float: %.6f \n\n",value);
                 if (value >= -0.1f && value <= 0.1f)
                     value = 0.f;
                 if (manager->rawStickCallback != nullptr)
