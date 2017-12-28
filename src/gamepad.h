@@ -1,11 +1,15 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <functional>
 #include <libudev.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 
 class LinuxGamepadManager {
+
+public:
+    typedef std::string GamepadTypeId;
 
 private:
     static const int BUTTON_A = 0;
@@ -26,11 +30,14 @@ private:
             int button = -1;
             int stick = -1;
             bool stickY = false;
+            char stickVal = 0; // -1, 0, 1
             int trigger = -1;
         };
         Entry buttons[16];
         Entry axis[16];
         std::map<int, Entry> hats[8];
+
+        void parse(std::string const& str);
     };
 
     struct AbsInfo {
@@ -45,7 +52,7 @@ private:
         int index;
         int fd = -1;
         struct libevdev* edev;
-        MappingInfo mapping;
+        std::shared_ptr<MappingInfo> mapping;
         AbsInfo axisInfo[16];
         StickValueInfo sticks[2];
         int hatValues[8];
@@ -61,6 +68,8 @@ private:
 
     struct udev* udev = nullptr;
     Device devices[4];
+    std::shared_ptr<MappingInfo> fallbackMapping;
+    std::map<GamepadTypeId, std::shared_ptr<MappingInfo>> mappings;
     std::function<void (int, int, bool)> rawButtonCallback;
     std::function<void (int, int, float)> rawStickCallback;
     std::function<void (int, int, int)> rawHatCallback;
@@ -71,6 +80,8 @@ private:
 
     std::string getSDLJoystickGUID(struct libevdev* dev);
 
+    std::string getGamepadTypeId(struct libevdev* dev);
+
 public:
     static LinuxGamepadManager instance;
 
@@ -79,6 +90,10 @@ public:
     void init();
 
     void pool();
+
+    GamepadTypeId getGamepadTypeId(int index);
+
+    void setGamepadMapping(GamepadTypeId gamepad, std::string const& mapping);
 
     void setRawButtonCallback(std::function<void (int, int, bool)> cb) {
         rawButtonCallback = cb;

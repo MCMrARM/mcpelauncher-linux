@@ -146,7 +146,7 @@ static void minecraft_mouse(int x, int y) {
     if (LinuxAppPlatform::mousePointerHidden) {
         int cx = eglutGetWindowWidth() / 2;
         int cy = eglutGetWindowHeight() / 2;
-        if (x != cy || y != cy) {
+        if (x != cx || y != cy) {
             Mouse::feed(0, 0, x, y, x - cx, y - cy);
             moveMouseToCenter = true;
         }

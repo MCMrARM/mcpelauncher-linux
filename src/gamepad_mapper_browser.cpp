@@ -47,8 +47,12 @@ GamepadMapperBrowserClient::~GamepadMapperBrowserClient() {
 
 bool GamepadMapperBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
                                                          CefRefPtr<CefProcessMessage> message) {
-    if (message->GetName() == "Finish") {
-        CloseAllBrowsers(true);
+    if (message->GetName() == "SetGamepadMapping") {
+        int index = message->GetArgumentList()->GetInt(0);
+        std::string mapping = message->GetArgumentList()->GetString(1);
+        printf("Set Mapping = %s\n", mapping.c_str());
+        // TODO: Synchronize this
+        LinuxGamepadManager::instance.setGamepadMapping(LinuxGamepadManager::instance.getGamepadTypeId(index), mapping);
         return true;
     }
     return false;
@@ -96,6 +100,7 @@ void GamepadMapperRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
     object->SetValue("setGamepadButtonCallback", CefV8Value::CreateFunction("setGamepadButtonCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setGamepadStickCallback", CefV8Value::CreateFunction("setGamepadStickCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     object->SetValue("setGamepadHatCallback", CefV8Value::CreateFunction("setGamepadHatCallback", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
+    object->SetValue("setGamepadMapping", CefV8Value::CreateFunction("setGamepadMapping", externalInterfaceHandler), V8_PROPERTY_ATTRIBUTE_NONE);
     global->SetValue("gamepadMapper", object, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
@@ -155,8 +160,11 @@ bool GamepadMapperV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value
     } else if (name == "setGamepadHatCallback" && args.size() == 1 && args[0]->IsFunction()) {
         gamepadHatCallback = {CefV8Context::GetCurrentContext(), args[0]};
         return true;
-    } else if (name == "finish" && args.size() == 1 && args[0]->IsBool()) {
-        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Finish");
+    } else if (name == "setGamepadMapping" && args.size() == 2 && args[0]->IsInt() && args[1]->IsString()) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SetGamepadMapping");
+        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
+        msgArgs->SetInt(0, args[0]->GetIntValue());
+        msgArgs->SetString(1, args[1]->GetStringValue());
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
     }

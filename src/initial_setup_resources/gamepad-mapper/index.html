@@ -153,6 +153,7 @@
     let stepHatVal = -1;
     let mapping = {};
     let mappingTestingMode = false;
+    let mappingGamepadId = -1;
 
     function startStep(stepN, substep) {
         stepClearHighlight();
@@ -225,7 +226,7 @@
                 continue;
 
             if (str.length > 0)
-                str += ",";
+                str += ";";
             str += k + "=";
             if (v.type === "button") {
                 str += "b";
@@ -250,6 +251,8 @@
         svgDoc = document.getElementById("gamepad-image").contentDocument;
         startStep(0);
         document.getElementById("undo").addEventListener("click", function() {
+            if (currentStep <= 0)
+                mappingGamepadId = -1;
             if (currentStep === 0 && currentSubstep <= 0)
                 return;
             document.getElementById("skip").style.display = "block";
@@ -265,7 +268,8 @@
             stepFinished();
         });
         document.getElementById("done").addEventListener("click", function() {
-            document.getElementById("action-text").textContent = createMappingString();
+            gamepadMapper.setGamepadMapping(mappingGamepadId, createMappingString());
+            //window.close();
         });
     });
 
@@ -296,6 +300,15 @@
         }
     }
 
+    function checkGamepadId(gamepad) {
+        if (mappingGamepadId === -1) {
+            mappingGamepadId = gamepad;
+        } else if (mappingGamepadId !== gamepad) {
+            return false;
+        }
+        return true;
+    }
+
     gamepadMapper.setGamepadButtonCallback(function(gamepad, btn, pressed) {
         if (mappingTestingMode) {
             for (let k in mapping) {
@@ -313,6 +326,8 @@
             }
             return;
         }
+        if (!checkGamepadId(gamepad))
+            return;
         if (pressed && stepButtonPressed === -1) {
             stepButtonPressed = btn;
         } else if (!pressed && btn === stepButtonPressed) {
@@ -346,6 +361,8 @@
             }
             return;
         }
+        if (!checkGamepadId(gamepad))
+            return;
         if (Math.abs(value) > 0.9) {
             stepStick = stick;
             stepStickVal = value;
@@ -374,6 +391,8 @@
             }
             return;
         }
+        if (!checkGamepadId(gamepad))
+            return;
         if (value !== 0) {
             stepHat = hat;
             stepHatVal = value;
