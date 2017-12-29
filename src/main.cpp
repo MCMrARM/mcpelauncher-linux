@@ -621,6 +621,7 @@ int main(int argc, char *argv[]) {
     GameControllerManager::GameControllerManager_feedButton = (void (*)(GameControllerManager*, int, int, int, bool)) hybris_dlsym(handle, "_ZN21GameControllerManager10feedButtonEii25GameControllerButtonStateb");
     GameControllerManager::GameControllerManager_feedStick = (void (*)(GameControllerManager*, int, int, int, float, float)) hybris_dlsym(handle, "_ZN21GameControllerManager9feedStickEii24GameControllerStickStateff");
     GameControllerManager::GameControllerManager_feedTrigger = (void (*)(GameControllerManager*, int, int, float)) hybris_dlsym(handle, "_ZN21GameControllerManager11feedTriggerEiif");
+    GameControllerManager::GameControllerManager_feedJoinGame = (void (*)(GameControllerManager*, int, bool)) hybris_dlsym(handle, "_ZN21GameControllerManager12feedJoinGameEib");
 
     Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
     Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");

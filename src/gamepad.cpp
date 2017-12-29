@@ -85,6 +85,8 @@ void LinuxGamepadManager::Device::release() {
 
 void LinuxGamepadManager::Device::pool() {
     struct input_event e;
+    GameControllerManager::sGamePadManager->setGameControllerConnected(index, true);
+    GameControllerManager::sGamePadManager->feedJoinGame(index, true);
     while (true) {
         int r = libevdev_next_event(edev, LIBEVDEV_READ_FLAG_NORMAL, &e);
         if (r == -EAGAIN)
@@ -150,7 +152,6 @@ void LinuxGamepadManager::Device::pool() {
 }
 
 void LinuxGamepadManager::Device::onButton(MappingInfo::Entry const& mapping, bool pressed) {
-    printf("FEED!\n");
     if (GameControllerManager::sGamePadManager == nullptr)
         return;
     if (mapping.button != -1)
@@ -262,6 +263,14 @@ void LinuxGamepadManager::MappingInfo::parse(std::string const& str) {
                 buttons[leftBtnId].stickVal = -1;
                 buttons[rightBtnId] = mapping;
                 buttons[rightBtnId].stickVal = 1;
+                if (key == "axis:dpadx") {
+                    buttons[leftBtnId].button = BUTTON_DPAD_LEFT;
+                    buttons[rightBtnId].button = BUTTON_DPAD_RIGHT;
+                }
+                if (key == "axis:dpady") {
+                    buttons[leftBtnId].button = BUTTON_DPAD_DOWN;
+                    buttons[rightBtnId].button = BUTTON_DPAD_UP;
+                }
             }
         } else if (t == 's') {
             bool invert = str[s] == '!';
@@ -283,18 +292,27 @@ void LinuxGamepadManager::MappingInfo::parse(std::string const& str) {
                 size_t vs = str.find(':', s);
                 if (vs == std::string::npos || vs >= hs)
                     throw std::runtime_error("Parse error");
-                int hatId = std::stoi(str.substr(s, vs - s));
-                int hatVal = std::stoi(str.substr(vs + 1, hs - vs - 1));
-                hats[hatId][hatVal] = mapping;
-                hats[hatId][hatVal].stickVal = -1;
+                int leftHatId = std::stoi(str.substr(s, vs - s));
+                int leftHatVal = std::stoi(str.substr(vs + 1, hs - vs - 1));
+                hats[leftHatId][leftHatVal] = mapping;
+                hats[leftHatId][leftHatVal].stickVal = -1;
 
                 vs = str.find(':', hs + 1);
                 if (vs == std::string::npos || vs >= end)
                     throw std::runtime_error("Parse error");
-                hatId = std::stoi(str.substr(hs + 1, vs - hs - 1));
-                hatVal = std::stoi(str.substr(vs + 1, end - vs - 1));
-                hats[hatId][hatVal] = mapping;
-                hats[hatId][hatVal].stickVal = 1;
+                int rightHatId = std::stoi(str.substr(hs + 1, vs - hs - 1));
+                int rightHatVal = std::stoi(str.substr(vs + 1, end - vs - 1));
+                hats[rightHatId][rightHatVal] = mapping;
+                hats[rightHatId][rightHatVal].stickVal = 1;
+
+                if (key == "axis:dpadx") {
+                    hats[leftHatId][leftHatVal].button = BUTTON_DPAD_LEFT;
+                    hats[rightHatId][rightHatVal].button = BUTTON_DPAD_RIGHT;
+                }
+                if (key == "axis:dpady") {
+                    hats[leftHatId][leftHatVal].button = BUTTON_DPAD_DOWN;
+                    hats[rightHatId][rightHatVal].button = BUTTON_DPAD_UP;
+                }
             }
         }
 

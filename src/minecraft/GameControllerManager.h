@@ -10,6 +10,7 @@ public:
     static void (*GameControllerManager_feedButton)(GameControllerManager*, int, int, int, bool);
     static void (*GameControllerManager_feedStick)(GameControllerManager*, int, int, int, float, float);
     static void (*GameControllerManager_feedTrigger)(GameControllerManager*, int, int, float);
+    static void (*GameControllerManager_feedJoinGame)(GameControllerManager*, int, bool);
 
     void setGameControllerConnected(int i, bool b) {
         GameControllerManager_setGameControllerConnected(this, i, b);
@@ -25,6 +26,10 @@ public:
 
     void feedTrigger(int a, int b, float c) {
         GameControllerManager_feedTrigger(this, a, b, c);
+    }
+
+    void feedJoinGame(int a, bool b) {
+        GameControllerManager_feedJoinGame(this, a, b);
     }
 
 };

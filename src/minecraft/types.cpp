@@ -90,3 +90,4 @@ void (*GameControllerManager::GameControllerManager_setGameControllerConnected)(
 void (*GameControllerManager::GameControllerManager_feedButton)(GameControllerManager*, int, int, int, bool);
 void (*GameControllerManager::GameControllerManager_feedStick)(GameControllerManager*, int, int, int, float, float);
 void (*GameControllerManager::GameControllerManager_feedTrigger)(GameControllerManager*, int, int, float);
+void (*GameControllerManager::GameControllerManager_feedJoinGame)(GameControllerManager*, int, bool);

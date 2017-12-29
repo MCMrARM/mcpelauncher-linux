@@ -319,9 +319,9 @@
                     if ("id" in v && v.id === btn)
                         testModeHighlight(k, 0, pressed);
                     if ("left-id" in v && v["left-id"] === btn)
-                        testModeHighlight(k, 0, pressed, pressed ? -1 : 0);
+                        testModeHighlight(k, 1, pressed, pressed ? -1 : 0);
                     if ("right-id" in v && v["right-id"] === btn)
-                        testModeHighlight(k, 1, pressed, pressed ? 1 : 0);
+                        testModeHighlight(k, 0, pressed, pressed ? 1 : 0);
                 }
             }
             return;
@@ -337,12 +337,12 @@
                 stepFinished();
             } else if (currentMappingType === "axis") {
                 if (currentSubstep === 0) {
-                    mapping[currentMappingId] = {"type": "button", "left-id": btn};
+                    mapping[currentMappingId] = {"type": "button", "right-id": btn};
                     startStep(currentStep, 1);
                 } else {
                     if (mapping[currentMappingId].type !== "button")
                         return;
-                    mapping[currentMappingId]["right-id"] = btn;
+                    mapping[currentMappingId]["left-id"] = btn;
                     stepFinished();
                 }
             }
@@ -384,9 +384,9 @@
                     if ("id" in v && v.id === hat)
                         testModeHighlight(k, 0, v.value === value);
                     if ("left-id" in v && v["left-id"] === hat)
-                        testModeHighlight(k, 0, v["left-value"] === value);
+                        testModeHighlight(k, 1, v["left-value"] === value);
                     if ("right-id" in v && v["right-id"] === hat)
-                        testModeHighlight(k, 1, v["right-value"] === value);
+                        testModeHighlight(k, 0, v["right-value"] === value);
                 }
             }
             return;
@@ -403,13 +403,13 @@
                 stepFinished();
             } else if (currentMappingType === "axis") {
                 if (currentSubstep === 0) {
-                    mapping[currentMappingId] = {"type": "hat", "left-id": hat, "left-value": stepHatVal};
+                    mapping[currentMappingId] = {"type": "hat", "right-id": hat, "right-value": stepHatVal};
                     startStep(currentStep, 1);
                 } else {
                     if (mapping[currentMappingId].type !== "hat")
                         return;
-                    mapping[currentMappingId]["right-id"] = hat;
-                    mapping[currentMappingId]["right-value"] = stepHatVal;
+                    mapping[currentMappingId]["left-id"] = hat;
+                    mapping[currentMappingId]["left-value"] = stepHatVal;
                     stepFinished();
                 }
             }
