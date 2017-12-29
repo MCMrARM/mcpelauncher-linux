@@ -139,6 +139,8 @@ void LinuxGamepadManager::Device::pool() {
         } else if (e.type == EV_ABS) {
             if (e.code >= ABS_X && e.code < ABS_X + 16) {
                 float value = (float) e.value / axisInfo[e.code].max;
+                if (axisInfo[e.code].min >= 0)
+                    value = 2.f * (e.value - axisInfo[e.code].min) / (axisInfo[e.code].max - axisInfo[e.code].min) - 1.f;
                 if (value >= -0.1f && value <= 0.1f)
                     value = 0.f;
                 if (manager->rawStickCallback != nullptr)
