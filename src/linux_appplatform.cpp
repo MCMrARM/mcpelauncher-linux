@@ -104,6 +104,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDERSs", (void*) &LinuxAppPlatform::createDeviceID);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", (void*) &LinuxAppPlatform::queueForMainThread);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", (void*) &LinuxAppPlatform::getMultiplayerServiceListToRegister);
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16allowSplitScreenEv", (void*) &LinuxAppPlatform::allowSplitScreen);
 }
 
 void LinuxAppPlatform::hideMousePointer() {

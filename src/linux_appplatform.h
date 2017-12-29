@@ -169,4 +169,8 @@ public:
         runOnMainThreadMutex.unlock();
     }
 
+    bool allowSplitScreen() {
+        return true;
+    }
+
 };

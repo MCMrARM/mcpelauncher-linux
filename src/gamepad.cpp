@@ -181,6 +181,8 @@ void LinuxGamepadManager::Device::pool() {
 void LinuxGamepadManager::Device::onButton(MappingInfo::Entry const& mapping, bool pressed) {
     if (GameControllerManager::sGamePadManager == nullptr)
         return;
+    if (mapping.button == BUTTON_START)
+        GameControllerManager::sGamePadManager->feedJoinGame(index, true);
     if (mapping.button != -1)
         GameControllerManager::sGamePadManager->feedButton(index, mapping.button, pressed ? 1 : 0, true);
     // stick is absolutely pointless to assign to a button

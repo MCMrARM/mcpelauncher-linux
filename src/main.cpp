@@ -15,6 +15,7 @@
 #include <functional>
 #include <sys/mman.h>
 #include <EGL/egl.h>
+#include <GLES2/gl2.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include "symbols/gles_symbols.h"
@@ -335,6 +336,14 @@ static int XIOErrorHandlerImpl(Display* display) {
     return 0;
 }
 
+
+static void (*clearRenderTargetOrginal)(void*, void*, void*);
+static void clearRenderTarget(void* a, void* b, void* c) {
+    glEnable(GL_SCISSOR_TEST);
+    clearRenderTargetOrginal(a, b, c);
+    glDisable(GL_SCISSOR_TEST);
+}
+
 extern "C"
 void pshufb(char* dest, char* src) {
     char new_dest[16];
@@ -400,6 +409,7 @@ int main(int argc, char *argv[]) {
 
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
+    bool workaroundSplitscreen = false;
 
     int windowWidth = 720;
     int windowHeight = 480;
@@ -420,6 +430,9 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "--amd-fix") == 0) {
             std::cout << "--amd-fix: Enabling AMD Workaround.\n";
             workaroundAMD = true;
+        } else if (strcmp(argv[i], "-sf") == 0 || strcmp(argv[i], "--splitscreen-fix") == 0) {
+            std::cout << "--splitscreen-fix: Enabling splitscreen workaround.\n";
+            workaroundSplitscreen = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
             std::cout << "--help               Shows this help information\n";
@@ -428,7 +441,8 @@ int main(int argc, char *argv[]) {
             std::cout << "--height <height>    Sets the window height\n";
             std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n";
             std::cout << "--no-stacktrace      Disables stack trace printing\n";
-            std::cout << "--amd-workaround     Fixes crashes on pre-i686 and AMD CPUs\n\n";
+            std::cout << "--amd-fix            Fixes crashes on pre-i686 and AMD CPUs\n";
+            std::cout << "--splitscreen-fix    Fixes the splitscreen bug\n\n";
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";
@@ -560,6 +574,13 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
     patchCallInstruction((void*) patchOff, (void*) &xblLogCLL, true);
 
+    if (workaroundSplitscreen) {
+        (void*&) clearRenderTargetOrginal = hybris_dlsym(handle,
+                                            "_ZN3mce13RenderContext16clearColorBufferERK5ColorPKNS_12ViewportInfoE");
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12GameRenderer17clearRenderTargetER13ScreenContext") + 57;
+        patchCallInstruction((void*) patchOff, (void*) &clearRenderTarget, false);
+    }
+
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -667,6 +688,7 @@ int main(int argc, char *argv[]) {
     platform->initialize();
 
     mce::Platform::OGL::initBindings();
+
 
     std::cout << "create minecraft client\n";
     client = new MinecraftGame(argc, argv);
