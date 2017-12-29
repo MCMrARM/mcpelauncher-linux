@@ -124,6 +124,7 @@ void LinuxGamepadManager::Device::pool() {
         }
         if (e.type == EV_KEY) {
             int code = e.code - BTN_GAMEPAD;
+            if(code >=-16 && code < 0) code+=16;
             if (code >= 0 && code < 16) {
                 if (manager->rawButtonCallback != nullptr)
                     manager->rawButtonCallback(index, code, e.value != 0);
@@ -134,7 +135,10 @@ void LinuxGamepadManager::Device::pool() {
             }
         } else if (e.type == EV_ABS) {
             if (e.code >= ABS_X && e.code < ABS_X + 16) {
-                float value = (float) e.value / axisInfo[e.code].max;
+                //float value = (float) e.value / axisInfo[e.code].max;
+                float value;
+                if (axisInfo[e.code].min >= 0) value = (float) (e.value - 128) / ((axisInfo[e.code].max-axisInfo[e.code].min)/2.0);
+                else value = (float) e.value / axisInfo[e.code].max;
                 if (value >= -0.1f && value <= 0.1f)
                     value = 0.f;
                 if (manager->rawStickCallback != nullptr)
