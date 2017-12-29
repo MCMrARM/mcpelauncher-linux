@@ -23,7 +23,8 @@ LinuxGamepadManager::LinuxGamepadManager() {
     fallbackMapping->buttons[BTN_Y - BTN_GAMEPAD].button = BUTTON_Y;
     fallbackMapping->buttons[BTN_TL - BTN_GAMEPAD].button = BUTTON_LB;
     fallbackMapping->buttons[BTN_TR - BTN_GAMEPAD].button = BUTTON_RB;
-    fallbackMapping->buttons[BTN_SELECT - BTN_GAMEPAD].button = BUTTON_SELECT;
+    fallbackMapping->buttons[BTN_THUMBL - BTN_GAMEPAD].button = BUTTON_LEFT_STICK;
+    fallbackMapping->buttons[BTN_THUMBR - BTN_GAMEPAD].button = BUTTON_RIGHT_STICK;
     fallbackMapping->buttons[BTN_START - BTN_GAMEPAD].button = BUTTON_START;
     fallbackMapping->axis[ABS_X].stick = fallbackMapping->axis[ABS_Y].stick = 0;
     fallbackMapping->axis[ABS_Y].stickY = true;
@@ -260,6 +261,10 @@ void LinuxGamepadManager::MappingInfo::parse(std::string const& str) {
             mapping.button = BUTTON_SELECT;
         if (key == "button:start")
             mapping.button = BUTTON_START;
+        if (key == "button:leftstick")
+            mapping.button = BUTTON_LEFT_STICK;
+        if (key == "button:rightstick")
+            mapping.button = BUTTON_RIGHT_STICK;
         if (key == "button:lb")
             mapping.button = BUTTON_LB;
         if (key == "button:rb")

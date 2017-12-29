@@ -21,6 +21,8 @@ private:
     static const int BUTTON_DPAD_DOWN = 5;
     static const int BUTTON_DPAD_LEFT = 6;
     static const int BUTTON_DPAD_RIGHT = 7;
+    static const int BUTTON_LEFT_STICK = 8;
+    static const int BUTTON_RIGHT_STICK = 9;
     static const int BUTTON_LB = 10;
     static const int BUTTON_RB = 11;
     static const int BUTTON_SELECT = 12;
