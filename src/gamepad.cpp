@@ -5,11 +5,15 @@
 #include <linux/joystick.h>
 #include <limits>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include "gamepad.h"
+#include "path_helper.h"
 #include "minecraft/GameControllerManager.h"
 
 LinuxGamepadManager LinuxGamepadManager::instance;
+
+const char* LinuxGamepadManager::MAPPINGS_FILE = "gamepad-mappings.txt";
 
 LinuxGamepadManager::LinuxGamepadManager() {
     fallbackMapping = std::shared_ptr<MappingInfo>(new MappingInfo());
@@ -36,6 +40,24 @@ LinuxGamepadManager::LinuxGamepadManager() {
         devices[i].manager = this;
         devices[i].index = i;
         devices[i].mapping = fallbackMapping;
+    }
+
+    std::ifstream mappingsFile(PathHelper::getPrimaryDataDirectory() + MAPPINGS_FILE);
+    if (mappingsFile)
+        parseMappings(mappingsFile);
+}
+
+void LinuxGamepadManager::parseMappings(std::istream& ifs) {
+    mappings.clear();
+    std::string line;
+    while (std::getline(ifs, line)) {
+        size_t o = line.find(' ');
+        if (o == std::string::npos)
+            continue;
+        std::string key = line.substr(0, o);
+        std::string mapping = line.substr(o + 1);
+        mappings[key] = std::shared_ptr<MappingInfo>(new MappingInfo());
+        mappings[key]->parse(mapping);
     }
 }
 
@@ -72,6 +94,12 @@ void LinuxGamepadManager::Device::assign(int fd, libevdev* edev) {
         axisInfo[i].min = absinfo->minimum;
         axisInfo[i].max = absinfo->maximum;
     }
+
+    std::string typeId = manager->getGamepadTypeId(edev);
+    if (manager->mappings.count(typeId))
+        mapping = manager->mappings.at(typeId);
+    else
+        mapping = manager->fallbackMapping;
 }
 
 void LinuxGamepadManager::Device::release() {
@@ -85,8 +113,6 @@ void LinuxGamepadManager::Device::release() {
 
 void LinuxGamepadManager::Device::pool() {
     struct input_event e;
-    GameControllerManager::sGamePadManager->setGameControllerConnected(index, true);
-    GameControllerManager::sGamePadManager->feedJoinGame(index, true);
     while (true) {
         int r = libevdev_next_event(edev, LIBEVDEV_READ_FLAG_NORMAL, &e);
         if (r == -EAGAIN)
@@ -357,4 +383,22 @@ void LinuxGamepadManager::setGamepadMapping(GamepadTypeId gamepad, std::string c
     std::shared_ptr<MappingInfo> mappingInfo (new MappingInfo());
     mappingInfo->parse(mapping);
     mappings[gamepad] = mappingInfo;
+
+    std::ifstream mappingsFile(PathHelper::getPrimaryDataDirectory() + MAPPINGS_FILE);
+    std::map<std::string, std::string> mappingStrings;
+    if (mappingsFile) {
+        std::string line;
+        while (std::getline(mappingsFile, line)) {
+            size_t o = line.find(' ');
+            if (o == std::string::npos)
+                continue;
+            mappingStrings[line.substr(0, o)] = line.substr(o + 1);
+        }
+    }
+    mappingStrings[gamepad] = mapping;
+    mappingsFile.close();
+    std::ofstream outMappingsFile(PathHelper::getPrimaryDataDirectory() + MAPPINGS_FILE);
+    for (auto const& p : mappingStrings)
+        outMappingsFile << p.first << " " << p.second << "\n";
+    outMappingsFile.close();
 }

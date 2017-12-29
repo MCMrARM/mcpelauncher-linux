@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <istream>
 #include <libudev.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 
@@ -24,6 +25,8 @@ private:
     static const int BUTTON_RB = 11;
     static const int BUTTON_SELECT = 12;
     static const int BUTTON_START = 13;
+
+    static const char* MAPPINGS_FILE;
 
     struct MappingInfo {
         struct Entry {
@@ -81,6 +84,8 @@ private:
     std::string getSDLJoystickGUID(struct libevdev* dev);
 
     std::string getGamepadTypeId(struct libevdev* dev);
+
+    void parseMappings(std::istream& ifs);
 
 public:
     static LinuxGamepadManager instance;
