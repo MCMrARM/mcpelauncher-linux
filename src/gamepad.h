@@ -38,7 +38,7 @@ private:
             char stickVal = 0; // -1, 0, 1
             int trigger = -1;
         };
-        Entry buttons[16];
+        Entry buttons[32];
         Entry axis[16];
         std::map<int, Entry> hats[8];
 

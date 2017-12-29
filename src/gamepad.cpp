@@ -123,8 +123,12 @@ void LinuxGamepadManager::Device::pool() {
             break;
         }
         if (e.type == EV_KEY) {
-            int code = e.code - BTN_GAMEPAD;
-            if (code >= 0 && code < 16) {
+            int code = e.code;
+            if (code >= BTN_JOYSTICK && code < BTN_GAMEPAD + 16) {
+                if (code >= BTN_GAMEPAD && code < BTN_GAMEPAD + 16)
+                    code = code - BTN_GAMEPAD;
+                if (code >= BTN_JOYSTICK && code < BTN_JOYSTICK + 16)
+                    code = code - BTN_JOYSTICK + 16;
                 if (manager->rawButtonCallback != nullptr)
                     manager->rawButtonCallback(index, code, e.value != 0);
                 if (mapping == nullptr)
