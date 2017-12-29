@@ -68,6 +68,12 @@ void LinuxGamepadManager::init() {
         if (!udev)
             throw std::runtime_error("Failed to initialize udev");
     }
+
+    udevMonitor = udev_monitor_new_from_netlink(udev, "udev");
+    udev_monitor_filter_add_match_subsystem_devtype(udevMonitor, "input", NULL);
+    udev_monitor_enable_receiving(udevMonitor);
+    udevMonitorFd = udev_monitor_get_fd(udevMonitor);
+
     struct udev_enumerate* enumerate = udev_enumerate_new(udev);
     udev_enumerate_add_match_subsystem(enumerate, "input");
     udev_enumerate_scan_devices(enumerate);
@@ -84,8 +90,9 @@ void LinuxGamepadManager::init() {
     udev_enumerate_unref(enumerate);
 }
 
-void LinuxGamepadManager::Device::assign(int fd, libevdev* edev) {
+void LinuxGamepadManager::Device::assign(std::string devPath, int fd, libevdev* edev) {
     this->fd = fd;
+    this->devPath = devPath;
     this->edev = edev;
 
     for (unsigned int i = 0; i < 16; i++) {
@@ -197,6 +204,27 @@ void LinuxGamepadManager::Device::onButton(MappingInfo::Entry const& mapping, bo
 }
 
 void LinuxGamepadManager::pool() {
+    if (udevMonitor != NULL) {
+        while (true) {
+            struct timeval tv;
+            tv.tv_sec = tv.tv_usec = 0;
+            fd_set fds;
+            FD_ZERO(&fds);
+            FD_SET(udevMonitorFd, &fds);
+
+            int r = select(udevMonitorFd + 1, &fds, NULL, NULL, &tv);
+            if (r <= 0 || !FD_ISSET(udevMonitorFd, &fds))
+                break;
+            struct udev_device* dev = udev_monitor_receive_device(udevMonitor);
+            const char* action = udev_device_get_action(dev);
+            if (strcmp(action, "add") == 0)
+                onDeviceAdded(dev);
+            else if (strcmp(action, "remove") == 0)
+                onDeviceRemoved(dev);
+            udev_device_unref(dev);
+        }
+    }
+
     for (int i = 0; i < 4; i++) {
         if (devices[i].fd == -1)
             continue;
@@ -234,10 +262,24 @@ void LinuxGamepadManager::onDeviceAdded(struct udev_device* dev) {
             return;
         }
         printf("Joystick #%i added (%s)\n", no, devPath);
-        devices[no].assign(fd, edev);
+        devices[no].assign(devPath, fd, edev);
         if (GameControllerManager::sGamePadManager != nullptr) {
             devices[no].assignedInMinecraft = true;
             GameControllerManager::sGamePadManager->setGameControllerConnected(no, true);
+        }
+    }
+}
+
+void LinuxGamepadManager::onDeviceRemoved(struct udev_device* dev) {
+    const char* devPath = udev_device_get_devnode(dev);
+    if (devPath == nullptr)
+        return;
+    for (int i = 0; i < 4; i++) {
+        if (devices[i].fd != -1 && strcmp(devices[i].devPath.c_str(), devPath) == 0) {
+            printf("Joystick #%i removed (%s)\n", i, devPath);
+            devices[i].release();
+            if (GameControllerManager::sGamePadManager != nullptr)
+                GameControllerManager::sGamePadManager->setGameControllerConnected(i, false);
         }
     }
 }

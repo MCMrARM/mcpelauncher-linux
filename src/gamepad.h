@@ -56,6 +56,7 @@ private:
         LinuxGamepadManager* manager;
         int index;
         int fd = -1;
+        std::string devPath;
         struct libevdev* edev;
         std::shared_ptr<MappingInfo> mapping;
         AbsInfo axisInfo[16];
@@ -63,7 +64,7 @@ private:
         int hatValues[8];
         bool assignedInMinecraft = false;
 
-        void assign(int fd, libevdev* edev);
+        void assign(std::string devPath, int fd, libevdev* edev);
         void release();
 
         void pool();
@@ -72,6 +73,8 @@ private:
     };
 
     struct udev* udev = nullptr;
+    struct udev_monitor* udevMonitor = nullptr;
+    int udevMonitorFd;
     Device devices[4];
     std::shared_ptr<MappingInfo> fallbackMapping;
     std::map<GamepadTypeId, std::shared_ptr<MappingInfo>> mappings;
@@ -82,6 +85,8 @@ private:
     int getFreeDeviceIndex();
 
     void onDeviceAdded(struct udev_device* dev);
+
+    void onDeviceRemoved(struct udev_device* dev);
 
     std::string getSDLJoystickGUID(struct libevdev* dev);
 
