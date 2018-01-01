@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-CEF_DOWNLOAD_URL="http://opensource.spotify.com/cefbuilds/cef_binary_3.2987.1597.gffc5773_linux32_minimal.tar.bz2"
+CEF_DOWNLOAD_URL="http://opensource.spotify.com/cefbuilds/cef_binary_3.3239.1716.g735b746_linux32_minimal.tar.bz2"
 CEF_PATH="cef.tar.bz2"
 CEF_TMP_DIR="tmp_cef"
 TARGET_BASE_DIR="${PWD}/libs/cef"
