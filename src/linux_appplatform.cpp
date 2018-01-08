@@ -17,7 +17,9 @@
 #include "path_helper.h"
 
 extern "C" {
+#ifndef SERVER
 #include <eglut.h>
+#endif
 #include "../hybris/include/hybris/dlfcn.h"
 }
 
@@ -108,12 +110,16 @@ void LinuxAppPlatform::initVtable(void* lib) {
 
 void LinuxAppPlatform::hideMousePointer() {
     mousePointerHidden = true;
+#ifndef SERVER
     moveMouseToCenter = true;
     eglutSetMousePointerVisiblity(EGLUT_POINTER_INVISIBLE);
+#endif
 }
 void LinuxAppPlatform::showMousePointer() {
     mousePointerHidden = false;
+#ifndef SERVER
     eglutSetMousePointerVisiblity(EGLUT_POINTER_VISIBLE);
+#endif
 }
 
 std::string LinuxAppPlatform::_pickFile(std::string commandLine) {
@@ -183,9 +189,11 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
 
 void LinuxAppPlatform::setFullscreenMode(int mode) {
     std::cout << "set fullscreen mode: " << mode << "\n";
+#ifndef SERVER
     int newMode = mode == 1 ? EGLUT_FULLSCREEN : EGLUT_WINDOWED;
     if (eglutGet(EGLUT_FULLSCREEN_MODE) != newMode)
         eglutToggleFullscreen();
+#endif
 }
 
 long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {

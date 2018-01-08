@@ -28,6 +28,8 @@ public:
 
     static bool fileExists(std::string const& path);
 
+    static std::string getWorkingDir();
+
     static std::string findDataFile(std::string const& path);
 
     static std::string getPrimaryDataDirectory() {

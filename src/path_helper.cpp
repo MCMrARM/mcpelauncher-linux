@@ -70,6 +70,12 @@ std::string PathHelper::findUserHome() {
     return ret;
 }
 
+std::string PathHelper::getWorkingDir() {
+    char _cwd[256];
+    getcwd(_cwd, 256);
+    return std::string(_cwd) + "/";
+}
+
 bool PathHelper::fileExists(std::string const& path) {
     struct stat sb;
     return !stat(path.c_str(), &sb);

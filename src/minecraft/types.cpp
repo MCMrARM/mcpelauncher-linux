@@ -81,3 +81,51 @@ void (*Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL)(Social::Multiplaye
 #include "Common.h"
 
 mcpe::string (*Common::Common_getGameVersionStringNet)();
+
+#include "LevelSettings.h"
+
+void (*LevelSettings::LevelSettings_construct)(LevelSettings*);
+void (*LevelSettings::LevelSettings_construct2)(LevelSettings*, LevelSettings const&);
+
+#include "MinecraftEventing.h"
+
+void (*MinecraftEventing::MinecraftEventing_construct)(MinecraftEventing*, mcpe::string const&);
+void (*MinecraftEventing::MinecraftEventing_init)(MinecraftEventing*);
+
+#include "ResourcePack.h"
+
+void (*SkinPackKeyProvider::SkinPackKeyProvider_construct)(SkinPackKeyProvider*);
+void (*PackManifestFactory::PackManifestFactory_construct)(PackManifestFactory*, IPackTelemetry&);
+void (*PackSourceFactory::PackSourceFactory_construct)(PackSourceFactory*, Options*);
+void (*ContentTierManager::ContentTierManager_construct)(ContentTierManager*);
+void (*ResourcePackRepository::ResourcePackRepository_construct)(ResourcePackRepository*, MinecraftEventing&, PackManifestFactory&, IContentAccessibilityProvider&, FilePathManager*, PackSourceFactory &);
+void (*ResourcePackManager::ResourcePackManager_construct)(ResourcePackManager*, std::function<mcpe::string ()> const&, ContentTierManager const&);
+
+#include "FilePathManager.h"
+
+void (*FilePathManager::FilePathManager_construct)(FilePathManager*, mcpe::string, bool);
+
+#include "UUID.h"
+
+mce::UUID* mce::UUID::EMPTY;
+mce::UUID (*mce::UUID::fromString)(mcpe::string const&);
+
+#include "ServerInstance.h"
+
+void (*NetworkHandler::NetworkHandler_construct)(NetworkHandler*);
+void (*ServerInstance::ServerInstance_construct)(ServerInstance*, IMinecraftApp&, Whitelist const&, OpsList const&, FilePathManager*, std::chrono::duration<long long>, mcpe::string, mcpe::string, mcpe::string, IContentAccessibilityProvider const&, mcpe::string, LevelSettings, minecraft::api::Api&, int, bool, int, int, int, bool, std::vector<mcpe::string> const&, mcpe::string, mce::UUID const&, MinecraftEventing&, NetworkHandler&, ResourcePackRepository&, ContentTierManager const&, ResourcePackManager&, ResourcePackManager*, std::function<void (mcpe::string const&)>);
+void (*ServerInstance::ServerInstance_update)(ServerInstance*);
+void (*ServerInstance::ServerInstance_mainThreadNetworkUpdate_HACK)(ServerInstance*);
+
+#include "UserManager.h"
+
+std::unique_ptr<Social::UserManager> (*Social::UserManager::CreateUserManager)();
+
+#include "AutomationClient.h"
+
+void (*Automation::AutomationClient::AutomationClient_construct)(Automation::AutomationClient*, IMinecraftApp&);
+
+#include "Scheduler.h"
+
+Scheduler* (*Scheduler::singleton)();
+void (*Scheduler::Scheduler_processCoroutines)(Scheduler*, std::chrono::duration<long long>);
