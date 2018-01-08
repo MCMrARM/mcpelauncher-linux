@@ -129,3 +129,15 @@ void (*Automation::AutomationClient::AutomationClient_construct)(Automation::Aut
 
 Scheduler* (*Scheduler::singleton)();
 void (*Scheduler::Scheduler_processCoroutines)(Scheduler*, std::chrono::duration<long long>);
+
+#include "Minecraft.h"
+
+MinecraftCommands* (*Minecraft::Minecraft_getCommands)(Minecraft*);
+
+#include "MinecraftCommands.h"
+
+MCRESULT (*MinecraftCommands::MinecraftCommands_requestCommandExecution)(MinecraftCommands*, std::unique_ptr<CommandOrigin>, mcpe::string const&, int, bool);
+
+#include "DedicatedServerCommandOrigin.h"
+
+void (*DedicatedServerCommandOrigin::DedicatedServerCommandOrigin_construct)(DedicatedServerCommandOrigin*, mcpe::string const&, Minecraft&);

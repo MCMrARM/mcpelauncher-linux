@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <fcntl.h>
 #include "symbols/android_symbols.h"
 #include "symbols/egl_symbols.h"
 #include "symbols/gles_symbols.h"
@@ -22,6 +23,9 @@
 #include "minecraft/UserManager.h"
 #include "minecraft/AutomationClient.h"
 #include "minecraft/Scheduler.h"
+#include "minecraft/Minecraft.h"
+#include "minecraft/MinecraftCommands.h"
+#include "minecraft/DedicatedServerCommandOrigin.h"
 
 extern "C" {
 #include "../hybris/include/hybris/dlfcn.h"
@@ -96,6 +100,9 @@ int main(int argc, char *argv[]) {
     Automation::AutomationClient::AutomationClient_construct = (void (*)(Automation::AutomationClient*, IMinecraftApp&)) hybris_dlsym(handle, "_ZN10Automation16AutomationClientC2ER13IMinecraftApp");
     Scheduler::singleton = (Scheduler* (*)()) hybris_dlsym(handle, "_ZN9Scheduler9singletonEv");
     Scheduler::Scheduler_processCoroutines = (void (*)(Scheduler*, std::chrono::duration<long long>)) hybris_dlsym(handle, "_ZN9Scheduler17processCoroutinesENSt6chrono8durationIxSt5ratioILx1ELx1000000000EEEE");
+    Minecraft::Minecraft_getCommands = (MinecraftCommands* (*)(Minecraft*)) hybris_dlsym(handle, "_ZN9Minecraft11getCommandsEv");
+    MinecraftCommands::MinecraftCommands_requestCommandExecution = (MCRESULT (*)(MinecraftCommands*, std::unique_ptr<CommandOrigin>, mcpe::string const&, int, bool)) hybris_dlsym(handle, "_ZNK17MinecraftCommands23requestCommandExecutionESt10unique_ptrI13CommandOriginSt14default_deleteIS1_EERKSsib");
+    DedicatedServerCommandOrigin::DedicatedServerCommandOrigin_construct = (void (*)(DedicatedServerCommandOrigin*, mcpe::string const&, Minecraft&)) hybris_dlsym(handle, "_ZN28DedicatedServerCommandOriginC2ERKSsR9Minecraft");
 
     std::cout << "init app platform vtable\n";
     LinuxAppPlatform::initVtable(handle);
@@ -163,8 +170,32 @@ int main(int argc, char *argv[]) {
     ServerInstance::ServerInstance_construct(&instance, minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ "o0ABALqqBgA=", /* world name */ "My World", mcpe::string(), skinPackKeyProvider, mcpe::string(), /* settings */ levelSettings, api, 22, true, /* (query?) port */ 19132, /* (maybe not) port */ 19132, /* max player count */ 5, /* requiresXboxLive */ false, {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
-    std::cout << "initialized lib\n";;
+    std::cout << "initialized lib\n";
+
+    int flags = fcntl(0, F_GETFL, 0);
+    fcntl(0, F_SETFL, flags | O_NONBLOCK);
+    char lineBuffer[1024 * 16];
+    size_t lineBufferOffset = 0;
+
+
     while (true) {
+        ssize_t r;
+        while ((r = read(0, &lineBuffer[lineBufferOffset], sizeof(lineBuffer) - lineBufferOffset)) > 0)
+            lineBufferOffset += r;
+        for (size_t i = 0; i <= lineBufferOffset; ) {
+            if (i == lineBufferOffset || lineBuffer[i] == '\n') {
+                std::string cmd = std::string(lineBuffer, i);
+                memcpy(lineBuffer, &lineBuffer[i + 1], lineBufferOffset - i - 1);
+                lineBufferOffset -= i + 1;
+
+                std::unique_ptr<DedicatedServerCommandOrigin> commandOrigin(new DedicatedServerCommandOrigin("Server", *instance.minecraft));
+                instance.minecraft->getCommands()->requestCommandExecution(std::move(commandOrigin), cmd, 4, true);
+                i = 0;
+            } else {
+                i++;
+            }
+        }
+
         instance.update();
         instance.mainThreadNetworkUpdate_HACK();
         Scheduler::singleton()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)));
