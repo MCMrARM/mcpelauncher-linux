@@ -6,6 +6,7 @@
 #include <vector>
 #include <sys/mman.h>
 #include <map>
+#include "log.h"
 
 extern "C" {
 #include "../hybris/include/hybris/dlfcn.h"
@@ -29,11 +30,11 @@ void addHookLibrary(void* ptr, std::string const& fileName) {
     Elf32_Ehdr header;
     FILE* file = fopen(fileName.c_str(), "r");
     if (file == nullptr) {
-        printf("addHookLibrary: failed to open file\n");
+        Log::error("Hook", "addHookLibrary: failed to open file");
         return;
     }
     if (fread(&header, sizeof(Elf32_Ehdr), 1, file) != 1) {
-        printf("addHookLibrary: failed to read header\n");
+        Log::error("Hook", "addHookLibrary: failed to read header");
         fclose(file);
         return;
     }
@@ -42,7 +43,7 @@ void addHookLibrary(void* ptr, std::string const& fileName) {
 
     char shdr[header.e_shentsize * header.e_shnum];
     if (fread(&shdr, header.e_shentsize, header.e_shnum, file) != header.e_shnum) {
-        printf("addHookLibrary: failed to read shdr\n");
+        Log::error("Hook", "addHookLibrary: failed to read shdr");
         fclose(file);
         return;
     }
@@ -55,7 +56,7 @@ void addHookLibrary(void* ptr, std::string const& fileName) {
             strtab = new char[entry.sh_size];
             fseek(file, (long) entry.sh_offset, SEEK_SET);
             if (fread(strtab, 1, entry.sh_size, file) != entry.sh_size) {
-                printf("addHookLibrary: failed to read strtab\n");
+                Log::error("Hook", "addHookLibrary: failed to read strtab");
                 fclose(file);
                 delete[] strtab;
                 return;
@@ -63,7 +64,7 @@ void addHookLibrary(void* ptr, std::string const& fileName) {
         }
     }
     if (strtab == nullptr) {
-        printf("addHookLibrary: couldn't find strtab\n");
+        Log::error("Hook", "addHookLibrary: couldn't find strtab");
         fclose(file);
         return;
     }
@@ -113,5 +114,5 @@ void hookFunction(void* symbol, void* hook, void** original) {
         if (patchLibrary(handle.first, symbol, hook))
             foundEntry = true;
     if (!foundEntry)
-        printf("Failed to hook a symbol (%llu)\n", (long long int) symbol);
+        Log::error("Hook", "Failed to hook a symbol (%llu)", (long long int) symbol);
 }

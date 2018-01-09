@@ -448,7 +448,7 @@ int main(int argc, char *argv[]) {
     std::string mcpePath = PathHelper::findDataFile("libs/libminecraftpe.so");
     void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
-        std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
+        Log::error("Launcher", "Failed to load Minecraft: %s", hybris_dlerror());
         return -1;
     }
     addHookLibrary(handle, mcpePath);

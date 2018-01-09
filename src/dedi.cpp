@@ -35,7 +35,7 @@ extern "C" {
 }
 
 void stubFunc() {
-    std::cout << "warn: stubbed function call\n";
+    Log::warn("Launcher", "Stubbed function call");
 }
 
 int main(int argc, char *argv[]) {
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Loading Minecraft library");
     void* handle = hybris_dlopen((cwd + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
     if (handle == nullptr) {
-        std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
+        Log::error("Launcher", "Failed to load Minecraft: %s", hybris_dlerror());
         return -1;
     }
 
@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
     Whitelist whitelist;
     OpsList ops;
     Log::trace("Launcher", "Initializing Minecraft API classes");
-    std::cout << "create minecraft api class\n";
     minecraft::api::Api api;
     api.vtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api3ApiE") + 2;
     api.envPath = cwd;
@@ -146,7 +145,7 @@ int main(int argc, char *argv[]) {
     FilePathManager pathmgr (cwd, false);
     Log::trace("Launcher", "Initializing MinecraftEventing (create instance)");
     MinecraftEventing eventing (cwd);
-    /*std::cout << "create user manager\n";
+    /*Log::trace("Launcher", "Social::UserManager::CreateUserManager()");
     auto userManager = Social::UserManager::CreateUserManager();*/
     Log::trace("Launcher", "Initializing MinecraftEventing (init call)");
     eventing.init();

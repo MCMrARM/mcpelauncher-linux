@@ -1,6 +1,7 @@
 #include "xboxlive.h"
 #include "base64.h"
 #include "path_helper.h"
+#include "log.h"
 
 #include <fstream>
 
@@ -34,12 +35,12 @@ void XboxLiveHelper::invokeXbLogin(xbox::services::system::user_auth_android* au
     auto config = auth_manager::auth_manager_get_auth_config(auth_mgr.get());
     auth_config::auth_config_set_xtoken_composition(config.get(), types);
     std::string const& endpoint = auth_config::auth_config_xbox_live_endpoint(config.get()).std();
-    printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
+    Log::trace("XboxLiveHelper", "Xbox Live Endpoint: %s", endpoint.c_str());
     auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth_mgr.get(), "GET", endpoint, endpoint, std::string(), std::vector<unsigned char>(), false, false, std::string()); // I'm unsure about the vector (and pretty much only about the vector)
-    printf("Get token and signature task started!\n");
+    Log::trace("XboxLiveHelper", "Get token and signature task started!");
     auto ret = pplx::task::task_xbox_live_result_token_and_signature_get(&task);
-    printf("User info received! Status: %i\n", ret.code);
-    printf("Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
+    Log::debug("User info received! Status: %i", ret.code);
+    Log::debug("Gamertag = %s, age group = %s, web account id = %s\n", ret.data.gamertag.c_str(), ret.data.age_group.c_str(), ret.data.web_account_id.c_str());
 
     auth->auth_flow->auth_flow_result.xbox_user_id = ret.data.xbox_user_id;
     auth->auth_flow->auth_flow_result.gamertag = ret.data.gamertag;
