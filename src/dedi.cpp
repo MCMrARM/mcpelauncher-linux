@@ -182,8 +182,8 @@ int main(int argc, char *argv[]) {
         ssize_t r;
         while ((r = read(0, &lineBuffer[lineBufferOffset], sizeof(lineBuffer) - lineBufferOffset)) > 0)
             lineBufferOffset += r;
-        for (size_t i = 0; i <= lineBufferOffset; ) {
-            if (i == lineBufferOffset || lineBuffer[i] == '\n') {
+        for (size_t i = 0; i < lineBufferOffset; ) {
+            if (i == sizeof(lineBuffer) - 1 || lineBuffer[i] == '\n') {
                 std::string cmd = std::string(lineBuffer, i);
                 memcpy(lineBuffer, &lineBuffer[i + 1], lineBufferOffset - i - 1);
                 lineBufferOffset -= i + 1;
