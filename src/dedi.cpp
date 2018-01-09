@@ -69,8 +69,8 @@ int main(int argc, char *argv[]) {
     }
 
     unsigned int libBase = ((soinfo*) handle)->base;
-    Log::debug("Launcher", "Loaded Minecraft library");
-    Log::trace("Launcher", "Minecraft is at offset 0x%x", libBase);
+    Log::info("Launcher", "Loaded Minecraft library");
+    Log::debug("Launcher", "Minecraft is at offset 0x%x", libBase);
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
@@ -105,6 +105,8 @@ int main(int argc, char *argv[]) {
     MinecraftCommands::MinecraftCommands_requestCommandExecution = (MCRESULT (*)(MinecraftCommands*, std::unique_ptr<CommandOrigin>, mcpe::string const&, int, bool)) hybris_dlsym(handle, "_ZNK17MinecraftCommands23requestCommandExecutionESt10unique_ptrI13CommandOriginSt14default_deleteIS1_EERKSsib");
     DedicatedServerCommandOrigin::DedicatedServerCommandOrigin_construct = (void (*)(DedicatedServerCommandOrigin*, mcpe::string const&, Minecraft&)) hybris_dlsym(handle, "_ZN28DedicatedServerCommandOriginC2ERKSsR9Minecraft");
 
+    Log::info("Launcher", "Starting server initialization");
+
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     LinuxAppPlatform::initVtable(handle);
     Log::trace("Launcher", "Initializing AppPlatform (create instance)");
@@ -113,9 +115,10 @@ int main(int argc, char *argv[]) {
     platform->initialize();
     Log::debug("Launcher", "AppPlatform initialized successfully");
 
-    std::cout << "load white-list and ops-list\n";
+    Log::trace("Launcher", "Loading whitelist and operator list");
     Whitelist whitelist;
     OpsList ops;
+    Log::trace("Launcher", "Initializing Minecraft API classes");
     std::cout << "create minecraft api class\n";
     minecraft::api::Api api;
     api.vtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api3ApiE") + 2;
@@ -124,7 +127,8 @@ int main(int argc, char *argv[]) {
     api.entityIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api15EntityInterfaceE") + 2;
     api.networkIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api16NetworkInterfaceE") + 2;
     api.playerInteractionsIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api26PlayerInteractionInterfaceE") + 2;
-    std::cout << "create level settings\n";
+
+    Log::trace("Launcher", "Setting up level settings");
     LevelSettings levelSettings;
     levelSettings.seed = 0;
     levelSettings.gametype = 0;
@@ -138,40 +142,39 @@ int main(int argc, char *argv[]) {
     levelSettings.commandsEnabled = true;
     levelSettings.texturepacksRequired = false;
 
-    std::cout << "create file path manager\n";
+    Log::trace("Launcher", "Initializing FilePathManager");
     FilePathManager pathmgr (cwd, false);
-    std::cout << "create minecraft eventing\n";
+    Log::trace("Launcher", "Initializing MinecraftEventing (create instance)");
     MinecraftEventing eventing (cwd);
     /*std::cout << "create user manager\n";
     auto userManager = Social::UserManager::CreateUserManager();*/
-    std::cout << "init minecraft eventing\n";
+    Log::trace("Launcher", "Initializing MinecraftEventing (init call)");
     eventing.init();
-    std::cout << "create resource pack manager\n";
+    Log::trace("Launcher", "Initializing ResourcePackManager");
     ContentTierManager ctm;
     ResourcePackManager resourcePackManager ([cwd]() {
         return cwd;
     }, ctm);
-    std::cout << "create pack manifest factory\n";
+    Log::trace("Launcher", "Initializing PackManifestFactory");
     PackManifestFactory packManifestFactory (eventing);
-    std::cout << "create pack key provider\n";
+    Log::trace("Launcher", "Initializing SkinPackKeyProvider");
     SkinPackKeyProvider skinPackKeyProvider;
-    std::cout << "create pack source factory\n";
+    Log::trace("Launcher", "Initializing PackSourceFactory");
     PackSourceFactory packSourceFactory (nullptr);
-    std::cout << "create resource pack repository\n";
+    Log::trace("Launcher", "Initializing ResourcePackRepository");
     ResourcePackRepository resourcePackRepo (eventing, packManifestFactory, skinPackKeyProvider, &pathmgr, packSourceFactory);
-    std::cout << "create network handler\n";
+    Log::trace("Launcher", "Initializing NetworkHandler");
     NetworkHandler handler;
-    std::cout << "create psuedo-app\n";
+    Log::trace("Launcher", "Initializing Automation::AutomationClient");
     DedicatedServerMinecraftApp minecraftApp;
-    std::cout << "create automation client\n";
     Automation::AutomationClient aclient (minecraftApp);
     minecraftApp.automationClient = &aclient;
-    std::cout << "create server\n";
+    Log::debug("Launcher", "Initializing ServerInstance");
     ServerInstance instance;
     ServerInstance::ServerInstance_construct(&instance, minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ "o0ABALqqBgA=", /* world name */ "My World", mcpe::string(), skinPackKeyProvider, mcpe::string(), /* settings */ levelSettings, api, 22, true, /* (query?) port */ 19132, /* (maybe not) port */ 19132, /* max player count */ 5, /* requiresXboxLive */ false, {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
-    std::cout << "initialized lib\n";
+    Log::info("Launcher", "Server initialized");
 
     int flags = fcntl(0, F_GETFL, 0);
     fcntl(0, F_SETFL, flags | O_NONBLOCK);
