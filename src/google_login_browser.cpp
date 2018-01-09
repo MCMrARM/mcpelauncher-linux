@@ -1,13 +1,14 @@
+#include "google_login_browser.h"
+
 #include <codecvt>
 #include <locale>
-#include "google_login_browser.h"
-#include "include/views/cef_browser_view.h"
+#include "log.h"
 
 AsyncResult<GoogleLoginResult> GoogleLoginBrowserClient::resultState;
 std::string const GoogleLoginRenderHandler::Name = "GoogleLoginRenderHandler";
 
 GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(MyWindowDelegate::Options const& windowInfo) {
-    printf("GoogleLoginBrowserClient::OpenBrowser\n");
+    Log::trace("GoogleLoginBrowserClient", "OpenBrowser");
 
     BrowserApp::RunWithContext([windowInfo] {
         CefRefPtr<GoogleLoginBrowserClient> client = new GoogleLoginBrowserClient();
@@ -39,11 +40,11 @@ void GoogleLoginBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
 bool GoogleLoginBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
                                                         CefRefPtr<CefProcessMessage> message) {
     if (message->GetName() == "SetAccountIdentifier") {
-        printf("SetAccountIdentifier\n");
+        Log::trace("GoogleLoginBrowserClient", "SetAccountIdentifier");
         result.email = message->GetArgumentList()->GetString(0).ToString();
         return true;
     } else if (message->GetName() == "Show") {
-        printf("Show\n");
+        Log::trace("GoogleLoginBrowserClient", "Show");
         BrowserApp::RunOnUI([this] {
             GetPrimaryWindow()->Show();
         });
@@ -58,7 +59,7 @@ void GoogleLoginBrowserClient::OnAddressChange(CefRefPtr<CefBrowser> browser, Ce
     auto iof = urlStr.find('?');
     if (iof != std::string::npos)
         urlStr = urlStr.substr(0, iof);
-    printf("OnAddressChange %s %i\n", urlStr.c_str(), frame->IsMain());
+    Log::trace("GoogleLoginBrowserClient", "OnAddressChange %s %i", urlStr.c_str(), frame->IsMain());
     CefRefPtr<CefCookieManager> manager = CefCookieManager::GetGlobalManager(NULL);
     manager->VisitAllCookies(this);
 }
@@ -66,10 +67,10 @@ void GoogleLoginBrowserClient::OnAddressChange(CefRefPtr<CefBrowser> browser, Ce
 bool GoogleLoginBrowserClient::Visit(const CefCookie& cookie, int count, int total, bool& deleteCookie) {
     CefString cookieName (&cookie.name);
     if (cookieName == "oauth_token") {
-        printf("Cookie: oauth_token\n");
+        Log::trace("GoogleLoginBrowserClient", "Cookie: oauth_token");
         result.oauthToken = CefString(&cookie.value).ToString();
     } else if (cookieName == "user_id") {
-        printf("Cookie: user_id\n");
+        Log::trace("GoogleLoginBrowserClient", "Cookie: user_id");
         result.userId = CefString(&cookie.value).ToString();
     }
     if (!result.email.empty() && !result.userId.empty() && !result.oauthToken.empty()) {
@@ -85,7 +86,7 @@ bool GoogleLoginBrowserClient::Visit(const CefCookie& cookie, int count, int tot
 
 void GoogleLoginRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                                 CefRefPtr<CefV8Context> context) {
-    printf("GoogleLoginRenderHandler::OnContextCreated\n");
+    Log::trace("OnContextCreated", "OnContextCreated");
 
     if (!externalInterfaceHandler)
         externalInterfaceHandler = new GoogleLoginV8Handler(*this);
@@ -102,7 +103,7 @@ bool GoogleLoginV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> 
                                        CefRefPtr<CefV8Value>& retval, CefString& exception) {
     if (name == "log" && args.size() == 1 && args[0]->IsString()) {
         CefString prop = args[0]->GetStringValue();
-        printf("log: %s\n", prop.ToString().c_str());
+        Log::trace("GoogleLoginV8Handler", "Log: %s", prop.ToString().c_str());
         return true;
     }
     if (name == "setAccountIdentifier" && args.size() == 1 && args[0]->IsString()) {
@@ -118,6 +119,6 @@ bool GoogleLoginV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> 
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
     }
-    printf("Invalid Execute: %s\n", name.ToString().c_str());
+    Log::error("GoogleLoginV8Handler", "Invalid Execute: %s", name.ToString().c_str());
     return true;
 }

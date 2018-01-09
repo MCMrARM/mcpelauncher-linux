@@ -2,105 +2,106 @@
 
 #include <iostream>
 #include "minecraft/string.h"
+#include "log.h"
 
 struct StoreListener;
 struct PurchaseInfo;
 struct LinuxStore {
     virtual ~LinuxStore() {
-        std::cout << "destroying store\n";
+        Log::trace("Store", "Destroying LinuxStore");
     }
     virtual bool isReadyToMakePurchases() {
-        std::cout << "is ready to make purchases: false\n";
+        Log::trace("Store", "isReadyToMakePurchases: false");
         return true;
     }
     virtual bool requiresRestorePurchasesButton() {
-        std::cout << "requires restore purchases button: false\n";
+        Log::trace("Store", "requiresRestorePurchasesButton: false");
         return false;
     }
     virtual bool allowsSubscriptions() {
-        std::cout << "allows subscriptions: true\n";
+        Log::trace("Store", "allowsSubscriptions: true");
         return true;
     }
     virtual mcpe::string getStoreId() {
-        std::cout << "get store id: android.googleplay\n";
+        Log::trace("Store", "getStoreId: android.googleplay");
         return "android.googleplay";
     }
     virtual mcpe::string getSubPlatformStoreId() {
-        std::cout << "get sub platform store id: \n";
+        Log::trace("Store", "getSubPlatformStoreId: ");
         return "";
     }
     virtual mcpe::string getProductSkuPrefix() {
-        std::cout << "get product sku prefix: \n";
+        Log::trace("Store", "getProductSkuPrefix: ");
         return "";
     }
     virtual mcpe::string getRealmsSkuPrefix() {
-        std::cout << "get product sku prefix: \n";
+        Log::trace("Store", "getRealmsSkuPrefix: ");
         return "";
     }
     virtual void queryProducts(std::vector<std::string> const& arr) {
-        std::cout << "query products\n";
+        Log::trace("Store", "queryProducts");
     }
     virtual void purchase(std::string const& name) {
-        std::cout << "purchase: " << name << "\n";
+        Log::trace("Store", "purchase: %s", name.c_str());
     }
     virtual void acknowledgePurchase(PurchaseInfo const& info, int type) {
-        std::cout << "acknowledge purchase: type=" << type << "\n";
+        Log::trace("Store", "acknowledgePurchase: type=%i", type);
     }
     virtual void queryPurchases() {
-        std::cout << "query purchases\n";
+        Log::trace("Store", "queryPurchases");
     }
     virtual void restorePurchases() {
-        std::cout << "restore purchases\n";
+        Log::trace("Store", "restorePurchases");
     }
     virtual bool isTrial() {
-        //std::cout << "is trial: false\n";
+        // Log::trace("Store", "isTrial: false");
         return false;
     }
     virtual void purchaseGame() {
-        std::cout << "purchase game\n";
+        Log::trace("Store", "purchaseGame");
     }
     virtual bool isGameLicensed() {
-        std::cout << "is game purchased: true\n";
+        Log::trace("Store", "isGameLicensed: true");
         return true;
     }
     virtual mcpe::string getAppReceipt() {
-        std::cout << "get app receipt\n";
+        Log::trace("Store", "getAppReceipt");
         return mcpe::string();
     }
     virtual void registerLicenseChangeCallback() {
-        std::cout << "register license change callback\n";
+        Log::trace("Store", "registerLicenseChangeCallback");
     }
     virtual void handleLicenseChange() {
-        std::cout << "handle license changed\n";
+        Log::trace("Store", "handleLicenseChange");
     }
     virtual void restoreFromCache() {
-        std::cout << "restore from cache\n";
+        Log::trace("Store", "restoreFromCache");
     }
     virtual void getUserAccessTokenAsync() {
-        std::cout << "get user access token async\n";
+        Log::trace("Store", "getUserAccessTokenAsync");
     }
     virtual void getFullSKUWithMetadataFromProductSku() {
-        std::cout << "get full sku with metadata from product sku\n";
+        Log::trace("Store", "getFullSKUWithMetadataFromProductSku");
     }
     virtual std::string getFullGameProductSku() {
-        std::cout << "get full game product sku\n";
+        Log::trace("Store", "getFullGameProductSku");
         return "idk";
     }
     virtual std::string getLanguageCode() {
-        std::cout << "get language code\n";
+        Log::trace("Store", "getLanguageCode");
         return "idk";
     }
     virtual std::string getRegionCode() {
-        std::cout << "get region code\n";
+        Log::trace("Store", "getRegionCode");
         return "idk";
     }
     virtual void refreshLicenses() {
-        std::cout << "refresh licenses\n";
+        Log::trace("Store", "refreshLicenses");
     }
     virtual void updateXUID() {
-        std::cout << "update xuid\n";
+        Log::trace("Store", "updateXUID");
     }
     virtual void onNewPrimaryUser() {
-        std::cout << "on new primary user\n";
+        Log::trace("Store", "onNewPrimaryUser");
     }
 };

@@ -14,6 +14,7 @@
 #include <random>
 #include <netinet/in.h>
 #include "base64.h"
+#include "log.h"
 
 std::chrono::milliseconds MSANetwork::serverTimeOffset;
 
@@ -35,7 +36,7 @@ static size_t curl_header_callback(char* buffer, size_t size, size_t nitems, voi
 }
 
 std::string MSANetwork::send(std::string const& url, std::string const& data) {
-    std::cout << "Send " << url << ": " << data << "\n";
+    Log::trace("MSANetwork", "Send %s: %s", url.c_str(), data.c_str());
 
     CURL* curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -52,7 +53,7 @@ std::string MSANetwork::send(std::string const& url, std::string const& data) {
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_stringstream_write_func);
     curl_easy_perform(curl);
-    std::cout << "Reply: " << output.str() << "\n";
+    Log::trace("MSANetwork", "Reply: %s", output.str().c_str());
     return output.str();
 }
 
@@ -472,7 +473,7 @@ std::vector<MSATokenResponse> MSANetwork::requestTokens(std::shared_ptr<MSALegac
     if (respNonce.empty())
         throw std::runtime_error("Failed to find the encryption nonce");
     std::string decrypted = decryptData(encryptedData, daToken->getBinarySecret(), respNonce);
-    printf("Decrypted body: %s\n", decrypted.c_str());
+    Log::trace("MSANetwork", "Decrypted body: %s\n", decrypted.c_str());
 
     rapidxml::xml_document<char> subdoc;
     subdoc.parse<0>(&decrypted[0]);

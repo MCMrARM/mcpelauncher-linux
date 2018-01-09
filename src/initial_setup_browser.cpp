@@ -5,6 +5,7 @@
 #include "include/views/cef_browser_view.h"
 #include "initial_setup_browser.h"
 #include "common.h"
+#include "log.h"
 #include "extract.h"
 #include "path_helper.h"
 
@@ -16,7 +17,7 @@ AsyncResult<bool> InitialSetupBrowserClient::resultState;
 std::string const InitialSetupRenderHandler::Name = "InitialSetupRenderHandler";
 
 bool InitialSetupBrowserClient::OpenBrowser() {
-    printf("InitialSetupBrowserClient::OpenBrowser\n");
+    Log::trace("InitialSetupBrowserClient", "OpenBrowser");
 
     BrowserApp::RunWithContext([] {
         CefRefPtr<InitialSetupBrowserClient> client = new InitialSetupBrowserClient();
@@ -78,7 +79,7 @@ void InitialSetupBrowserClient::HandlePickFile(std::string const& title, std::st
         close(pipes[PIPE_STDOUT][PIPE_READ]);
         close(pipes[PIPE_STDERR][PIPE_READ]);
         int r = execv(argv[0], argv);
-        printf("execv() error: %i\n", r);
+        Log::error("InitialSetupBrowserClient", "HandlePickFile: execv() error %i", r);
         close(STDOUT_FILENO);
         close(STDERR_FILENO);
         close(STDIN_FILENO);
@@ -104,10 +105,10 @@ void InitialSetupBrowserClient::HandlePickFile(std::string const& title, std::st
         int status;
         waitpid(pid, &status, 0);
         status = WEXITSTATUS(status);
-        printf("Status = %i\n", status);
+        Log::trace("InitialSetupBrowserClient", "HandlePickFile: Status = %i", status);
 
-        printf("Stdout = %s\n", outputStdOut.c_str());
-        printf("Stderr = %s\n", outputStdErr.c_str());
+        Log::trace("InitialSetupBrowserClient", "Stdout = %s", outputStdOut.c_str());
+        Log::trace("InitialSetupBrowserClient", "Stderr = %s", outputStdErr.c_str());
 
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFileResult");
         CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
@@ -124,7 +125,7 @@ void InitialSetupBrowserClient::HandlePickFile(std::string const& title, std::st
 }
 
 void InitialSetupBrowserClient::HandleSetupWithFile(std::string const& file) {
-    printf("SetupWithFile %s\n", file.c_str());
+    Log::trace("InitialSetupBrowserClient", "SetupWithFile %s", file.c_str());
     try {
         ExtractHelper::extractApk(file);
         NotifyApkSetupResult(true);
@@ -142,7 +143,7 @@ void InitialSetupBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
 bool InitialSetupBrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
                                                          CefRefPtr<CefProcessMessage> message) {
     if (message->GetName() == "StartGoogleLogin") {
-        printf("StartGoogleLogin\n");
+        Log::trace("InitialSetupBrowserClient", "StartGoogleLogin");
 
 #ifdef DISABLE_PLAYAPI
         ShowMessage("Feature disabled", "Google account login was disabled during compilation.");
@@ -247,7 +248,7 @@ void InitialSetupBrowserClient::NotifyApkSetupResult(bool success) {
 
 void InitialSetupRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                                  CefRefPtr<CefV8Context> context) {
-    printf("InitialSetupRenderHandler::OnContextCreated\n");
+    Log::trace("InitialSetupBrowserClient", "OnContextCreated");
 
     if (!externalInterfaceHandler)
         externalInterfaceHandler = new InitialSetupV8Handler(*this);

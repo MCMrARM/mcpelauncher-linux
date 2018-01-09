@@ -4,6 +4,7 @@
 #include <X11/Xatom.h>
 #include <sys/stat.h>
 #include "path_helper.h"
+#include "log.h"
 
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
@@ -79,12 +80,12 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProc
 
 
 void BrowserApp::OnBrowserCreated(CefRefPtr<CefBrowser> browser) {
-    printf("BrowserApp::OnBrowserCreated %i\n", browser->GetIdentifier());
+    Log::trace("BrowserApp", "OnBrowserCreated %i", browser->GetIdentifier());
     renderProcessBrowsers[browser->GetIdentifier()] = browser;
 }
 
 void BrowserApp::OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) {
-    printf("BrowserApp::OnBrowserDestroyed %i\n", browser->GetIdentifier());
+    Log::trace("BrowserApp", "OnBrowserDestroyed %i", browser->GetIdentifier());
     browserRenderHandlers.erase(browser->GetIdentifier());
     renderProcessBrowsers.erase(browser->GetIdentifier());
 }

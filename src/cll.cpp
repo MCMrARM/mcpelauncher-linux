@@ -5,6 +5,7 @@
 #include <functional>
 #include <curl/curl.h>
 #include <zlib.h>
+#include "log.h"
 #include "msa.h"
 #include "xboxlive.h"
 
@@ -79,7 +80,7 @@ std::pair<std::string, std::string> CLL::getXTokenAndTicket() {
     auto config = auth_manager::auth_manager_get_auth_config(auth_mgr.get());
     auth_config::auth_config_set_xtoken_composition(config.get(), types);
     std::string const& endpoint = "https://test.vortex.data.microsoft.com";
-    printf("Xbox Live Endpoint: %s\n", endpoint.c_str());
+    Log::trace("CLL", "Xbox Live Endpoint: %s", endpoint.c_str());
     auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth_mgr.get(), "GET", endpoint, endpoint,
                                                                             std::string(), std::vector<unsigned char>(),
                                                                             false, false,
@@ -171,7 +172,7 @@ void CLL::sendEvent(std::string const& data, bool compress) {
     auto timeMs = duration_cast<microseconds>(time.time_since_epoch()) - duration_cast<microseconds>(duration_cast<seconds>(time.time_since_epoch()));
     snprintf(&timestamp[timestampLen], sizeof(timestamp) - timestampLen, ".%06dZ", (int) timeMs.count());
 
-    printf("Request: %s\n", data.c_str());
+    Log::trace("CLL", "Request: %s", data.c_str());
 
     CURL* curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, VORTEX_URL.c_str());
@@ -206,7 +207,7 @@ void CLL::sendEvent(std::string const& data, bool compress) {
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_stringstream_write_func);
     curl_easy_perform(curl);
-    printf("Response: %s\n", output.str().c_str());
+    Log::trace("CLL", "Response: %s", data.c_str());
 }
 
 std::string CLL::compress(std::string const& data) {

@@ -236,10 +236,10 @@ mcpe::string xboxReadConfigFile(void* th) {
     return s.str();
 }
 void workerPoolDestroy(void* th) {
-    std::cout << "worker pool-related class destroy " << (unsigned long)th << "\n";
+    Log::trace("Launcher", "worker pool-related class destroy %uli", (unsigned long) th);
 }
 xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, mcpe::string const& s) {
-    std::cout << "log_telemetry_signin " << b << " " << s.std() << "\n";
+    Log::trace("Launcher", "log_telemetry_signin %i %s", (int) b, s.c_str());
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
@@ -250,7 +250,7 @@ mcpe::string xboxGetLocalStoragePath() {
     return "data/";
 }
 xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int requestCode) {
-    std::cout << "init_sign_in_activity " << requestCode << "\n";
+    Log::trace("Launcher", "init_sign_in_activity %i", requestCode);
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
@@ -286,7 +286,7 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
     return ret;
 }
 void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
-    std::cout << "invoke_auth_flow\n";
+    Log::trace("Launcher", "invoke_auth_flow");
 
 #ifdef DISABLE_CEF
     std::cerr << "This build does not support Xbox Live login.\n";
@@ -304,10 +304,10 @@ std::vector<mcpe::string> xblGetLocaleList() {
     return ret;
 }
 void xblRegisterNatives() {
-    std::cout << "register_natives stub\n";
+    Log::trace("Launcher", "register_natives stub");
 }
 xbox::services::xbox_live_result<void> xblLogCLL(void* th, mcpe::string const& a, mcpe::string const& b, mcpe::string const& c) {
-    std::cout << "log_cll " << a.std() << " " << b.std() << " " << c.std() << "\n";
+    Log::trace("Launcher", "log_cll %s %s %s", a.c_str(), b.c_str(), c.c_str());
     XboxLiveHelper::getCLL()->addEvent(a.std(), b.std(), c.std());
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;

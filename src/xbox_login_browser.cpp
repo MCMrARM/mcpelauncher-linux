@@ -4,6 +4,7 @@
 #include <iostream>
 #include <X11/Xlib.h>
 #include "common.h"
+#include "log.h"
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
@@ -22,7 +23,7 @@ std::string const XboxLoginBrowserClient::APPEND_URL_PARAMS = "platform=android2
 AsyncResult<XboxLoginResult> XboxLoginBrowserClient::resultState;
 
 void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_android* auth) {
-    printf("OpenBrowser\n");
+    Log::trace("XboxLoginBrowserClient", "OpenBrowser");
 
     BrowserApp::RunWithContext([] {
         CefRefPtr<XboxLoginBrowserClient> client = new XboxLoginBrowserClient();
@@ -81,7 +82,7 @@ void XboxLoginBrowserClient::ContinueLogIn(std::string const& username, std::str
     auto ret = account->requestTokens({{"http://Passport.NET/tb"}, {"user.auth.xboxlive.com", "mbi_ssl"}});
     auto xboxLiveToken = ret[{"user.auth.xboxlive.com"}];
     if (xboxLiveToken.hasError()) {
-        printf("Has error\n");
+        Log::trace("XboxLoginBrowserClient", "Has error");
         if (xboxLiveToken.getError()->inlineAuthUrl.empty()) {
             CloseAllBrowsers(true);
         } else {
@@ -90,7 +91,7 @@ void XboxLoginBrowserClient::ContinueLogIn(std::string const& username, std::str
                 url = url + "?" + XboxLoginBrowserClient::APPEND_URL_PARAMS;
             else
                 url = url + "&" + XboxLoginBrowserClient::APPEND_URL_PARAMS;
-            printf("Navigating to URL: %s\n", url.c_str());
+            Log::trace("XboxLoginBrowserClient", "Navigating to URL: %s", url.c_str());
             GetPrimaryBrowser()->GetMainFrame()->LoadURL(url);
         }
         return;
@@ -99,7 +100,7 @@ void XboxLoginBrowserClient::ContinueLogIn(std::string const& username, std::str
     result.success = true;
     result.binaryToken = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
     result.cid = cid;
-    printf("Binary token: %s\n", result.binaryToken.c_str());
+    Log::trace("XboxLoginBrowserClient", "Binary token: %s", result.binaryToken.c_str());
     XboxLiveHelper::getMSAStorageManager()->setAccount(account);
     resultState.Set(result);
     CloseAllBrowsers(true);
@@ -130,7 +131,7 @@ void XboxLoginBrowserClient::OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
 
 void XboxLoginRenderHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
                                               CefRefPtr<CefV8Context> context) {
-    printf("XboxLoginBrowserHandler::OnContextCreated\n");
+    Log::trace("XboxLoginBrowserHandler", "OnContextCreated");
 
     if (!externalInterfaceHandler)
         externalInterfaceHandler = new XboxLiveV8Handler(*this);
@@ -182,6 +183,6 @@ bool XboxLiveV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value> obj
         handler.RequestContinueLogIn(properties);
         return true;
     }
-    printf("Invalid Execute: %s\n", name.ToString().c_str());
+    Log::error("XboxLiveV8Handler", "Invalid Execute: %s", name.ToString().c_str());
     return false;
 }
