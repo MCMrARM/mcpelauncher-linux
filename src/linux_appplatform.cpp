@@ -10,9 +10,13 @@
 #include <sys/types.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <dlfcn.h>
 #include "minecraft/ImagePickingCallback.h"
 #include "minecraft/FilePickerSettings.h"
 #include "../hybris/src/jb/linker.h"
+#include "log.h"
 #include "common.h"
 #include "path_helper.h"
 
@@ -22,6 +26,8 @@ extern "C" {
 #endif
 #include "../hybris/include/hybris/dlfcn.h"
 }
+
+const char* LinuxAppPlatform::TAG = "AppPlatform";
 
 void** LinuxAppPlatform::myVtable = nullptr;
 bool LinuxAppPlatform::mousePointerHidden = false;
@@ -39,10 +45,6 @@ LinuxAppPlatform::LinuxAppPlatform() : AppPlatform() {
     userdataPathForLevels = dataDir;
     region = "0xdeadbeef";
 }
-
-#include <execinfo.h>
-#include <cxxabi.h>
-#include <dlfcn.h>
 
 void LinuxAppPlatform::replaceVtableEntry(void* lib, void** vtable, const char* sym, void* nw) {
     void* sm = hybris_dlsym(lib, sym);
@@ -65,7 +67,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
         if (vt[size] == nullptr)
             break;
     }
-    printf("AppPlatform size = %i\n", size);
+    Log::trace("AppPlatform", "Vtable size = %i", size);
 
     myVtable = (void**) ::operator new(size * sizeof(void*));
     memcpy(&myVtable[0], &vt[2], (size - 2) * sizeof(void*));
@@ -123,20 +125,20 @@ void LinuxAppPlatform::showMousePointer() {
 }
 
 std::string LinuxAppPlatform::_pickFile(std::string commandLine) {
-    std::cout << "Launching file picker with args: " << commandLine << "\n";
+    Log::trace(TAG, "Launching file picker with args: %s", commandLine.c_str());
     char file[1024];
     FILE *f = popen(commandLine.c_str(), "r");
     if (fgets(file, 1024, f) == nullptr) {
-        std::cout << "No file selected\n";
+        Log::trace(TAG, "No file selected");
         return "";
     }
     file[strlen(file) - 1] = '\0';
-    std::cout << "Selected file: " << file << "\n";
+    Log::trace(TAG, "Selected file: %s", file);
     return std::string(file);
 }
 
 void LinuxAppPlatform::pickImage(ImagePickingCallback &callback) {
-    std::cout << "pickImage\n";
+    Log::trace(TAG, "pickImage");
     std::string file = _pickFile("zenity --file-selection --title 'Select image' --file-filter '*.png'");
     if (file.empty()) {
         callback.onImagePickingCanceled();
@@ -188,7 +190,7 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
 }
 
 void LinuxAppPlatform::setFullscreenMode(int mode) {
-    std::cout << "set fullscreen mode: " << mode << "\n";
+    Log::trace(TAG, "Changing fullscreen mode: %i", mode);
 #ifndef SERVER
     int newMode = mode == 1 ? EGLUT_FULLSCREEN : EGLUT_WINDOWED;
     if (eglutGet(EGLUT_FULLSCREEN_MODE) != newMode)

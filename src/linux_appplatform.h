@@ -7,10 +7,11 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+#include "log.h"
+#include "path_helper.h"
 #include "minecraft/gl.h"
 #include "minecraft/AppPlatform.h"
 #include "minecraft/ImagePickingCallback.h"
-#include "path_helper.h"
 #include "minecraft/MultiplayerService.h"
 
 class ImageData;
@@ -23,6 +24,8 @@ extern bool moveMouseToCenter;
 class LinuxAppPlatform : public AppPlatform {
 
 private:
+    static const char* TAG;
+
     static std::string _pickFile(std::string commandLine);
 
     static void replaceVtableEntry(void* lib, void** vtable, const char* sym, void* nw);
@@ -44,11 +47,11 @@ public:
     LinuxAppPlatform();
 
     mcpe::string getDataUrl() { // this is used only for sounds
-        printf("get data url: %s\n", assetsDir.c_str());
+        Log::trace(TAG, "getDataUrl: %s", assetsDir.c_str());
         return assetsDir;
     }
     mcpe::string getUserDataUrl() {
-        printf("get user data url: %s\n", dataDir.c_str());
+        Log::trace(TAG, "getUserDataUrl: %s", dataDir.c_str());
         return dataDir;
     }
 
@@ -63,7 +66,7 @@ public:
         //printf("swap buffers\n");
     }
     mcpe::string const& getSystemRegion() {
-        printf("get system region: %s\n", region.c_str());
+        Log::trace(TAG, "getSystemRegion: %s", region.c_str());
         return region;
     }
 
@@ -77,27 +80,27 @@ public:
         return true;
     }
     mcpe::string& getExternalStoragePath() {
-        printf("external storage path = %s\n", externalStorage.c_str());
+        Log::trace(TAG, "getExternalStoragePath: %s", externalStorage.c_str());
         return externalStorage;
     }
     mcpe::string& getInternalStoragePath() {
-        printf("internal storage path = %s\n", internalStorage.c_str());
+        Log::trace(TAG, "getInternalStoragePath: %s", internalStorage.c_str());
         return internalStorage;
     }
     mcpe::string& getCurrentStoragePath() {
-        printf("current storage path = %s\n", currentStorage.c_str());
+        Log::trace(TAG, "getCurrentStoragePath: %s", currentStorage.c_str());
         return currentStorage;
     }
     mcpe::string& getUserdataPath() {
-        printf("userdata path = %s\n", userdata.c_str());
+        Log::trace(TAG, "getUserdataPath: %s", userdata.c_str());
         return userdata;
     }
     mcpe::string& getUserdataPathForLevels() {
-        printf("userdata path for levels = %s\n", userdata.c_str());
+        Log::trace(TAG, "getUserdataPathForLevels: %s", userdataPathForLevels.c_str());
         return userdataPathForLevels;
     }
     mcpe::string getAssetFileFullPath(mcpe::string const& s) {
-        printf("get assert full path: %s\n", s.c_str());
+        Log::trace(TAG, "getAssetFileFullPath: %s", s.c_str());
         return mcpe::string(assetsDir) + s;
     }
     int getScreenType() {
@@ -109,24 +112,24 @@ public:
         return (enablePocketGuis ? false : true);
     }
     mcpe::string getApplicationId() {
-        printf("application id = com.mojang.minecraftpe\n");
+        Log::trace(TAG, "getApplicationId: com.mojang.minecraftpe");
         return "com.mojang.minecraftpe";
     }
     mcpe::string getDeviceId() {
-        printf("device id = linux\n");
+        Log::trace(TAG, "getDeviceId: linux");
         return "linux";
     }
     mcpe::string createUUID();
     bool isFirstSnoopLaunch() {
-        printf("is first snoop launch = true\n");
+        Log::trace(TAG, "isFirstSnoopLaunch: true");
         return true;
     }
     bool hasHardwareInformationChanged() {
-        printf("has hardware information change = false\n");
+        Log::trace(TAG, "hasHardwareInformationChanged: false");
         return false;
     }
     bool isTablet() {
-        printf("is tablet = true\n");
+        Log::trace(TAG, "isTablet: true");
         return true;
     }
     void setFullscreenMode(int mode);
@@ -153,7 +156,7 @@ public:
     }
 
     mcpe::string createDeviceID(std::string const& c) {
-        printf("create device id: %s\n", c.c_str());
+        Log::trace(TAG, "createDeviceID: %s", c.c_str());
         return "linux";
     }
 
