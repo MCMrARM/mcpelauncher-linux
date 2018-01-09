@@ -100,6 +100,8 @@ void (*PackSourceFactory::PackSourceFactory_construct)(PackSourceFactory*, Optio
 void (*ContentTierManager::ContentTierManager_construct)(ContentTierManager*);
 void (*ResourcePackRepository::ResourcePackRepository_construct)(ResourcePackRepository*, MinecraftEventing&, PackManifestFactory&, IContentAccessibilityProvider&, FilePathManager*, PackSourceFactory &);
 void (*ResourcePackManager::ResourcePackManager_construct)(ResourcePackManager*, std::function<mcpe::string ()> const&, ContentTierManager const&);
+void (*ResourcePackManager::ResourcePackManager_setStack)(ResourcePackManager*, std::unique_ptr<ResourcePackStack>, ResourcePackStackType, bool);
+void (*ResourcePackManager::ResourcePackManager_onLanguageChanged)(ResourcePackManager*);
 
 #include "FilePathManager.h"
 
@@ -136,8 +138,32 @@ MinecraftCommands* (*Minecraft::Minecraft_getCommands)(Minecraft*);
 
 #include "MinecraftCommands.h"
 
+void (*MinecraftCommands::MinecraftCommands_setOutputSender)(MinecraftCommands*, std::unique_ptr<CommandOutputSender>);
 MCRESULT (*MinecraftCommands::MinecraftCommands_requestCommandExecution)(MinecraftCommands*, std::unique_ptr<CommandOrigin>, mcpe::string const&, int, bool);
 
 #include "DedicatedServerCommandOrigin.h"
 
 void (*DedicatedServerCommandOrigin::DedicatedServerCommandOrigin_construct)(DedicatedServerCommandOrigin*, mcpe::string const&, Minecraft&);
+
+#include "CommandOutputSender.h"
+
+void (*CommandOutputSender::CommandOutputSender_construct)(CommandOutputSender*, Automation::AutomationClient&);
+void (*CommandOutputSender::CommandOutputSender_destruct)(CommandOutputSender*);
+void (*CommandOutputSender::CommandOutputSender_send)(CommandOutputSender*, CommandOrigin const&, CommandOutput const&);
+std::vector<mcpe::string> (*CommandOutputSender::CommandOutputSender_translate)(std::vector<mcpe::string> const&);
+
+#include "CommandOutput.h"
+
+std::vector<CommandOutputMessage> const& (*CommandOutput::CommandOutput_getMessages)(CommandOutput const*);
+
+#include "I18n.h"
+
+mcpe::string (*I18n::I18n_get)(mcpe::string const&, std::vector<mcpe::string> const&);
+void (*I18n::I18n_chooseLanguage)(mcpe::string const&);
+void (*I18n::I18n_loadLanguages)(ResourcePackManager&, SkinRepository*, mcpe::string const&);
+
+#include "ResourcePackStack.h"
+
+void** ResourcePackStack::ResourcePackStack_vtable;
+void (*PackInstance::PackInstance_construct)(PackInstance*, ResourcePack*, int, bool);
+void (*ResourcePackStack::ResourcePackStack_add)(ResourcePackStack*, PackInstance const&, ResourcePackRepository const&, bool);
