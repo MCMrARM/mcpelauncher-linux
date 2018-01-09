@@ -119,7 +119,6 @@ _eglutNativeInitWindow(struct eglut_window *win, const char *title,
             unsigned char* data = malloc((img_w * img_h + 2) * 4);
             *((unsigned int*) &data[0]) = img_w;
             *((unsigned int*) &data[4]) = img_h;
-            printf("%i %i\n", img_w, img_h);
             for (ssize_t i = (img_w * img_h - 1) * 4; i >= 0; i -= 4) {
                 data[8 + i + 3] = img_data[i + 3];
                 data[8 + i + 2] = img_data[i + 0];

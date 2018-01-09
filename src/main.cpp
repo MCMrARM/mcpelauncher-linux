@@ -57,15 +57,15 @@ extern "C" {
 }
 
 void androidStub() {
-    std::cout << "warn: android call\n";
+    Log::warn("Launcher", "Android function stub call");
 }
 
 void eglStub() {
-    std::cout << "warn: egl call\n";
+    Log::warn("Launcher", "EGL function stub call");
 }
 
 std::unique_ptr<LinuxStore> createStoreHookFunc(const mcpe::string& idk, StoreListener& listener) {
-    std::cout << "creating fake store <" << idk << ">\n";
+    Log::trace("Launcher", "Creating fake store (%s)", idk.c_str());
     return std::unique_ptr<LinuxStore>(new LinuxStore());
 }
 
@@ -78,7 +78,7 @@ public:
     HTTPRequest* request;
 
     void destroy() {
-        std::cout << "destroying http request\n";
+        Log::trace("Launcher", "LinuxHttpRequestInternal::~LinuxHttpRequestInternal");
     }
 };
 void** linuxHttpRequestInternalVtable;
@@ -89,12 +89,12 @@ void constructLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal
 }
 
 void sendLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
-    std::cout << "send http request\n";
+    Log::trace("Launcher", "HTTPRequestInternalAndroid::send stub called");
     // TODO: Implement it
 }
 
 void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
-    std::cout << "abort http request\n";
+    Log::trace("Launcher", "HTTPRequestInternalAndroid::abort stub called");
     // TODO: Implement it
 }
 
@@ -218,18 +218,18 @@ static void minecraft_close() {
 }
 
 void detachFromJavaStub() {
-    std::cout << "detach from java\n";
+    Log::trace("Launcher", "detach_from_java stub called");
 }
 void* getJVMEnvStub() {
-    std::cout << "getjvmenv\n";
+    Log::trace("Launcher", "get_jvm_env stub called");
     return nullptr;
 }
 bool verifyCertChainStub() {
-    std::cout << "verifycertchain\n";
+    Log::trace("Launcher", "verify_cert_chain_platform_specific stub called");
     return true;
 }
 mcpe::string xboxReadConfigFile(void* th) {
-    std::cout << "xbox read config file\n";
+    Log::trace("Launcher", "Reading xbox config file");
     std::ifstream f(PathHelper::findDataFile("assets/xboxservices.config"));
     std::stringstream s;
     s << f.rdbuf();
@@ -425,13 +425,13 @@ int main(int argc, char *argv[]) {
 
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
-    std::cout << "loading native libraries\n";
+    Log::trace("Launcher", "Loading native libraries");
     void* glesLib = loadLibraryOS("libGLESv2.so.2", gles_symbols);
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6").c_str(), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     if (glesLib == nullptr || fmodLib == nullptr || libmLib == nullptr)
         return -1;
-    std::cout << "loading hybris libraries\n";
+    Log::trace("Launcher", "Loading hybris libraries");
     stubSymbols(android_symbols, (void*) androidStub);
     stubSymbols(egl_symbols, (void*) eglStub);
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
@@ -444,7 +444,7 @@ int main(int argc, char *argv[]) {
         return -1;
     if (!load_empty_library("libmcpelauncher_mod.so"))
         return -1;
-    std::cout << "loading MCPE\n";
+    Log::trace("Launcher", "Loading Minecraft library");
     std::string mcpePath = PathHelper::findDataFile("libs/libminecraftpe.so");
     void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
@@ -454,7 +454,8 @@ int main(int argc, char *argv[]) {
     addHookLibrary(handle, mcpePath);
 
     unsigned int libBase = ((soinfo*) handle)->base;
-    std::cout << "loaded MCPE (at " << libBase << ")\n";
+    Log::info("Launcher", "Loaded Minecraft library");
+    Log::debug("Launcher", "Minecraft is at offset 0x%x", libBase);
 
     std::vector<void*> mods;
     {
@@ -462,7 +463,7 @@ int main(int argc, char *argv[]) {
         DIR* dir;
         struct dirent* ent;
         if ((dir = opendir(modsDir.c_str())) != NULL) {
-            std::cout << "loading mods\n";
+            Log::info("Launcher", "Loading mods");
             while ((ent = readdir(dir)) != NULL) {
                 if (ent->d_name[0] == '.')
                     continue;
@@ -470,31 +471,18 @@ int main(int argc, char *argv[]) {
                 int len = fileName.length();
                 if (len < 4 || fileName[len - 3] != '.' || fileName[len - 2] != 's' || fileName[len - 1] != 'o')
                     continue;
-                std::cout << "loading: " << fileName << "\n";
+                Log::info("Launcher", "Loading mod: %s", fileName);
                 void* mod = loadMod(modsDir + fileName);
                 if (mod != nullptr)
                     mods.push_back(mod);
             }
             closedir(dir);
-            std::cout << "loaded " << mods.size() << " mods\n";
+            Log::info("Launcher", "Loading %li mods", mods.size());
         }
     }
 
-    std::cout << "apply patches\n";
+    Log::info("Launcher", "Applying patches");
 
-    /*
-    unsigned int patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12StoreFactory11createStoreER13StoreListener") + 66;
-    patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, false);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN11HTTPRequestC2ERKSs") + 154;
-    patchCallInstruction((void*) patchOff, (void*) &constructLinuxHttpRequestInternal, false);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN11HTTPRequest4sendEv") + 26;
-    patchCallInstruction((void*) patchOff, (void*) &sendLinuxHttpRequestInternal, false);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN11HTTPRequest5abortEv") + 26;
-    patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, false);
-     */
     unsigned int patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12AndroidStore21createGooglePlayStoreERKSsR13StoreListener");
     patchCallInstruction((void*) patchOff, (void*) &createStoreHookFunc, true);
 
@@ -553,51 +541,43 @@ int main(int argc, char *argv[]) {
         patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
     }
 
-    std::cout << "patches applied!\n";
+    Log::info("Launcher", "Patches were successfully applied");
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
     Common::Common_getGameVersionStringNet = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN6Common23getGameVersionStringNetEv");
 
-    printf("Version: %s\n", Common::Common_getGameVersionStringNet().c_str());
+    Log::info("Launcher", "Game version: %s", Common::Common_getGameVersionStringNet().c_str());
     XboxLiveHelper::getCLL()->setAppVersion(Common::Common_getGameVersionStringNet().std());
 
-    // load symbols for gl
     gl::getOpenGLVendor = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
     gl::getOpenGLRenderer = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
     gl::getOpenGLVersion = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl16getOpenGLVersionEv");
     gl::getOpenGLExtensions = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl19getOpenGLExtensionsEv");
     mce::Platform::OGL::OGL_initBindings = (void (*)()) hybris_dlsym(handle, "_ZN3mce8Platform3OGL12InitBindingsEv");
 
-    // init linux app platform
     AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
     AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
     AppPlatform::AppPlatform_initialize = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform10initializeEv");
     AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
 
-    void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
-    *ptr = (void*) 1; // this just needs not to be null
+    App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
+    MinecraftGame::MinecraftGame_construct = (void (*)(MinecraftGame*, int, char**)) hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
+    MinecraftGame::MinecraftGame_destruct = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
+    MinecraftGame::MinecraftGame_update = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
+    MinecraftGame::MinecraftGame_setRenderingSize = (void (*)(MinecraftGame*, int, int)) hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
+    MinecraftGame::MinecraftGame_setUISizeAndScale = (void (*)(MinecraftGame*, int, int, float)) hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");
+    MinecraftGame::MinecraftGame_getPrimaryUserOptions = (std::shared_ptr<Options> (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame21getPrimaryUserOptionsEv");
 
-    xbox::services::java_interop::get_java_interop_singleton = (std::shared_ptr<xbox::services::java_interop> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
-
-    std::shared_ptr<xbox::services::java_interop> javaInterop = xbox::services::java_interop::get_java_interop_singleton();
-    javaInterop->activity = (void*) 1; // this just needs not to be null as well
-
-    std::cout << "init app platform vtable\n";
-    LinuxAppPlatform::initVtable(handle);
-    std::cout << "init app platform\n";
-    platform = new LinuxAppPlatform();
-    std::cout << "app platform initialized\n";
+    Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
+    Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
 
     Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(handle, "_ZN5Mouse4feedEccssss");
 
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
     Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
     Keyboard::Keyboard_feedText = (void (*)(const mcpe::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
-
-    Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
-    Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
 
     xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
     pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set = (void (*)(pplx::task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system15java_rps_ticketEE3setES4_");
@@ -616,40 +596,48 @@ int main(int argc, char *argv[]) {
     xbox::services::system::auth_manager::auth_manager_internal_get_token_and_signature = (pplx::task (*)(xbox::services::system::auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_");
     xbox::services::system::auth_config::auth_config_set_xtoken_composition = (void (*)(xbox::services::system::auth_config*, std::vector<xbox::services::system::token_identity_type>)) hybris_dlsym(handle, "_ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE");
     xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (mcpe::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
+    xbox::services::java_interop::get_java_interop_singleton = (std::shared_ptr<xbox::services::java_interop> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
     Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL = (void (*)(Social::MultiplayerXBL*)) hybris_dlsym(handle, "_ZN6Social14MultiplayerXBLC2Ev");
 
-    std::cout << "init window\n";
+    Log::info("Launcher", "Creating window");
     eglutInitWindowSize(windowWidth, windowHeight);
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
 
     winId = eglutCreateWindow("Minecraft", PathHelper::getIconPath().c_str());
 
-    // init MinecraftGame
-    App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
-    MinecraftGame::MinecraftGame_construct = (void (*)(MinecraftGame*, int, char**)) hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
-    MinecraftGame::MinecraftGame_destruct = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
-    MinecraftGame::MinecraftGame_update = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
-    MinecraftGame::MinecraftGame_setRenderingSize = (void (*)(MinecraftGame*, int, int)) hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
-    MinecraftGame::MinecraftGame_setUISizeAndScale = (void (*)(MinecraftGame*, int, int, float)) hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");
-    MinecraftGame::MinecraftGame_getPrimaryUserOptions = (std::shared_ptr<Options> (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame21getPrimaryUserOptionsEv");
+    Log::info("Launcher", "Starting game initialization");
+
+    void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
+    *ptr = (void*) 1; // this just needs not to be null
+
+    std::shared_ptr<xbox::services::java_interop> javaInterop = xbox::services::java_interop::get_java_interop_singleton();
+    javaInterop->activity = (void*) 1; // this just needs not to be null as well
+
+    Log::trace("Launcher", "Initializing AppPlatform (vtable)");
+    LinuxAppPlatform::initVtable(handle);
+    Log::trace("Launcher", "Initializing AppPlatform (create instance)");
+    platform = new LinuxAppPlatform();
+    Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
+    platform->initialize();
+
+    Log::trace("Launcher", "Initializing OpenGL bindings");
+    mce::Platform::OGL::initBindings();
+
+    Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
+    client = new MinecraftGame(argc, argv);
+    Log::trace("Launcher", "Initializing MinecraftGame (init call)");
     AppContext ctx;
     ctx.platform = platform;
     ctx.doRender = true;
-
-    platform->initialize();
-
-    mce::Platform::OGL::initBindings();
-
-    std::cout << "create minecraft client\n";
-    client = new MinecraftGame(argc, argv);
-    std::cout << "init minecraft client\n";
     client->init(ctx);
-    std::cout << "initialized lib\n";
+    Log::info("Launcher", "Game initialized");
 
     if (client->getPrimaryUserOptions()->getFullscreen())
         eglutToggleFullscreen();
 
+    if (!mods.empty())
+        Log::info("Launcher", "Initializing mods");
     for (void* mod : mods) {
         void (*initFunc)(MinecraftGame*) = (void (*)(MinecraftGame*)) hybris_dlsym(mod, "mod_set_minecraft");
         if ((void*) initFunc != nullptr)
@@ -665,9 +653,8 @@ int main(int argc, char *argv[]) {
     eglutSpecialFunc(minecraft_keyboard_special);
     eglutPasteFunc(minecraft_paste);
     eglutCloseWindowFunc(minecraft_close);
-    std::cout << "initialized display\n";
+    Log::trace("Launcher", "Initialized display");
 
-    // init
     //(*AppPlatform::_singleton)->_fireAppFocusGained();
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
