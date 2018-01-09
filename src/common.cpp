@@ -9,16 +9,19 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <malloc.h>
+#include "log.h"
 
 extern "C" {
 #include "../hybris/include/hybris/hook.h"
 #include "../hybris/include/hybris/dlfcn.h"
 }
 
+static const char* TAG = "Launcher";
+
 bool loadLibrary(std::string path) {
     void* handle = hybris_dlopen(PathHelper::findDataFile("libs/hybris/" + path).c_str(), RTLD_LAZY);
     if (handle == nullptr) {
-        printf("failed to load library %s: %s\n", path.c_str(), hybris_dlerror());
+        Log::error(TAG, "Failed to load hybris library %s: %s", path.c_str(), hybris_dlerror());
         return false;
     }
     return true;
@@ -27,10 +30,10 @@ bool loadLibrary(std::string path) {
 void* loadLibraryOS(std::string path, const char** symbols) {
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
-        printf("failed to load library %s: %s\n", path.c_str(), dlerror());
+        Log::error(TAG, "Failed to load OS library %s", path.c_str());
         return nullptr;
     }
-    printf("oslib: %s: %i\n", path.c_str(), (int) handle);
+    Log::trace(TAG, "Loaded OS library %s", path.c_str());
     int i = 0;
     while (true) {
         const char* sym = symbols[i];
@@ -46,14 +49,14 @@ void* loadLibraryOS(std::string path, const char** symbols) {
 void* loadMod(std::string path) {
     void* handle = hybris_dlopen(path.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
-        printf("failed to load mod: %s\n", path.c_str());
+        Log::error(TAG, "Failed to load mod: %s", path.c_str());
         return nullptr;
     }
 
     void (*initFunc)();
     initFunc = (void (*)()) hybris_dlsym(handle, "mod_init");
     if (((void*) initFunc) == nullptr) {
-        printf("warn: mod %s doesn't have a init function\n", path.c_str());
+        Log::warn(TAG, "Mod %s does not have an init function", path.c_str());
         return handle;
     }
     initFunc();
@@ -72,19 +75,42 @@ void stubSymbols(const char** symbols, void* stubfunc) {
     }
 }
 
+typedef enum AndroidLogPriority {
+    ANDROID_LOG_UNKNOWN = 0,
+    ANDROID_LOG_DEFAULT,
+    ANDROID_LOG_VERBOSE,
+    ANDROID_LOG_DEBUG,
+    ANDROID_LOG_INFO,
+    ANDROID_LOG_WARN,
+    ANDROID_LOG_ERROR,
+    ANDROID_LOG_FATAL,
+    ANDROID_LOG_SILENT
+} android_LogPriority;
+
+static LogLevel convertAndroidLogLevel(int level) {
+    if (level <= AndroidLogPriority::ANDROID_LOG_VERBOSE)
+        return LogLevel::LOG_TRACE;
+    if (level == AndroidLogPriority::ANDROID_LOG_DEBUG)
+        return LogLevel::LOG_DEBUG;
+    if (level == AndroidLogPriority::ANDROID_LOG_INFO)
+        return LogLevel::LOG_INFO;
+    if (level == AndroidLogPriority::ANDROID_LOG_WARN)
+        return LogLevel::LOG_WARN;
+    if (level >= AndroidLogPriority::ANDROID_LOG_ERROR)
+        return LogLevel::LOG_ERROR;
+    return LogLevel::LOG_ERROR;
+}
 void __android_log_vprint(int prio, const char *tag, const char *fmt, va_list args) {
-    printf("[%s] ", tag);
-    vprintf(fmt, args);
-    printf("\n");
+    Log::vlog(convertAndroidLogLevel(prio), tag, fmt, args);
 }
 void __android_log_print(int prio, const char *tag, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    __android_log_vprint(prio, tag, fmt, args);
+    Log::vlog(convertAndroidLogLevel(prio), tag, fmt, args);
     va_end(args);
 }
 void __android_log_write(int prio, const char *tag, const char *text) {
-    printf("[%s] %s\n", tag, text);
+    Log::log(convertAndroidLogLevel(prio), tag, "%s", text);
 }
 
 void hookAndroidLog() {
@@ -95,11 +121,11 @@ void hookAndroidLog() {
 
 void patchCallInstruction(void* patchOff, void* func, bool jump) {
     unsigned char* data = (unsigned char*) patchOff;
-    printf("original: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
+    Log::trace(TAG, "Patching - original: %i %i %i %i %i", data[0], data[1], data[2], data[3], data[4]);
     data[0] = (unsigned char) (jump ? 0xe9 : 0xe8);
     int ptr = ((int) func) - (int) patchOff - 5;
     memcpy(&data[1], &ptr, sizeof(int));
-    printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
+    Log::trace(TAG, "Patching - result: %i %i %i %i %i", data[0], data[1], data[2], data[3], data[4]);
 }
 
 bool hasCrashed = false;

@@ -9,6 +9,7 @@
 #include "symbols/fmod_symbols.h"
 #include "symbols/libm_symbols.h"
 #include "common.h"
+#include "log.h"
 #include "linux_appplatform.h"
 #include "minecraft/Api.h"
 #include "minecraft/Whitelist.h"
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
     // assets, so let's at least use the CWD for as much stuff as possible.
     std::string cwd = PathHelper::getWorkingDir();
 
-    std::cout << "loading hybris libraries\n";
+    Log::trace("Launcher", "Loading hybris libraries");
     stubSymbols(android_symbols, (void*) stubFunc);
     stubSymbols(egl_symbols, (void*) stubFunc);
     stubSymbols(gles_symbols, (void*) stubFunc);
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
         return -1;
     if (!load_empty_library("libmcpelauncher_mod.so"))
         return -1;
-    std::cout << "loading MCPE\n";
+    Log::trace("Launcher", "Loading Minecraft library");
     void* handle = hybris_dlopen((cwd + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
@@ -68,11 +69,11 @@ int main(int argc, char *argv[]) {
     }
 
     unsigned int libBase = ((soinfo*) handle)->base;
-    std::cout << "loaded MCPE (at " << libBase << ")\n";
+    Log::debug("Launcher", "Loaded Minecraft library");
+    Log::trace("Launcher", "Minecraft is at offset 0x%x", libBase);
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
-    std::cout << "init symbols\n";
     AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
     AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
@@ -104,13 +105,13 @@ int main(int argc, char *argv[]) {
     MinecraftCommands::MinecraftCommands_requestCommandExecution = (MCRESULT (*)(MinecraftCommands*, std::unique_ptr<CommandOrigin>, mcpe::string const&, int, bool)) hybris_dlsym(handle, "_ZNK17MinecraftCommands23requestCommandExecutionESt10unique_ptrI13CommandOriginSt14default_deleteIS1_EERKSsib");
     DedicatedServerCommandOrigin::DedicatedServerCommandOrigin_construct = (void (*)(DedicatedServerCommandOrigin*, mcpe::string const&, Minecraft&)) hybris_dlsym(handle, "_ZN28DedicatedServerCommandOriginC2ERKSsR9Minecraft");
 
-    std::cout << "init app platform vtable\n";
+    Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     LinuxAppPlatform::initVtable(handle);
-    std::cout << "create app platform\n";
+    Log::trace("Launcher", "Initializing AppPlatform (create instance)");
     LinuxAppPlatform* platform = new LinuxAppPlatform();
-    std::cout << "init app platform\n";
+    Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
     platform->initialize();
-    std::cout << "app platform initialized\n";
+    Log::debug("Launcher", "AppPlatform initialized successfully");
 
     std::cout << "load white-list and ops-list\n";
     Whitelist whitelist;
