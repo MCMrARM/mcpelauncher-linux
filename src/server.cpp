@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <fstream>
 #include <fcntl.h>
 #include "symbols/android_symbols.h"
 #include "symbols/egl_symbols.h"
@@ -31,6 +32,7 @@
 #include "minecraft/I18n.h"
 #include "minecraft/ResourcePackStack.h"
 #include "server_minecraft_app.h"
+#include "server_properties.h"
 
 extern "C" {
 #include "../hybris/include/hybris/dlfcn.h"
@@ -49,6 +51,13 @@ int main(int argc, char *argv[]) {
     // have to register a proper asset loader in MCPE, and the default one just falls back to the current directory for
     // assets, so let's at least use the CWD for as much stuff as possible.
     std::string cwd = PathHelper::getWorkingDir();
+
+    ServerProperties properties;
+    {
+        std::ifstream propertiesFile("server.properties");
+        if (propertiesFile)
+            properties.load(propertiesFile);
+    }
 
     Log::trace("Launcher", "Loading hybris libraries");
     stubSymbols(android_symbols, (void*) stubFunc);
@@ -147,10 +156,10 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Setting up level settings");
     LevelSettings levelSettings;
-    levelSettings.seed = 0;
-    levelSettings.gametype = 0;
-    levelSettings.forcegametype = 0;
-    levelSettings.difficulty = 0;
+    levelSettings.seed = properties.getInt("level-seed", 0);
+    levelSettings.gametype = properties.getInt("gamemode", 0);
+    levelSettings.forceGameType = properties.getBool("force-gamemode", false);
+    levelSettings.difficulty = properties.getInt("difficulty", 0);
     levelSettings.dimension = 0;
     levelSettings.generator = 0;
     levelSettings.edu = false;
@@ -192,7 +201,7 @@ int main(int argc, char *argv[]) {
     minecraftApp.automationClient = &aclient;
     Log::debug("Launcher", "Initializing ServerInstance");
     ServerInstance instance;
-    ServerInstance::ServerInstance_construct(&instance, minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ "o0ABALqqBgA=", /* world name */ "My World", mcpe::string(), skinPackKeyProvider, mcpe::string(), /* settings */ levelSettings, api, 22, true, /* (query?) port */ 19132, /* (maybe not) port */ 19132, /* max player count */ 5, /* requiresXboxLive */ false, {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
+    ServerInstance::ServerInstance_construct(&instance, minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, mcpe::string(), /* settings */ levelSettings, api, 22, true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
     Log::trace("Launcher", "Loading language data");

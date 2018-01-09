@@ -12,7 +12,7 @@ public:
     int seed; // 4
     int gametype; // 8
     int difficulty; // c
-    int forcegametype; // 10
+    bool forceGameType; // 10
     int generator; // 14
     bool hasAchievementsDisabled; // 18
     int dimension; // 1c
