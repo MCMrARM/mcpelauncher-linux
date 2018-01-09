@@ -20,7 +20,6 @@
 #include "minecraft/UUID.h"
 #include "minecraft/LevelSettings.h"
 #include "minecraft/ServerInstance.h"
-#include "dedi_minecraft_app.h"
 #include "minecraft/UserManager.h"
 #include "minecraft/AutomationClient.h"
 #include "minecraft/Scheduler.h"
@@ -31,6 +30,7 @@
 #include "minecraft/CommandOutput.h"
 #include "minecraft/I18n.h"
 #include "minecraft/ResourcePackStack.h"
+#include "server_minecraft_app.h"
 
 extern "C" {
 #include "../hybris/include/hybris/dlfcn.h"

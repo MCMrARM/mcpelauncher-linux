@@ -46,7 +46,7 @@ set(COMMON_SOURCE_FILES src/common.cpp src/hook.cpp src/linux_appplatform.cpp sr
 set(CLIENT_SOURCE_FILES src/main.cpp src/amdfix.s src/linux_appplatform.cpp src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/xboxlive.h src/xboxlive.cpp src/cll.cpp src/cll.h)
 set(CLIENT_SOURCE_FILES_CEF src/browser.cpp src/browser.h src/xbox_login_browser.h src/xbox_login_browser.cpp src/initial_setup_browser.cpp src/initial_setup_browser.h)
 set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/google_login_browser.h src/google_login_browser.cpp src/google_play_helper.cpp src/google_play_helper.h)
-set(SERVER_SOURCE_FILES src/dedi.cpp src/dedi_minecraft_app.h)
+set(SERVER_SOURCE_FILES src/server.cpp src/server_minecraft_app.h)
 
 if (CEF_ENABLED)
     link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
