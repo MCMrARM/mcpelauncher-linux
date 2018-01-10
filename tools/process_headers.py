@@ -221,6 +221,7 @@ def generate_init_func():
     output("void minecraft_symbols_init(void* handle) {");
     for symbol in symbol_list:
         output("    ((void*&) " + symbol["name"] + ") = hybris_dlsym(handle, \"" + symbol["symbol"] + "\");")
+        output("    if (" + symbol["name"] + " == nullptr) Log::error(\"MinecraftSymbols\", \"Unresolved symbol: %s\", \"" + symbol["symbol"] + "\");")
     output("}")
 
 out_file = open("../src/minecraft/symbols.cpp", "w")
@@ -228,6 +229,7 @@ output("// This file was automatically generated using tools/process_headers.py"
 output("// Generated on " + datetime.datetime.utcnow().strftime("%a %b %d %Y %H:%M:%S UTC"))
 output("")
 output("#include <hybris/dlfcn.h>")
+output("#include \"../log.h\"")
 output("")
 header_dir = "../src/minecraft/"
 for file in os.listdir(header_dir):
