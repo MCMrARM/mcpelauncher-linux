@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Wed Jan 10 2018 17:24:34 UTC
+// Generated on Wed Jan 10 2018 17:44:29 UTC
 
 #include <hybris/dlfcn.h>
 #include "../log.h"
@@ -11,6 +11,10 @@ std::unique_ptr<Social::UserManager> Social::UserManager::CreateUserManager() {
 }
 
 #include "Xbox.h"
+static void * (*_xbox_services_xbox_services_error_code_category)();
+void * xbox::services::xbox_services_error_code_category() {
+    return _xbox_services_xbox_services_error_code_category();
+}
 static std::shared_ptr<xbox::services::java_interop> (*_xbox_services_java_interop_get_java_interop_singleton)();
 std::shared_ptr<xbox::services::java_interop> xbox::services::java_interop::get_java_interop_singleton() {
     return _xbox_services_java_interop_get_java_interop_singleton();
@@ -373,6 +377,8 @@ mcpe::string Common::getGameVersionStringNet() {
 void minecraft_symbols_init(void* handle) {
     ((void*&) _Social_UserManager_CreateUserManager) = hybris_dlsym(handle, "_ZN6Social11UserManager17CreateUserManagerEv");
     if (_Social_UserManager_CreateUserManager == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN6Social11UserManager17CreateUserManagerEv");
+    ((void*&) _xbox_services_xbox_services_error_code_category) = hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
+    if (_xbox_services_xbox_services_error_code_category == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN4xbox8services33xbox_services_error_code_categoryEv");
     ((void*&) _xbox_services_java_interop_get_java_interop_singleton) = hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
     if (_xbox_services_java_interop_get_java_interop_singleton == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
     ((void*&) _xbox_services_local_config_get_local_config_singleton) = hybris_dlsym(handle, "_ZN4xbox8services12local_config26get_local_config_singletonEv");

@@ -16,10 +16,16 @@ def output(text):
         out_file.write("\n")
 
 def get_method_path(method):
-    method_path = method["path"]
-    if method_path.startswith("::"):
-        method_path = method_path[2:]
-    return method_path
+    if "path" in method:
+        method_path = method["path"]
+        if method_path.startswith("::"):
+            method_path = method_path[2:]
+        return method_path
+    else:
+        method_path = method["namespace"]
+        if method_path.endswith("::"):
+            method_path = method_path[:-2]
+        return method_path
 
 def get_method_wrapper_name(method):
     method_name = method["name"]
@@ -163,9 +169,64 @@ def get_doxygen_properties(doxygen):
 
     return properties
 
+def process_method(method, is_class):
+    method_path = get_method_path(method)
+    wrapper_name = get_method_wrapper_name(method)
+    mangled_name = get_mangled_method(method)
+
+    if "doxygen" in method:
+        props = get_doxygen_properties(method["doxygen"])
+        if "symbol" in props:
+            mangled_name = props["symbol"]
+
+    params_str = ""
+    params_with_names = ""
+    params_for_call = ""
+    param_no = 1
+    #if not method["static"]:
+    #    params_str = method_path + "*"
+    #    if method["const"]:
+    #        params_str = method_path + " const*"
+    #    params_for_call = "this"
+    for param in method["parameters"]:
+        if len(params_str) > 0:
+            params_str += ", "
+            params_for_call += ", "
+        if len(params_with_names) > 0:
+            params_with_names += ", "
+        params_str += param["type"]
+        params_with_names += param["type"] + " p" + str(param_no)
+        if param["type"].startswith("std::unique_ptr"):
+            params_for_call += "std::move(p" + str(param_no) + ")"
+        else:
+            params_for_call += "p" + str(param_no)
+        param_no += 1
+    ret_type = method["rtnType"]
+    if ret_type.startswith("static "):
+        ret_type = ret_type[len("static "):]
+    if method["static"] or not is_class:
+        output("static " + ret_type + " (*" + wrapper_name + ")(" + params_str + ");")
+    else:
+        output("static " + ret_type + " (" + method_path + "::*" + wrapper_name + ")(" + params_str + ")" + (" const" if method["const"] else "") + ";")
+    output((ret_type + " " if not method["constructor"] and not method["destructor"] else "") + method_path + "::" + ("~" if method["destructor"] else "") + method["name"] + "(" + params_with_names + ")" + (" const" if method["const"] else "") + " {")
+    has_return = ret_type != "void" and ret_type != ""
+    if method["static"] or not is_class:
+        output("    " + ("return " if has_return else "") + wrapper_name + "(" + params_for_call + ");")
+    else:
+        output("    " + ("return " if has_return else "") + "(this->*" + wrapper_name + ")(" + params_for_call + ");")
+    output("}")
+    symbol_list.append({
+        "name": wrapper_name,
+        "symbol": mangled_name
+    })
+
+
 def process_header(file):
     print("Processing file " + file)
     cpp_header = cppheaderparser.CppHeader(file)
+
+    for function in cpp_header.functions:
+        process_method(function, False)
 
     for class_name in cpp_header.classes:
         print("Processing class " + class_name)
@@ -189,7 +250,7 @@ def process_header(file):
                 m_type = member["type"]
                 if m_type.startswith("static "):
                     m_type = m_type[len("static "):]
-                output(m_type + " " + class_name_with_namespace + "::" + member["name"] + ";");
+                output(m_type + " " + class_name_with_namespace + "::" + member["name"] + ";")
                 symbol_list.append({
                     "name": class_name_with_namespace + "::" + member["name"],
                     "symbol": mangled_name
@@ -199,59 +260,11 @@ def process_header(file):
             for method in class_data["methods"][method_vis]:
                 if method["defined"] or method["pure_virtual"]:
                     continue
+                process_method(method, True)
 
-                method_path = get_method_path(method)
-                wrapper_name = get_method_wrapper_name(method)
-                mangled_name = get_mangled_method(method)
-
-                if "doxygen" in method:
-                    props = get_doxygen_properties(method["doxygen"])
-                    if "symbol" in props:
-                        mangled_name = props["symbol"]
                 
-                params_str = ""
-                params_with_names = ""
-                params_for_call = ""
-                param_no = 1
-                #if not method["static"]:
-                #    params_str = method_path + "*"
-                #    if method["const"]:
-                #        params_str = method_path + " const*"
-                #    params_for_call = "this"
-                for param in method["parameters"]:
-                    if len(params_str) > 0:
-                        params_str += ", "
-                        params_for_call += ", "
-                    if len(params_with_names) > 0:
-                        params_with_names += ", "
-                    params_str += param["type"]
-                    params_with_names += param["type"] + " p" + str(param_no)
-                    if param["type"].startswith("std::unique_ptr"):
-                        params_for_call += "std::move(p" + str(param_no) + ")"
-                    else:
-                        params_for_call += "p" + str(param_no)
-                    param_no += 1
-                ret_type = method["rtnType"]
-                if ret_type.startswith("static "):
-                    ret_type = ret_type[len("static "):]
-                if method["static"]:
-                    output("static " + ret_type + " (*" + wrapper_name + ")(" + params_str + ");");
-                else:
-                    output("static " + ret_type + " (" + method_path + "::*" + wrapper_name + ")(" + params_str + ")" + (" const" if method["const"] else "") + ";");
-                output((ret_type + " " if not method["constructor"] and not method["destructor"] else "") + method_path + "::" + ("~" if method["destructor"] else "") + method["name"] + "(" + params_with_names + ")" + (" const" if method["const"] else "") + " {");
-                has_return = ret_type != "void" and ret_type != ""
-                if method["static"]:
-                    output("    " + ("return " if has_return else "") + wrapper_name + "(" + params_for_call + ");");
-                else:
-                    output("    " + ("return " if has_return else "") + "(this->*" + wrapper_name + ")(" + params_for_call + ");");
-                output("}");
-                symbol_list.append({
-                    "name": wrapper_name,
-                    "symbol": mangled_name
-                })
-
 def generate_init_func():
-    output("void minecraft_symbols_init(void* handle) {");
+    output("void minecraft_symbols_init(void* handle) {")
     for symbol in symbol_list:
         output("    ((void*&) " + symbol["name"] + ") = hybris_dlsym(handle, \"" + symbol["symbol"] + "\");")
         output("    if (" + symbol["name"] + " == nullptr) Log::error(\"MinecraftSymbols\", \"Unresolved symbol: %s\", \"" + symbol["symbol"] + "\");")
@@ -271,8 +284,8 @@ for file in os.listdir(header_dir):
         continue
     if file == "symbols.h" or file == "string.h":
         continue
-    output("#include \"" + file + "\"");
-    process_header(file_path);
+    output("#include \"" + file + "\"")
+    process_header(file_path)
     output("")
 generate_init_func()
 out_file.close()

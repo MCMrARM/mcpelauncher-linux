@@ -548,10 +548,6 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Game version: %s", Common::getGameVersionStringNet().c_str());
     XboxLiveHelper::getCLL()->setAppVersion(Common::getGameVersionStringNet().std());
 
-    xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
-    xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
-    xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
-
     Log::info("Launcher", "Creating window");
     eglutInitWindowSize(windowWidth, windowHeight);
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);

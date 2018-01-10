@@ -7,7 +7,7 @@
 namespace xbox {
 namespace services {
 
-extern void* (*xbox_services_error_code_category)();
+void* xbox_services_error_code_category();
 
 template <typename T>
 struct xbox_live_result {
