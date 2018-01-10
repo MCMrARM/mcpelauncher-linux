@@ -6,10 +6,6 @@
 AppPlatform** AppPlatform::_singleton = nullptr;
 void** AppPlatform::myVtable = nullptr;
 
-#include "MinecraftGame.h"
-
-void (*MinecraftGame::MinecraftGame_destruct)(MinecraftGame*);
-
 #include "Keyboard.h"
 
 int* Keyboard::states;

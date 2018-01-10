@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Wed Jan 10 2018 14:55:47 UTC
+// Generated on Wed Jan 10 2018 15:09:27 UTC
 
 #include <hybris/dlfcn.h>
 
@@ -101,6 +101,10 @@ void MinecraftEventing::init() {
 static void (MinecraftGame::*_MinecraftGame_MinecraftGame)(int, char * *);
 MinecraftGame::MinecraftGame(int p1, char * * p2) {
     (this->*_MinecraftGame_MinecraftGame)(p1, p2);
+}
+static void (MinecraftGame::*_MinecraftGame_destructor)();
+MinecraftGame::~MinecraftGame() {
+    (this->*_MinecraftGame_destructor)();
 }
 static void (MinecraftGame::*_MinecraftGame_update)();
 void MinecraftGame::update() {
@@ -299,6 +303,7 @@ void minecraft_symbols_init(void* handle) {
     ((void*&) _MinecraftEventing_MinecraftEventing) = hybris_dlsym(handle, "_ZN17MinecraftEventingC2ERKSs");
     ((void*&) _MinecraftEventing_init) = hybris_dlsym(handle, "_ZN17MinecraftEventing4initEv");
     ((void*&) _MinecraftGame_MinecraftGame) = hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
+    ((void*&) _MinecraftGame_destructor) = hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
     ((void*&) _MinecraftGame_update) = hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
     ((void*&) _MinecraftGame_setRenderingSize) = hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
     ((void*&) _MinecraftGame_setUISizeAndScale) = hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");

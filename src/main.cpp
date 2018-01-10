@@ -554,8 +554,6 @@ int main(int argc, char *argv[]) {
     AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
 
-    MinecraftGame::MinecraftGame_destruct = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
-
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
 
     xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");

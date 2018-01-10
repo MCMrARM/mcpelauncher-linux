@@ -21,8 +21,11 @@ def get_method_path(method):
         method_path = method_path[2:]
     return method_path
 
-def get_method_wrapper_name(method_path, method_name):
-    name = "_" + method_path.replace("::", "_") + "_" + method_name
+def get_method_wrapper_name(method):
+    method_name = method["name"]
+    if method["destructor"]:
+        method_name = "destructor";
+    name = "_" + get_method_path(method).replace("::", "_") + "_" + method_name
     if name in wrapper_name_counter:
         wrapper_name_counter[name] += 1
         name = name + str(wrapper_name_counter[name])
@@ -121,6 +124,8 @@ def get_mangled_method(method):
     ret += get_mangled_type_name(get_method_path(method), [])
     if method["constructor"]:
         ret += "C2"
+    elif method["destructor"]:
+        ret += "D2"
     else:
         ret += str(len(method["name"])) + method["name"]
     ret += "E"
@@ -147,7 +152,7 @@ def process_header(file):
                     continue
 
                 method_path = get_method_path(method)
-                wrapper_name = get_method_wrapper_name(method_path, method["name"])
+                wrapper_name = get_method_wrapper_name(method)
                 mangled_name = get_mangled_method(method)
                 
                 params_str = ""
@@ -179,7 +184,7 @@ def process_header(file):
                     output("static " + ret_type + " (*" + wrapper_name + ")(" + params_str + ");");
                 else:
                     output("static " + ret_type + " (" + method_path + "::*" + wrapper_name + ")(" + params_str + ")" + (" const" if method["const"] else "") + ";");
-                output((ret_type + " " if not method["constructor"] else "") + method_path + "::" + method["name"] + "(" + params_with_names + ")" + (" const" if method["const"] else "") + " {");
+                output((ret_type + " " if not method["constructor"] and not method["destructor"] else "") + method_path + "::" + ("~" if method["destructor"] else "") + method["name"] + "(" + params_with_names + ")" + (" const" if method["const"] else "") + " {");
                 has_return = ret_type != "void" and ret_type != ""
                 if method["static"]:
                     output("    " + ("return " if has_return else "") + wrapper_name + "(" + params_for_call + ");");
