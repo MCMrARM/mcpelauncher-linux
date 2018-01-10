@@ -62,6 +62,7 @@ PRIMITIVE_TYPES = {
 
 def expand_cpp_default_templates(type_name):
     ret = re.sub(r"(std::unique_ptr\s*)<([\w:]*)>", r"\1<\2,std::default_delete<\2>>", type_name)
+    ret = re.sub(r"(std::vector\s*)<([\w:]*)>", r"\1<\2,std::allocator<\2>>", type_name)
     return ret
 
 def get_mangled_type_name(type_name, substitutions):
@@ -138,6 +139,21 @@ def get_mangled_method(method):
             ret += get_mangled_type_name(param["type"], substitutions)
     return ret
 
+def get_doxygen_properties(doxygen):
+    properties = {}
+    lines = doxygen.split('\n')
+    for line in lines:
+        if line.startswith("///"):
+            line = line[3:]
+        elif line.startswith("*"):
+            line = line[1:]
+        line = line.strip()
+        if line.startswith("@"):
+            key, _, val = line[1:].partition(" ")
+            properties[key] = val
+
+    return properties
+
 def process_header(file):
     print("Processing file " + file)
     cpp_header = cppheaderparser.CppHeader(file)
@@ -154,6 +170,11 @@ def process_header(file):
                 method_path = get_method_path(method)
                 wrapper_name = get_method_wrapper_name(method)
                 mangled_name = get_mangled_method(method)
+
+                if "doxygen" in method:
+                    props = get_doxygen_properties(method["doxygen"])
+                    if "symbol" in props:
+                        mangled_name = props["symbol"]
                 
                 params_str = ""
                 params_with_names = ""

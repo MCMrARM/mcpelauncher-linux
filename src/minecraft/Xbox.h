@@ -33,7 +33,7 @@ struct java_interop {
     char filler[0xc];
     void* activity;
 
-    static std::shared_ptr<xbox::services::java_interop> (*get_java_interop_singleton)();
+    static std::shared_ptr<xbox::services::java_interop> get_java_interop_singleton();
 
 };
 
@@ -46,7 +46,7 @@ struct local_config {
         return func(this, value);
     }
 
-    static std::shared_ptr<local_config> (*local_config_get_local_config_singleton)();
+    static std::shared_ptr<xbox::services::local_config> get_local_config_singleton();
 
 };
 
@@ -102,24 +102,37 @@ namespace pplx {
 
 struct task_completion_event_java_rps_ticket {
     char filler[0xc]; // shared_ptr
-    static void (*task_completion_event_java_rps_ticket_set)(task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket);
+
+    /// @symbol _ZNK4pplx21task_completion_eventIN4xbox8services6system15java_rps_ticketEE3setES4_
+    void set(xbox::services::system::java_rps_ticket);
 };
 struct task_completion_event_auth_flow_result {
     char filler[0xc]; // shared_ptr
-    static void (*task_completion_event_auth_flow_result_set)(task_completion_event_auth_flow_result*, xbox::services::system::auth_flow_result);
+
+    /// @symbol _ZNK4pplx21task_completion_eventIN4xbox8services6system16auth_flow_resultEE3setES4_
+    void set(xbox::services::system::auth_flow_result);
 };
 struct task_completion_event_xbox_live_result_void {
     char filler[0xc]; // shared_ptr
-    static void (*task_completion_event_xbox_live_result_void_set)(task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>);
+
+    /// @symbol _ZNK4pplx21task_completion_eventIN4xbox8services16xbox_live_resultIvEEE3setES4_
+    void set(xbox::services::xbox_live_result<void>);
 };
 
 struct task_impl {
     virtual ~task_impl() = 0;
 };
-struct task {
+struct task_xbox_live_result_void {
     std::shared_ptr<task_impl> impl;
-    static xbox::services::xbox_live_result<void> (*task_xbox_live_result_void_get)(task*);
-    static xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*task_xbox_live_result_token_and_signature_get)(task*);
+
+    /// @symbol _ZNK4pplx4taskIN4xbox8services16xbox_live_resultIvEEE3getEv
+    xbox::services::xbox_live_result<void> get();
+};
+struct task_xbox_live_result_token_and_signature_result {
+    std::shared_ptr<task_impl> impl;
+
+    /// @symbol _ZNK4pplx4taskIN4xbox8services16xbox_live_resultINS2_6system26token_and_signature_resultEEEE3getEv
+    xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> get();
 };
 
 
@@ -147,19 +160,22 @@ struct auth_config {
     char filler[0x3C];
     mcpe::string* errorDetail;
 
-    static void (*auth_config_set_xtoken_composition)(auth_config*, std::vector<xbox::services::system::token_identity_type>);
-    static mcpe::string const& (*auth_config_xbox_live_endpoint)(auth_config*);
+    /// @symbol _ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE
+    void set_xtoken_composition(std::vector<xbox::services::system::token_identity_type>);
+
+    mcpe::string const& xbox_live_endpoint();
 
 };
 
 struct auth_manager {
 
-    static std::shared_ptr<auth_manager> (*auth_manager_get_auth_manager_instance)();
+    static std::shared_ptr<xbox::services::system::auth_manager> get_auth_manager_instance();
 
-    static void (*auth_manager_set_rps_ticket)(auth_manager*, mcpe::string const&);
-    static pplx::task (*auth_manager_initialize_default_nsal)(auth_manager*);
-    static pplx::task (*auth_manager_internal_get_token_and_signature)(auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&);
-    static std::shared_ptr<auth_config> (*auth_manager_get_auth_config)(auth_manager*);
+    void set_rps_ticket(mcpe::string const&);
+    pplx::task_xbox_live_result_void initialize_default_nsal();
+    /// @symbol _ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_
+    pplx::task_xbox_live_result_token_and_signature_result internal_get_token_and_signature(mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&);
+    std::shared_ptr<xbox::services::system::auth_config> get_auth_config();
 
 };
 
@@ -168,7 +184,7 @@ struct user_auth_android {
     static pplx::task_completion_event_java_rps_ticket* s_rpsTicketCompletionEvent;
     static pplx::task_completion_event_xbox_live_result_void* s_signOutCompleteEvent;
 
-    static std::shared_ptr<user_auth_android> (*user_auth_android_get_instance)();
+    static std::shared_ptr<xbox::services::system::user_auth_android> get_instance();
 
     unknown_auth_flow_class* auth_flow;
     int filler;

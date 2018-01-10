@@ -53,12 +53,10 @@ void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_andro
         XboxLiveHelper::invokeXbLogin(auth, result.binaryToken);
         auth->auth_flow->auth_flow_result.code = 0;
         auth->auth_flow->auth_flow_result.cid = result.cid;
-        pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-                &auth->auth_flow->auth_flow_event, auth->auth_flow->auth_flow_result);
+        auth->auth_flow->auth_flow_event.set(auth->auth_flow->auth_flow_result);
     } else {
         auth->auth_flow->auth_flow_result.code = 2;
-        pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-                &auth->auth_flow->auth_flow_event, auth->auth_flow->auth_flow_result);
+        auth->auth_flow->auth_flow_event.set(auth->auth_flow->auth_flow_result);
     }
 }
 

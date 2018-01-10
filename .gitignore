@@ -4,6 +4,7 @@ libs/hybris/libminecraftpe.so
 libs/cef
 libs/native
 cmake-build-debug/
+__pycache__
 *.apk
 playdl.conf
 device.conf.state

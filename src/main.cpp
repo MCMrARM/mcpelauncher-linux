@@ -265,23 +265,20 @@ xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int request
             if (!xboxLiveToken.hasError()) {
                 ticket.token = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
                 ticket.error_code = 0;
-                pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
-                        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
+                xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
                 return ret;
             }
         }
         ticket.error_code = 1;
         ticket.error_text = "Must show UI to acquire an account.";
-        pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set(
-                xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent, ticket);
+        xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
     } else if (requestCode == 6) { // sign out
         XboxLiveHelper::getMSAStorageManager()->setAccount(std::shared_ptr<MSAAccount>());
 
         xbox::services::xbox_live_result<void> arg;
         arg.code = 0;
         arg.error_code_category = xbox::services::xbox_services_error_code_category();
-        pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set(
-                xbox::services::system::user_auth_android::s_signOutCompleteEvent, arg);
+        xbox::services::system::user_auth_android::s_signOutCompleteEvent->set(arg);
     }
 
     return ret;
@@ -557,23 +554,8 @@ int main(int argc, char *argv[]) {
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
 
     xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
-    pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set = (void (*)(pplx::task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system15java_rps_ticketEE3setES4_");
-    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set = (void (*)(pplx::task_completion_event_auth_flow_result*, xbox::services::system::auth_flow_result)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system16auth_flow_resultEE3setES4_");
-    pplx::task_completion_event_xbox_live_result_void::task_completion_event_xbox_live_result_void_set = (void (*)(pplx::task_completion_event_xbox_live_result_void*, xbox::services::xbox_live_result<void>)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services16xbox_live_resultIvEEE3setES4_");
-    pplx::task::task_xbox_live_result_void_get = (xbox::services::xbox_live_result<void> (*)(pplx::task*)) hybris_dlsym(handle, "_ZNK4pplx4taskIN4xbox8services16xbox_live_resultIvEEE3getEv");
-    pplx::task::task_xbox_live_result_token_and_signature_get = (xbox::services::xbox_live_result<xbox::services::system::token_and_signature_result> (*)(pplx::task*)) hybris_dlsym(handle, "_ZNK4pplx4taskIN4xbox8services16xbox_live_resultINS2_6system26token_and_signature_resultEEEE3getEv");
-    xbox::services::local_config::local_config_get_local_config_singleton = (std::shared_ptr<xbox::services::local_config> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12local_config26get_local_config_singletonEv");
     xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent = (pplx::task_completion_event_java_rps_ticket*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android26s_rpsTicketCompletionEventE");
     xbox::services::system::user_auth_android::s_signOutCompleteEvent = (pplx::task_completion_event_xbox_live_result_void*) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android22s_signOutCompleteEventE");
-    xbox::services::system::user_auth_android::user_auth_android_get_instance = (std::shared_ptr<xbox::services::system::user_auth_android> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system17user_auth_android12get_instanceEv");
-    xbox::services::system::auth_manager::auth_manager_get_auth_manager_instance = (std::shared_ptr<xbox::services::system::auth_manager> (*)()) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager25get_auth_manager_instanceEv");
-    xbox::services::system::auth_manager::auth_manager_set_rps_ticket = (void (*)(xbox::services::system::auth_manager*, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager14set_rps_ticketERKSs");
-    xbox::services::system::auth_manager::auth_manager_initialize_default_nsal = (pplx::task (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager23initialize_default_nsalEv");
-    xbox::services::system::auth_manager::auth_manager_get_auth_config = (std::shared_ptr<xbox::services::system::auth_config> (*)(xbox::services::system::auth_manager*)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager15get_auth_configEv");
-    xbox::services::system::auth_manager::auth_manager_internal_get_token_and_signature = (pplx::task (*)(xbox::services::system::auth_manager*, mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&)) hybris_dlsym(handle, "_ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_");
-    xbox::services::system::auth_config::auth_config_set_xtoken_composition = (void (*)(xbox::services::system::auth_config*, std::vector<xbox::services::system::token_identity_type>)) hybris_dlsym(handle, "_ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE");
-    xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (mcpe::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
-    xbox::services::java_interop::get_java_interop_singleton = (std::shared_ptr<xbox::services::java_interop> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
 
     Log::info("Launcher", "Creating window");
     eglutInitWindowSize(windowWidth, windowHeight);

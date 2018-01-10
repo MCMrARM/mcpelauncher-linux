@@ -69,26 +69,24 @@ std::pair<std::string, std::string> CLL::getXTokenAndTicket() {
         return {};
 
     using namespace xbox::services::system;
-    auto auth = user_auth_android::user_auth_android_get_instance();
-    auto auth_mgr = auth_manager::auth_manager_get_auth_manager_instance();
-    auto initTask = auth_manager::auth_manager_initialize_default_nsal(auth_mgr.get());
-    auto initRet = pplx::task::task_xbox_live_result_void_get(&initTask);
+    auto auth = user_auth_android::get_instance();
+    auto auth_mgr = auth_manager::get_auth_manager_instance();
+    auto initTask = auth_mgr->initialize_default_nsal();
+    auto initRet = initTask.get();
     if (initRet.code != 0)
         throw std::runtime_error("Failed to initialize default nsal");
     std::vector<token_identity_type> types = {(token_identity_type) 3, (token_identity_type) 1,
                                               (token_identity_type) 2};
-    auto config = auth_manager::auth_manager_get_auth_config(auth_mgr.get());
-    auth_config::auth_config_set_xtoken_composition(config.get(), types);
+    auto config = auth_mgr->get_auth_config();
+    config->set_xtoken_composition(types);
     std::string const& endpoint = "https://test.vortex.data.microsoft.com";
     Log::trace("CLL", "Xbox Live Endpoint: %s", endpoint.c_str());
-    auto task = auth_manager::auth_manager_internal_get_token_and_signature(auth_mgr.get(), "GET", endpoint, endpoint,
-                                                                            std::string(), std::vector<unsigned char>(),
-                                                                            false, false,
-                                                                            std::string()); // I'm unsure about the vector (and pretty much only about the vector)
-    auto ret = pplx::task::task_xbox_live_result_token_and_signature_get(&task);
+    auto task = auth_mgr->internal_get_token_and_signature("GET", endpoint, endpoint, std::string(),
+                                                           std::vector<unsigned char>(), false, false, std::string()); // I'm unsure about the vector (and pretty much only about the vector)
+    auto ret = task.get();
 
     std::string xuid = auth->xbox_user_id.std();
-    auto local_conf = xbox::services::local_config::local_config_get_local_config_singleton();
+    auto local_conf = xbox::services::local_config::get_local_config_singleton();
     std::string ticket = local_conf->get_value_from_local_storage(xuid).std();
     lock.lock();
     authXToken = ret.data.token.std();
