@@ -73,11 +73,8 @@ public:
 
     char filler[0x100];
 
-    static void (*ResourcePackManager_construct)(ResourcePackManager*, std::function<mcpe::string ()> const&, ContentTierManager const&);
-
-    ResourcePackManager(std::function<std::string ()> const& f, ContentTierManager const& m) {
-        ResourcePackManager_construct(this, f, m);
-    }
+    /// @symbol _ZN19ResourcePackManagerC2ESt8functionIFSsvEERK18ContentTierManager
+    ResourcePackManager(std::function<mcpe::string ()> const&, ContentTierManager const&);
 
     void setStack(std::unique_ptr<ResourcePackStack>, ResourcePackStackType, bool);
 

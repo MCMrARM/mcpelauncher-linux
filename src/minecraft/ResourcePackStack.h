@@ -17,8 +17,6 @@ struct ResourcePackStack {
 
     static void** ResourcePackStack_vtable;
 
-    static void (*ResourcePackStack_add)(ResourcePackStack*, PackInstance const&, ResourcePackRepository const&, bool);
-
     void** vtable;
     char filler[0x10];
 
@@ -27,8 +25,7 @@ struct ResourcePackStack {
         memset(filler, 0, sizeof(filler));
     }
 
-    void add(PackInstance const& i, ResourcePackRepository const& r, bool b) {
-        ResourcePackStack_add(this, i, r, b);
-    }
+    /// @symbol _ZN17ResourcePackStack3addE12PackInstanceRK22ResourcePackRepositoryb
+    void add(PackInstance const& i, ResourcePackRepository const& r, bool b);
 
 };

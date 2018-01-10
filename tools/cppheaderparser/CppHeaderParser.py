@@ -275,8 +275,10 @@ def is_method_namestack(stack):
                 in_template = True
             elif e == '>':
                 in_template = False
-            elif e == '(' and in_template:
-                return False
+            elif e == '(':
+                if in_template:
+                    r = False
+                break
     return r
 
 def is_property_namestack(nameStack):
@@ -493,7 +495,7 @@ class CppClass(dict):
                 else:
                     tmpStack = nameStack
                     nameStack = []
-                
+
                 # Convert template classes to one name in the last index
                 for i in range(0, len(tmpStack)):
                     if '<' in tmpStack[i]:
@@ -745,6 +747,8 @@ class _CppMethod( dict ):
         if '(' not in stack: return stack    # safe to return, no defaults that init a class
 
         # transforms ['someclass', '(', '0', '0', '0', ')'] into "someclass(0,0,0)'"
+        if '>' in stack: # template
+            return stack
         r = []; hit=False
         for a in stack:
             if a == '(': hit=True
@@ -865,7 +869,7 @@ class CppMethod( _CppMethod ):
                         doxyLine = doxyLine[doxyLine.find(" ") + 1:]
                         doxyVarDesc[lastParamDesc] += " " + doxyLine
                     except: pass
-        
+
         #Create the variable now
         while (len(paramsStack)):
             # Find commas that are not nexted in <>'s like template types

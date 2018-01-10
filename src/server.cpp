@@ -92,12 +92,8 @@ int main(int argc, char *argv[]) {
 
     AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
-    ResourcePackManager::ResourcePackManager_construct = (void (*)(ResourcePackManager*, std::function<mcpe::string ()> const&, ContentTierManager const&)) hybris_dlsym(handle, "_ZN19ResourcePackManagerC2ESt8functionIFSsvEERK18ContentTierManager");
-    ((void*&) ServerInstance::ServerInstance_construct) = hybris_dlsym(handle, "_ZN14ServerInstanceC2ER13IMinecraftAppRK9WhitelistRK7OpsListP15FilePathManagerNSt6chrono8durationIxSt5ratioILx1ELx1EEEESsSsSsRK19IContentKeyProviderSs13LevelSettingsRN9minecraft3api3ApiEibiiibRKSt6vectorISsSaISsEESsRKN3mce4UUIDER17MinecraftEventingR14NetworkHandlerR22ResourcePackRepositoryRK18ContentTierManagerR19ResourcePackManagerPS15_St8functionIFvRKSsEE");
     mce::UUID::EMPTY = (mce::UUID*) hybris_dlsym(handle, "_ZN3mce4UUID5EMPTYE");
-    Scheduler::Scheduler_processCoroutines = (void (*)(Scheduler*, std::chrono::duration<long long>)) hybris_dlsym(handle, "_ZN9Scheduler17processCoroutinesENSt6chrono8durationIxSt5ratioILx1ELx1000000000EEEE");
     ResourcePackStack::ResourcePackStack_vtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
-    ResourcePackStack::ResourcePackStack_add = (void (*)(ResourcePackStack*, PackInstance const&, ResourcePackRepository const&, bool)) hybris_dlsym(handle, "_ZN17ResourcePackStack3addE12PackInstanceRK22ResourcePackRepositoryb");
 
     Log::info("Launcher", "Starting server initialization");
 
@@ -167,8 +163,7 @@ int main(int argc, char *argv[]) {
     Automation::AutomationClient aclient (minecraftApp);
     minecraftApp.automationClient = &aclient;
     Log::debug("Launcher", "Initializing ServerInstance");
-    ServerInstance instance;
-    ServerInstance::ServerInstance_construct(&instance, minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, mcpe::string(), /* settings */ levelSettings, api, 22, true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
+    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, mcpe::string(), /* settings */ levelSettings, api, 22, true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
     Log::trace("Launcher", "Loading language data");

@@ -6,13 +6,10 @@ struct Scheduler {
 
 public:
 
-    static void (*Scheduler_processCoroutines)(Scheduler*, std::chrono::duration<long long>);
-
     static Scheduler* singleton();
 
-    void processCoroutines(std::chrono::duration<long long> d) {
-        Scheduler_processCoroutines(this, d);
-    }
+    /// @symbol _ZN9Scheduler17processCoroutinesENSt6chrono8durationIxSt5ratioILx1ELx1000000000EEEE
+    void processCoroutines(std::chrono::duration<long long>);
 
 
 };
