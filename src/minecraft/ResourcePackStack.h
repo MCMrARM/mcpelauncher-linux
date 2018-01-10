@@ -7,13 +7,9 @@ class ResourcePackRepository;
 
 struct PackInstance {
 
-    static void (*PackInstance_construct)(PackInstance*, ResourcePack*, int, bool);
-
     char filler[0x71];
 
-    PackInstance(ResourcePack* r, int i, bool b) {
-        PackInstance_construct(this, r, i, b);
-    }
+    PackInstance(ResourcePack*, int, bool);
 
 };
 

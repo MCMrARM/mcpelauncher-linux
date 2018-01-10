@@ -17,10 +17,6 @@ class CommandOutput {
 
 public:
 
-    static std::vector<CommandOutputMessage> const& (*CommandOutput_getMessages)(CommandOutput const*);
-
-    std::vector<CommandOutputMessage> const& getMessages() const {
-        return CommandOutput_getMessages(this);
-    }
+    std::vector<CommandOutputMessage> const& getMessages() const;
 
 };

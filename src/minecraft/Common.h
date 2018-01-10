@@ -5,6 +5,6 @@
 class Common {
 
 public:
-    static mcpe::string (*Common_getGameVersionStringNet)();
+    static mcpe::string getGameVersionStringNet();
 
 };

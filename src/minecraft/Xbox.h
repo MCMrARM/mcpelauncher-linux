@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "string.h"
 
 namespace xbox {
@@ -113,7 +114,7 @@ struct task_completion_event_xbox_live_result_void {
 };
 
 struct task_impl {
-    virtual ~task_impl();
+    virtual ~task_impl() = 0;
 };
 struct task {
     std::shared_ptr<task_impl> impl;

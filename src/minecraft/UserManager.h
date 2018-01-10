@@ -7,7 +7,7 @@ class UserManager {
 
 public:
 
-    static std::unique_ptr<UserManager> (*CreateUserManager)();
+    static std::unique_ptr<Social::UserManager> CreateUserManager();
 
 
 };

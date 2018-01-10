@@ -21,6 +21,7 @@
 #include "symbols/egl_symbols.h"
 #include "symbols/fmod_symbols.h"
 #include "symbols/libm_symbols.h"
+#include "minecraft/symbols.h"
 #include "minecraft/gl.h"
 #include "minecraft/AppPlatform.h"
 #include "minecraft/MinecraftGame.h"
@@ -177,7 +178,7 @@ static void minecraft_keyboard(char str[5], int action) {
         }
         std::stringstream ss;
         ss << str;
-        Keyboard::Keyboard_feedText(ss.str(), false, 0);
+        Keyboard::feedText(ss.str(), false, 0);
     }
 }
 bool modCTRL = false;
@@ -195,10 +196,10 @@ static void minecraft_keyboard_special(int key, int action) {
     }
     int mKey = getKeyMinecraft(key);
     if (action == EGLUT_KEY_PRESS) {
-        Keyboard::Keyboard_feed((unsigned char) mKey, 1);
+        Keyboard::feed((unsigned char) mKey, 1);
         //Keyboard::states[mKey] = 1;
     } else if (action == EGLUT_KEY_RELEASE) {
-        Keyboard::Keyboard_feed((unsigned char) mKey, 0);
+        Keyboard::feed((unsigned char) mKey, 0);
         //Keyboard::states[mKey] = 0;
     }
 }
@@ -210,7 +211,7 @@ static void minecraft_paste(const char* str, int len) {
             l = 3;
         else if ((c & 0b11100000) == 0b11000000)
             l = 2;
-        Keyboard::Keyboard_feedText(mcpe::string(&str[i], (size_t) l), false, 0);
+        Keyboard::feedText(mcpe::string(&str[i], (size_t) l), false, 0);
     }
 }
 static void minecraft_close() {
@@ -545,39 +546,17 @@ int main(int argc, char *argv[]) {
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
-    Common::Common_getGameVersionStringNet = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN6Common23getGameVersionStringNetEv");
+    minecraft_symbols_init(handle);
 
-    Log::info("Launcher", "Game version: %s", Common::Common_getGameVersionStringNet().c_str());
-    XboxLiveHelper::getCLL()->setAppVersion(Common::Common_getGameVersionStringNet().std());
-
-    gl::getOpenGLVendor = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl15getOpenGLVendorEv");
-    gl::getOpenGLRenderer = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl17getOpenGLRendererEv");
-    gl::getOpenGLVersion = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl16getOpenGLVersionEv");
-    gl::getOpenGLExtensions = (mcpe::string (*)()) hybris_dlsym(handle, "_ZN2gl19getOpenGLExtensionsEv");
-    mce::Platform::OGL::OGL_initBindings = (void (*)()) hybris_dlsym(handle, "_ZN3mce8Platform3OGL12InitBindingsEv");
+    Log::info("Launcher", "Game version: %s", Common::getGameVersionStringNet().c_str());
+    XboxLiveHelper::getCLL()->setAppVersion(Common::getGameVersionStringNet().std());
 
     AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
-    AppPlatform::AppPlatform_construct = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatformC2Ev");
-    AppPlatform::AppPlatform_initialize = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform10initializeEv");
-    AppPlatform::AppPlatform__fireAppFocusGained = (void (*)(AppPlatform*)) hybris_dlsym(handle, "_ZN11AppPlatform19_fireAppFocusGainedEv");
 
-    App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
-    MinecraftGame::MinecraftGame_construct = (void (*)(MinecraftGame*, int, char**)) hybris_dlsym(handle, "_ZN13MinecraftGameC2EiPPc");
     MinecraftGame::MinecraftGame_destruct = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGameD2Ev");
-    MinecraftGame::MinecraftGame_update = (void (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame6updateEv");
-    MinecraftGame::MinecraftGame_setRenderingSize = (void (*)(MinecraftGame*, int, int)) hybris_dlsym(handle, "_ZN13MinecraftGame16setRenderingSizeEii");
-    MinecraftGame::MinecraftGame_setUISizeAndScale = (void (*)(MinecraftGame*, int, int, float)) hybris_dlsym(handle, "_ZN13MinecraftGame17setUISizeAndScaleEiif");
-    MinecraftGame::MinecraftGame_getPrimaryUserOptions = (std::shared_ptr<Options> (*)(MinecraftGame*)) hybris_dlsym(handle, "_ZN13MinecraftGame21getPrimaryUserOptionsEv");
-
-    Options::Options_getFullscreen = (bool (*)(Options*)) hybris_dlsym(handle, "_ZNK7Options13getFullscreenEv");
-    Options::Options_setFullscreen = (void (*)(Options*, bool)) hybris_dlsym(handle, "_ZN7Options13setFullscreenEb");
-
-    Mouse::feed = (void (*)(char, char, short, short, short, short)) hybris_dlsym(handle, "_ZN5Mouse4feedEccssss");
 
     Keyboard::states = (int*) hybris_dlsym(handle, "_ZN8Keyboard7_statesE");
-    Keyboard::Keyboard_feed = (void (*)(unsigned char, int)) hybris_dlsym(handle, "_ZN8Keyboard4feedEhi");
-    Keyboard::Keyboard_feedText = (void (*)(const mcpe::string&, bool, unsigned char)) hybris_dlsym(handle, "_ZN8Keyboard8feedTextERKSsbh");
 
     xbox::services::xbox_services_error_code_category = (void* (*)()) hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
     pplx::task_completion_event_java_rps_ticket::task_completion_event_java_rps_ticket_set = (void (*)(pplx::task_completion_event_java_rps_ticket*, xbox::services::system::java_rps_ticket)) hybris_dlsym(handle, "_ZNK4pplx21task_completion_eventIN4xbox8services6system15java_rps_ticketEE3setES4_");
@@ -597,7 +576,6 @@ int main(int argc, char *argv[]) {
     xbox::services::system::auth_config::auth_config_set_xtoken_composition = (void (*)(xbox::services::system::auth_config*, std::vector<xbox::services::system::token_identity_type>)) hybris_dlsym(handle, "_ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE");
     xbox::services::system::auth_config::auth_config_xbox_live_endpoint = (mcpe::string const& (*)(xbox::services::system::auth_config*)) hybris_dlsym(handle, "_ZNK4xbox8services6system11auth_config18xbox_live_endpointEv");
     xbox::services::java_interop::get_java_interop_singleton = (std::shared_ptr<xbox::services::java_interop> (*)()) hybris_dlsym(handle, "_ZN4xbox8services12java_interop26get_java_interop_singletonEv");
-    Social::MultiplayerXBL::MultiplayerXBL_MultiplayerXBL = (void (*)(Social::MultiplayerXBL*)) hybris_dlsym(handle, "_ZN6Social14MultiplayerXBLC2Ev");
 
     Log::info("Launcher", "Creating window");
     eglutInitWindowSize(windowWidth, windowHeight);
@@ -622,7 +600,7 @@ int main(int argc, char *argv[]) {
     platform->initialize();
 
     Log::trace("Launcher", "Initializing OpenGL bindings");
-    mce::Platform::OGL::initBindings();
+    mce::Platform::OGL::InitBindings();
 
     Log::trace("Launcher", "Initializing MinecraftGame (create instance)");
     client = new MinecraftGame(argc, argv);

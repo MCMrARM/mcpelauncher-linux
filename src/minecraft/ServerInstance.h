@@ -17,17 +17,16 @@ class MinecraftEventing;
 class ResourcePackRepository;
 class ResourcePackManager;
 class ContentTierManager;
+class FilePathManager;
+class IContentAccessibilityProvider;
 
 class NetworkHandler {
 
 public:
-    static void (*NetworkHandler_construct)(NetworkHandler*);
 
     char filler[0x200];
 
-    NetworkHandler() {
-        NetworkHandler_construct(this);
-    }
+    NetworkHandler();
 
 };
 
@@ -40,15 +39,9 @@ public:
     char filler2[0x200];
 
     static void (*ServerInstance_construct)(ServerInstance*, IMinecraftApp&, Whitelist const&, OpsList const&, FilePathManager*, std::chrono::duration<long long>, mcpe::string, mcpe::string, mcpe::string, IContentAccessibilityProvider const&, mcpe::string, LevelSettings, minecraft::api::Api&, int, bool, int, int, int, bool, std::vector<mcpe::string> const&, mcpe::string, mce::UUID const&, MinecraftEventing&, NetworkHandler&, ResourcePackRepository&, ContentTierManager const&, ResourcePackManager&, ResourcePackManager*, std::function<void (mcpe::string const&)>);
-    static void (*ServerInstance_update)(ServerInstance*);
-    static void (*ServerInstance_mainThreadNetworkUpdate_HACK)(ServerInstance*);
 
-    void update() {
-        ServerInstance_update(this);
-    }
+    void update();
 
-    void mainThreadNetworkUpdate_HACK() {
-        ServerInstance_mainThreadNetworkUpdate_HACK(this);
-    }
+    void mainThreadNetworkUpdate_HACK();
 
 };
