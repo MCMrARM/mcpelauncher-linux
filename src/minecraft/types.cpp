@@ -38,10 +38,6 @@ void (*ServerInstance::ServerInstance_construct)(ServerInstance*, IMinecraftApp&
 
 void (*Scheduler::Scheduler_processCoroutines)(Scheduler*, std::chrono::duration<long long>);
 
-#include "CommandOutputSender.h"
-
-void (*CommandOutputSender::CommandOutputSender_destruct)(CommandOutputSender*);
-
 #include "ResourcePackStack.h"
 
 void** ResourcePackStack::ResourcePackStack_vtable;

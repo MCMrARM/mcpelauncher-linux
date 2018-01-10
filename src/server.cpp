@@ -96,7 +96,6 @@ int main(int argc, char *argv[]) {
     ((void*&) ServerInstance::ServerInstance_construct) = hybris_dlsym(handle, "_ZN14ServerInstanceC2ER13IMinecraftAppRK9WhitelistRK7OpsListP15FilePathManagerNSt6chrono8durationIxSt5ratioILx1ELx1EEEESsSsSsRK19IContentKeyProviderSs13LevelSettingsRN9minecraft3api3ApiEibiiibRKSt6vectorISsSaISsEESsRKN3mce4UUIDER17MinecraftEventingR14NetworkHandlerR22ResourcePackRepositoryRK18ContentTierManagerR19ResourcePackManagerPS15_St8functionIFvRKSsEE");
     mce::UUID::EMPTY = (mce::UUID*) hybris_dlsym(handle, "_ZN3mce4UUID5EMPTYE");
     Scheduler::Scheduler_processCoroutines = (void (*)(Scheduler*, std::chrono::duration<long long>)) hybris_dlsym(handle, "_ZN9Scheduler17processCoroutinesENSt6chrono8durationIxSt5ratioILx1ELx1000000000EEEE");
-    CommandOutputSender::CommandOutputSender_destruct = (void (*)(CommandOutputSender*)) hybris_dlsym(handle, "_ZN19CommandOutputSenderD2Ev");
     ResourcePackStack::ResourcePackStack_vtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
     ResourcePackStack::ResourcePackStack_add = (void (*)(ResourcePackStack*, PackInstance const&, ResourcePackRepository const&, bool)) hybris_dlsym(handle, "_ZN17ResourcePackStack3addE12PackInstanceRK22ResourcePackRepositoryb");
 

@@ -163,7 +163,7 @@ struct auth_config {
     /// @symbol _ZN4xbox8services6system11auth_config22set_xtoken_compositionESt6vectorINS1_19token_identity_typeESaIS4_EE
     void set_xtoken_composition(std::vector<xbox::services::system::token_identity_type>);
 
-    mcpe::string const& xbox_live_endpoint();
+    mcpe::string const& xbox_live_endpoint() const;
 
 };
 

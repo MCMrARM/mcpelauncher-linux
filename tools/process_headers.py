@@ -62,7 +62,7 @@ PRIMITIVE_TYPES = {
 
 def expand_cpp_default_templates(type_name):
     ret = re.sub(r"(std::unique_ptr\s*)<([\w:]*)>", r"\1<\2,std::default_delete<\2>>", type_name)
-    ret = re.sub(r"(std::vector\s*)<([\w:]*)>", r"\1<\2,std::allocator<\2>>", type_name)
+    ret = re.sub(r"(std::vector\s*)<([\w:]*)>", r"\1<\2,std::allocator<\2>>", ret)
     return ret
 
 def get_mangled_type_name(type_name, substitutions):
@@ -106,6 +106,9 @@ def get_mangled_type_name(type_name, substitutions):
             np = p.split("::")
             if (np[0] == "std" or np[0] == "mcpe") and np[1] == "string":
                 ret.append("Ss")
+                continue
+            if np[0] == "std" and np[1] == "allocator":
+                ret.append("Sa")
                 continue
             substitutions.append(p)
             f = True

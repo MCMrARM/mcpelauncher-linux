@@ -8,18 +8,16 @@ class CommandOutputSender {
 
 public:
 
-    static void (*CommandOutputSender_destruct)(CommandOutputSender*);
-
     static std::vector<mcpe::string> translate(std::vector<mcpe::string> const& v);
 
+    /// @symbol _ZN19CommandOutputSenderC2ERN10Automation16AutomationClientE
     CommandOutputSender(Automation::AutomationClient& automationClient);
 
-    virtual ~CommandOutputSender() {
-        CommandOutputSender_destruct(this);
-    }
+    virtual ~CommandOutputSender();
 
     virtual void send(CommandOrigin const& origin, CommandOutput const& output);
 
+    /// @symbol _ZN19CommandOutputSender22registerOutputCallbackERKSt8functionIFvR19AutomationCmdOutputEE
     virtual void registerOutputCallback();
 
 };

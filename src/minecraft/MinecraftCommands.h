@@ -20,7 +20,7 @@ class MinecraftCommands {
 
 public:
 
-    void setOutputSender(std::unique_ptr<CommandOutputSender> sender) const;
+    void setOutputSender(std::unique_ptr<CommandOutputSender> sender);
 
     MCRESULT requestCommandExecution(std::unique_ptr<CommandOrigin> o, mcpe::string const& s, int i, bool b) const;
 
