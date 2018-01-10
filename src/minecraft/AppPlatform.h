@@ -3,8 +3,8 @@
 class AppPlatform {
 
 public:
+    /// @symbol _ZTV11AppPlatform
     static void** myVtable;
-    static AppPlatform** _singleton;
 
     void** vtable;
     char filler[0xA0 - sizeof(void**)];

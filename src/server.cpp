@@ -90,11 +90,6 @@ int main(int argc, char *argv[]) {
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
-    AppPlatform::myVtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
-    AppPlatform::_singleton = (AppPlatform**) hybris_dlsym(handle, "_ZN11AppPlatform10mSingletonE");
-    mce::UUID::EMPTY = (mce::UUID*) hybris_dlsym(handle, "_ZN3mce4UUID5EMPTYE");
-    ResourcePackStack::ResourcePackStack_vtable = (void**) hybris_dlsym(handle, "_ZTV11AppPlatform");
-
     Log::info("Launcher", "Starting server initialization");
 
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");

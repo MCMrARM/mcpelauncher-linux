@@ -6,7 +6,7 @@ class UUID {
 
 public:
 
-    static UUID* EMPTY;
+    static mce::UUID* EMPTY;
 
     static mce::UUID fromString(mcpe::string const&);
 

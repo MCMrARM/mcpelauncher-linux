@@ -67,7 +67,7 @@ def expand_cpp_default_templates(type_name):
 
 def get_mangled_type_name(type_name, substitutions):
     type_name = expand_cpp_default_templates(type_name)
-    print(type_name)
+    # print(type_name)
 
     sp = re.findall(r"((unsigned\s*|signed\s*|long\s*|short\s*|[\w:]+)+|[*&<>,])", type_name)
     ret = []
@@ -142,6 +142,12 @@ def get_mangled_method(method):
             ret += get_mangled_type_name(param["type"], substitutions)
     return ret
 
+def get_mangled_member(member, path):
+    ret = "_ZN";
+    ret += get_mangled_type_name(path, [])
+    ret += str(len(member["name"])) + member["name"] + "E"
+    return ret
+
 def get_doxygen_properties(doxygen):
     properties = {}
     lines = doxygen.split('\n')
@@ -165,6 +171,30 @@ def process_header(file):
         print("Processing class " + class_name)
         class_data = cpp_header.classes[class_name]
         # pprint(class_data)
+
+        class_name_with_namespace = class_data["namespace"] + "::" + class_data["name"]
+        if class_name_with_namespace.startswith("::"):
+            class_name_with_namespace = class_name_with_namespace[2:]
+
+        # pprint(class_data)
+        for member_vis in class_data["properties"]:
+            for member in class_data["properties"][member_vis]:
+                if not member["static"]:
+                    continue
+                mangled_name = get_mangled_member(member, class_name_with_namespace)
+                if "doxygen" in member:
+                    props = get_doxygen_properties(member["doxygen"])
+                    if "symbol" in props:
+                        mangled_name = props["symbol"]
+                m_type = member["type"]
+                if m_type.startswith("static "):
+                    m_type = m_type[len("static "):]
+                output(m_type + " " + class_name_with_namespace + "::" + member["name"] + ";");
+                symbol_list.append({
+                    "name": class_name_with_namespace + "::" + member["name"],
+                    "symbol": mangled_name
+                })
+
         for method_vis in class_data["methods"]:
             for method in class_data["methods"][method_vis]:
                 if method["defined"] or method["pure_virtual"]:

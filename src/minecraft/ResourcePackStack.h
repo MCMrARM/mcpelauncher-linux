@@ -15,13 +15,14 @@ struct PackInstance {
 
 struct ResourcePackStack {
 
-    static void** ResourcePackStack_vtable;
+    /// @symbol _ZTV17ResourcePackStack
+    static void** vtable_sym;
 
     void** vtable;
     char filler[0x10];
 
     ResourcePackStack() {
-        vtable = ResourcePackStack_vtable + 2;
+        vtable = vtable_sym + 2;
         memset(filler, 0, sizeof(filler));
     }
 
