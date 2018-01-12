@@ -8,6 +8,8 @@ class GLFWGameWindow : public GameWindow {
 private:
     GLFWwindow* window;
     double lastMouseX = 0.0, lastMouseY = 0.0;
+    int windowedX = -1, windowedY = -1;
+    int windowedWidth = -1, windowedHeight = -1;
 
     static int getKeyMinecraft(int keyCode);
 

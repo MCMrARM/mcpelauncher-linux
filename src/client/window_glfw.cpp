@@ -4,7 +4,7 @@
 #include <iomanip>
 
 GLFWGameWindow::GLFWGameWindow(const std::string& title, int width, int height, GraphicsApi api) :
-        GameWindow(title, width, height, api) {
+        GameWindow(title, width, height, api), windowedWidth(width), windowedHeight(height) {
     glfwDefaultWindowHints();
     if (api == GraphicsApi::OPENGL_ES2) {
         glfwWindowHint(GLFW_OPENGL_API, GLFW_OPENGL_ES_API);
@@ -52,7 +52,15 @@ void GLFWGameWindow::setCursorDisabled(bool disabled) {
 }
 
 void GLFWGameWindow::setFullscreen(bool fullscreen) {
-    // TODO:
+    if (fullscreen) {
+        glfwGetWindowPos(window, &windowedX, &windowedY);
+        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    } else {
+        glfwSetWindowMonitor(window, nullptr, windowedX, windowedY, windowedWidth, windowedHeight, GLFW_DONT_CARE);
+    }
 }
 
 void GLFWGameWindow::_glfwWindowSizeCallback(GLFWwindow* window, int w, int h) {
@@ -83,6 +91,8 @@ int GLFWGameWindow::getKeyMinecraft(int keyCode) {
         return 27;
     if (keyCode == GLFW_KEY_LEFT_SHIFT)
         return 16;
+    if (keyCode >= GLFW_KEY_F1 && keyCode <= GLFW_KEY_F12)
+        return keyCode - GLFW_KEY_F1 + 112;
     return keyCode;
 }
 

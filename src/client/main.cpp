@@ -526,7 +526,7 @@ int main(int argc, char *argv[]) {
         Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
     });
     window.setKeyboardCallback([](int key, KeyAction action) {
-        if (key == 65480 && action == KeyAction::PRESS)
+        if (key == 112 + 10 && action == KeyAction::PRESS)
             client->getPrimaryUserOptions()->setFullscreen(!client->getPrimaryUserOptions()->getFullscreen());
         if (action == KeyAction::PRESS)
             Keyboard::feed((unsigned char) key, 1);
