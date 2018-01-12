@@ -4,10 +4,10 @@
 #include <sys/stat.h>
 #include "include/views/cef_browser_view.h"
 #include "initial_setup_browser.h"
-#include "common.h"
-#include "log.h"
-#include "extract.h"
-#include "path_helper.h"
+#include "../common/common.h"
+#include "../common/log.h"
+#include "../common/extract.h"
+#include "../common/path_helper.h"
 
 #ifndef DISABLE_PLAYAPI
 #include "google_play_helper.h"
@@ -29,7 +29,7 @@ bool InitialSetupBrowserClient::OpenBrowser() {
 
         CefBrowserSettings browserSettings;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
-                client, "file://" + PathHelper::findDataFile("src/initial_setup_resources/index.html"), browserSettings, NULL, NULL);
+                client, "file://" + PathHelper::findDataFile("src/client/initial_setup_resources/index.html"), browserSettings, NULL, NULL);
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 

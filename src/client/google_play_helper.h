@@ -4,7 +4,7 @@
 #include <thread>
 #include <playapi/util/config.h>
 #include <include/cef_client.h>
-#include "browser.h"
+#include "../common/browser.h"
 
 class InitialSetupBrowserClient;
 

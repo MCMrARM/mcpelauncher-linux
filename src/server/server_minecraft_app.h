@@ -1,6 +1,6 @@
 #pragma once
 
-#include "minecraft/IMinecraftApp.h"
+#include "../minecraft/IMinecraftApp.h"
 
 class DedicatedServerMinecraftApp : public IMinecraftApp {
 

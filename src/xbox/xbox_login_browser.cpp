@@ -3,15 +3,15 @@
 
 #include <iostream>
 #include <X11/Xlib.h>
-#include "common.h"
-#include "log.h"
+#include "../common/common.h"
+#include "../common/log.h"
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
 #include "msa.h"
 #include "xboxlive.h"
-#include "base64.h"
-#include "minecraft/Xbox.h"
+#include "../common/base64.h"
+#include "../minecraft/Xbox.h"
 
 extern "C" {
 #include "eglut.h"

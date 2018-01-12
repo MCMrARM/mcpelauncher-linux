@@ -1,4 +1,4 @@
-#include "linux_appplatform.h"
+#include "appplatform.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -13,11 +13,11 @@
 #include <execinfo.h>
 #include <cxxabi.h>
 #include <dlfcn.h>
-#include "minecraft/ImagePickingCallback.h"
-#include "minecraft/FilePickerSettings.h"
-#include "log.h"
-#include "common.h"
-#include "path_helper.h"
+#include "../minecraft/ImagePickingCallback.h"
+#include "../minecraft/FilePickerSettings.h"
+#include "../common/log.h"
+#include "../common/common.h"
+#include "../common/path_helper.h"
 #ifndef SERVER
 #include "window.h"
 #endif

@@ -6,8 +6,8 @@
 #include <curl/curl.h>
 #include <zlib.h>
 #include "log.h"
-#include "msa.h"
-#include "xboxlive.h"
+#include "../xbox/msa.h"
+#include "../xbox/xboxlive.h"
 
 std::string const CLL::VORTEX_URL = "https://vortex.data.microsoft.com/collect/v1";
 // TODO: Those are normally fetched from config

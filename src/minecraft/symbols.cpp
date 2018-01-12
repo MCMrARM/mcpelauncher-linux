@@ -2,7 +2,7 @@
 // Generated on Wed Jan 10 2018 17:44:29 UTC
 
 #include <hybris/dlfcn.h>
-#include "../log.h"
+#include "../common/log.h"
 
 #include "UserManager.h"
 static std::unique_ptr<Social::UserManager> (*_Social_UserManager_CreateUserManager)();

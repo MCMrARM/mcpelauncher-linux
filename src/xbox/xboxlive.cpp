@@ -1,7 +1,7 @@
 #include "xboxlive.h"
-#include "base64.h"
-#include "path_helper.h"
-#include "log.h"
+#include "../common/base64.h"
+#include "../common/path_helper.h"
+#include "../common/log.h"
 
 #include <fstream>
 

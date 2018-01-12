@@ -13,8 +13,8 @@
 #include <openssl/err.h>
 #include <random>
 #include <netinet/in.h>
-#include "base64.h"
-#include "log.h"
+#include "../common/base64.h"
+#include "../common/log.h"
 
 std::chrono::milliseconds MSANetwork::serverTimeOffset;
 

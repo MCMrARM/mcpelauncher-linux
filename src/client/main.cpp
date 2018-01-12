@@ -16,33 +16,33 @@
 #include <EGL/egl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "symbols/gles_symbols.h"
-#include "symbols/android_symbols.h"
-#include "symbols/egl_symbols.h"
-#include "symbols/fmod_symbols.h"
-#include "symbols/libm_symbols.h"
-#include "minecraft/symbols.h"
-#include "minecraft/gl.h"
-#include "minecraft/AppPlatform.h"
-#include "minecraft/MinecraftGame.h"
-#include "minecraft/Mouse.h"
-#include "minecraft/Keyboard.h"
-#include "minecraft/Options.h"
-#include "minecraft/Common.h"
-#include "minecraft/Xbox.h"
-#include "minecraft/MultiplayerService.h"
-#include "linux_appplatform.h"
-#include "linux_store.h"
-#include "common.h"
-#include "hook.h"
-#include "xboxlive.h"
-#include "extract.h"
+#include "../common/symbols/gles_symbols.h"
+#include "../common/symbols/android_symbols.h"
+#include "../common/symbols/egl_symbols.h"
+#include "../common/symbols/fmod_symbols.h"
+#include "../common/symbols/libm_symbols.h"
+#include "../minecraft/symbols.h"
+#include "../minecraft/gl.h"
+#include "../minecraft/AppPlatform.h"
+#include "../minecraft/MinecraftGame.h"
+#include "../minecraft/Mouse.h"
+#include "../minecraft/Keyboard.h"
+#include "../minecraft/Options.h"
+#include "../minecraft/Common.h"
+#include "../minecraft/Xbox.h"
+#include "../minecraft/MultiplayerService.h"
+#include "appplatform.h"
+#include "store.h"
+#include "../common/common.h"
+#include "../common/hook.h"
+#include "../xbox/xboxlive.h"
+#include "../common/extract.h"
 #include "window_eglut.h"
 #ifndef DISABLE_CEF
-#include "browser.h"
-#include "xbox_login_browser.h"
+#include "../common/browser.h"
+#include "../xbox/xbox_login_browser.h"
 #include "initial_setup_browser.h"
-#include "path_helper.h"
+#include "../common/path_helper.h"
 #endif
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
@@ -54,7 +54,7 @@ extern "C" {
 #include <eglut.h>
 #include <hybris/dlfcn.h>
 #include <hybris/hook.h>
-#include "../libs/hybris/src/jb/linker.h"
+#include "../../libs/hybris/src/jb/linker.h"
 
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <iostream>
-#include "minecraft/string.h"
-#include "log.h"
+#include "../minecraft/string.h"
+#include "../common/log.h"
 
 struct StoreListener;
 struct PurchaseInfo;

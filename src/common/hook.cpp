@@ -10,7 +10,7 @@
 
 extern "C" {
 #include <hybris/dlfcn.h>
-#include "../libs/hybris/src/jb/linker.h"
+#include "../../libs/hybris/src/jb/linker.h"
 }
 
 struct soinfo_hookinfo {

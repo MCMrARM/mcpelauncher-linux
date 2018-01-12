@@ -1,8 +1,8 @@
 #pragma once
 
 #include "msa.h"
-#include "cll.h"
-#include "minecraft/Xbox.h"
+#include "../common/cll.h"
+#include "../minecraft/Xbox.h"
 #include <map>
 
 class SimpleMSAStorageManager;

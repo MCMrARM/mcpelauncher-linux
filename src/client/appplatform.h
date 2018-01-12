@@ -7,12 +7,12 @@
 #include <vector>
 #include <mutex>
 #include <memory>
-#include "log.h"
-#include "path_helper.h"
-#include "minecraft/gl.h"
-#include "minecraft/AppPlatform.h"
-#include "minecraft/ImagePickingCallback.h"
-#include "minecraft/MultiplayerService.h"
+#include "../common/log.h"
+#include "../common/path_helper.h"
+#include "../minecraft/gl.h"
+#include "../minecraft/AppPlatform.h"
+#include "../minecraft/ImagePickingCallback.h"
+#include "../minecraft/MultiplayerService.h"
 
 class ImageData;
 class ImagePickingCallback;
