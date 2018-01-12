@@ -176,8 +176,7 @@ void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     std::cerr << "This build does not support Xbox Live login.\n";
     std::cerr << "To log in please build the launcher with CEF support.\n";
     ret->auth_flow->auth_flow_result.code = 2;
-    pplx::task_completion_event_auth_flow_result::task_completion_event_auth_flow_result_set(
-            &ret->auth_flow->auth_flow_event, ret->auth_flow->auth_flow_result);
+    ret->auth_flow->auth_flow_event.set(ret->auth_flow->auth_flow_result);
 #else
     XboxLoginBrowserClient::OpenBrowser(ret);
 #endif
