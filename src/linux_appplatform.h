@@ -17,9 +17,9 @@
 class ImageData;
 class ImagePickingCallback;
 class FilePickerSettings;
+class GameWindow;
 
 extern bool enablePocketGuis;
-extern bool moveMouseToCenter;
 
 class LinuxAppPlatform : public AppPlatform {
 
@@ -30,11 +30,13 @@ private:
 
     static void replaceVtableEntry(void* lib, void** vtable, const char* sym, void* nw);
 
+#ifndef SERVER
+    GameWindow* window;
+#endif
+
 public:
     static void** myVtable;
     static void initVtable(void* lib);
-
-    static bool mousePointerHidden;
 
     mcpe::string region;
     mcpe::string internalStorage, externalStorage, currentStorage, userdata, userdataPathForLevels, tmpPath;
@@ -45,6 +47,10 @@ public:
     std::mutex runOnMainThreadMutex;
 
     LinuxAppPlatform();
+
+#ifndef SERVER
+    void setWindow(GameWindow* window) { this->window = window; }
+#endif
 
     mcpe::string getDataUrl() { // this is used only for sounds
         Log::trace(TAG, "getDataUrl: %s", assetsDir.c_str());
@@ -170,6 +176,14 @@ public:
         runOnMainThreadMutex.lock();
         runOnMainThreadQueue.push_back(f);
         runOnMainThreadMutex.unlock();
+    }
+
+    void runMainThreadTasks() {
+        runOnMainThreadMutex.lock();
+        auto queue = std::move(runOnMainThreadQueue);
+        runOnMainThreadMutex.unlock();
+        for (auto const& func : queue)
+            func();
     }
 
 };

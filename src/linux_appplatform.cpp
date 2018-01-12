@@ -19,18 +19,17 @@
 #include "log.h"
 #include "common.h"
 #include "path_helper.h"
+#ifndef SERVER
+#include "window.h"
+#endif
 
 extern "C" {
-#ifndef SERVER
-#include <eglut.h>
-#endif
 #include "../hybris/include/hybris/dlfcn.h"
 }
 
 const char* LinuxAppPlatform::TAG = "AppPlatform";
 
 void** LinuxAppPlatform::myVtable = nullptr;
-bool LinuxAppPlatform::mousePointerHidden = false;
 bool enablePocketGuis = false;
 
 LinuxAppPlatform::LinuxAppPlatform() : AppPlatform() {
@@ -111,16 +110,13 @@ void LinuxAppPlatform::initVtable(void* lib) {
 }
 
 void LinuxAppPlatform::hideMousePointer() {
-    mousePointerHidden = true;
 #ifndef SERVER
-    moveMouseToCenter = true;
-    eglutSetMousePointerVisiblity(EGLUT_POINTER_INVISIBLE);
+    window->setCursorDisabled(true);
 #endif
 }
 void LinuxAppPlatform::showMousePointer() {
-    mousePointerHidden = false;
 #ifndef SERVER
-    eglutSetMousePointerVisiblity(EGLUT_POINTER_VISIBLE);
+    window->setCursorDisabled(false);
 #endif
 }
 
@@ -192,9 +188,7 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
 void LinuxAppPlatform::setFullscreenMode(int mode) {
     Log::trace(TAG, "Changing fullscreen mode: %i", mode);
 #ifndef SERVER
-    int newMode = mode == 1 ? EGLUT_FULLSCREEN : EGLUT_WINDOWED;
-    if (eglutGet(EGLUT_FULLSCREEN_MODE) != newMode)
-        eglutToggleFullscreen();
+    window->setFullscreen(mode != 0);
 #endif
 }
 

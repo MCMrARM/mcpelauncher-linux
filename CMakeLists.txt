@@ -45,7 +45,7 @@ set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)
 
 set(COMMON_SOURCE_FILES src/common.cpp src/hook.cpp src/linux_appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/base64.cpp src/base64.h src/async_result_util.h src/extract.cpp src/extract.h src/path_helper.cpp src/path_helper.h src/log.cpp src/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h)
 set(CLIENT_SOURCE_FILES src/main.cpp src/amdfix.s src/linux_appplatform.cpp src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/xboxlive.h src/xboxlive.cpp src/cll.cpp src/cll.h)
-set(CLIENT_SOURCE_FILES_CEF src/browser.cpp src/browser.h src/xbox_login_browser.h src/xbox_login_browser.cpp src/initial_setup_browser.cpp src/initial_setup_browser.h)
+set(CLIENT_SOURCE_FILES_CEF src/browser.cpp src/browser.h src/xbox_login_browser.h src/xbox_login_browser.cpp src/initial_setup_browser.cpp src/initial_setup_browser.h src/window.h src/window_eglut.cpp src/window_eglut.h)
 set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/google_login_browser.h src/google_login_browser.cpp src/google_play_helper.cpp src/google_play_helper.h)
 set(SERVER_SOURCE_FILES src/server.cpp src/server_minecraft_app.h src/server_properties.cpp src/server_properties.h)
 

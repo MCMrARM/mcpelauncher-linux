@@ -37,6 +37,7 @@
 #include "hook.h"
 #include "xboxlive.h"
 #include "extract.h"
+#include "window_eglut.h"
 #ifndef DISABLE_CEF
 #include "browser.h"
 #include "xbox_login_browser.h"
@@ -102,121 +103,6 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 
 static MinecraftGame* client;
 static LinuxAppPlatform* platform;
-
-int winId = 0;
-bool moveMouseToCenter = false;
-
-static void minecraft_idle() {
-    if (client->wantToQuit()) {
-        delete client;
-        eglutDestroyWindow(winId);
-        eglutFini();
-        return;
-    }
-    int cx = eglutGetWindowWidth() / 2;
-    int cy = eglutGetWindowHeight() / 2;
-    if (moveMouseToCenter) {
-        eglutWarpMousePointer(cx, cy);
-        moveMouseToCenter = false;
-    }
-    eglutPostRedisplay();
-}
-static void minecraft_draw() {
-    platform->runOnMainThreadMutex.lock();
-    auto queue = std::move(platform->runOnMainThreadQueue);
-    platform->runOnMainThreadMutex.unlock();
-    for (auto const& func : queue)
-        func();
-    client->update();
-}
-float pixelSize = 2.f;
-int oldw = -1, oldh = -1;
-static void minecraft_reshape(int w, int h) {
-    if (oldw == w && oldh == h)
-        return;
-    oldw = w;
-    oldh = h;
-    client->setRenderingSize(w, h);
-    client->setUISizeAndScale(w, h, pixelSize);
-}
-static void minecraft_mouse(int x, int y) {
-    if (LinuxAppPlatform::mousePointerHidden) {
-        int cx = eglutGetWindowWidth() / 2;
-        int cy = eglutGetWindowHeight() / 2;
-        if (x != cy || y != cy) {
-            Mouse::feed(0, 0, x, y, x - cx, y - cy);
-            moveMouseToCenter = true;
-        }
-    } else {
-        Mouse::feed(0, 0, x, y, 0, 0);
-    }
-}
-static void minecraft_mouse_button(int x, int y, int btn, int action) {
-    int mcBtn = (btn == 1 ? 1 : (btn == 2 ? 3 : (btn == 3 ? 2 : (btn == 5 ? 4 : btn))));
-    Mouse::feed((char) mcBtn, (char) (action == EGLUT_MOUSE_PRESS ? (btn == 5 ? -120 : (btn == 4 ? 120 : 1)) : 0), x, y, 0, 0);
-}
-
-int getKeyMinecraft(int keyCode) {
-    if (keyCode == 65505)
-        return 16;
-    if (keyCode >= 97 && keyCode <= 122)
-        return (keyCode + 65 - 97);
-    if (keyCode >= 65361 && keyCode <= 65364)
-        return (keyCode + 37 - 65361);
-    if (keyCode >= 65470 && keyCode <= 65481)
-        return (keyCode + 112 - 65470);
-
-    return keyCode;
-}
-static void minecraft_keyboard(char str[5], int action) {
-    if (strcmp(str, "\t") == 0 || strcmp(str, "\26") == 0 || strcmp(str, "\33") == 0) // \t, paste, esc
-        return;
-    if (action == EGLUT_KEY_PRESS || action == EGLUT_KEY_REPEAT) {
-        if (str[0] == 13) {
-            str[0] = 10;
-            str[1] = 0;
-        }
-        std::stringstream ss;
-        ss << str;
-        Keyboard::feedText(ss.str(), false, 0);
-    }
-}
-bool modCTRL = false;
-static void minecraft_keyboard_special(int key, int action) {
-    if (key == 65507)
-        modCTRL = (action != EGLUT_KEY_RELEASE);
-    if (modCTRL && (key == 86 || key == 118) && action == EGLUT_KEY_PRESS) {
-        eglutRequestPaste();
-    }
-    if (key == 65480) {
-        if (action == EGLUT_KEY_PRESS) {
-            client->getPrimaryUserOptions()->setFullscreen(!client->getPrimaryUserOptions()->getFullscreen());
-        }
-        return;
-    }
-    int mKey = getKeyMinecraft(key);
-    if (action == EGLUT_KEY_PRESS) {
-        Keyboard::feed((unsigned char) mKey, 1);
-        //Keyboard::states[mKey] = 1;
-    } else if (action == EGLUT_KEY_RELEASE) {
-        Keyboard::feed((unsigned char) mKey, 0);
-        //Keyboard::states[mKey] = 0;
-    }
-}
-static void minecraft_paste(const char* str, int len) {
-    for (int i = 0; i < len; i++) {
-        char c = str[i];
-        int l = 1;
-        if ((c & 0b11110000) == 0b11100000)
-            l = 3;
-        else if ((c & 0b11100000) == 0b11000000)
-            l = 2;
-        Keyboard::feedText(mcpe::string(&str[i], (size_t) l), false, 0);
-    }
-}
-static void minecraft_close() {
-    client->quit();
-}
 
 void detachFromJavaStub() {
     Log::trace("Launcher", "detach_from_java stub called");
@@ -381,6 +267,7 @@ int main(int argc, char *argv[]) {
 
     int windowWidth = 720;
     int windowHeight = 480;
+    float pixelSize = 2.f;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
             i++;
@@ -549,11 +436,11 @@ int main(int argc, char *argv[]) {
     XboxLiveHelper::getCLL()->setAppVersion(Common::getGameVersionStringNet().std());
 
     Log::info("Launcher", "Creating window");
-    eglutInitWindowSize(windowWidth, windowHeight);
-    eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
-    eglutInit(argc, argv);
 
-    winId = eglutCreateWindow("Minecraft", PathHelper::getIconPath().c_str());
+    eglutInit(argc, argv);
+    EGLUTWindow window ("Minecraft", windowWidth, windowHeight, GraphicsApi::OPENGL_ES2);
+    window.setIcon(PathHelper::getIconPath());
+    window.show();
 
     Log::info("Launcher", "Starting game initialization");
 
@@ -567,6 +454,7 @@ int main(int argc, char *argv[]) {
     LinuxAppPlatform::initVtable(handle);
     Log::trace("Launcher", "Initializing AppPlatform (create instance)");
     platform = new LinuxAppPlatform();
+    platform->setWindow(&window);
     Log::trace("Launcher", "Initializing AppPlatform (initialize call)");
     platform->initialize();
 
@@ -583,7 +471,7 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Game initialized");
 
     if (client->getPrimaryUserOptions()->getFullscreen())
-        eglutToggleFullscreen();
+        window.setFullscreen(true);
 
     if (!mods.empty())
         Log::info("Launcher", "Initializing mods");
@@ -593,21 +481,64 @@ int main(int argc, char *argv[]) {
             initFunc(client);
     }
 
-    eglutIdleFunc(minecraft_idle);
-    eglutReshapeFunc(minecraft_reshape);
-    eglutDisplayFunc(minecraft_draw);
-    eglutMouseFunc(minecraft_mouse);
-    eglutMouseButtonFunc(minecraft_mouse_button);
-    eglutKeyboardFunc(minecraft_keyboard);
-    eglutSpecialFunc(minecraft_keyboard_special);
-    eglutPasteFunc(minecraft_paste);
-    eglutCloseWindowFunc(minecraft_close);
+    window.setDrawCallback([&client, &window]() {
+        if (client->wantToQuit()) {
+            delete client;
+            window.close();
+            return;
+        }
+        platform->runMainThreadTasks();
+        client->update();
+    });
+    window.setWindowSizeCallback([&client, pixelSize](int w, int h) {
+        client->setRenderingSize(w, h);
+        client->setUISizeAndScale(w, h, pixelSize);
+    });
+    window.setMouseButtonCallback([](double x, double y, int btn, MouseButtonAction action) {
+        Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
+    });
+    window.setMousePositionCallback([](double x, double y) {
+        Mouse::feed(0, 0, (short) x, (short) y, 0, 0);
+    });
+    window.setMouseRelativePositionCallback([](double x, double y) {
+        Mouse::feed(0, 0, 0, 0, (short) x, (short) y);
+    });
+    window.setMouseScrollCallback([](double x, double y, double dx, double dy) {
+        char cdy = (char) std::max(std::min(dy * 127.0, 127.0), -127.0);
+        Mouse::feed(4, cdy, 0, 0, (short) x, (short) y);
+    });
+    window.setKeyboardCallback([](int key, KeyAction action) {
+        if (key == 65480 && action == KeyAction::PRESS)
+            client->getPrimaryUserOptions()->setFullscreen(!client->getPrimaryUserOptions()->getFullscreen());
+        if (action == KeyAction::PRESS)
+            Keyboard::feed((unsigned char) key, 1);
+        else if (action == KeyAction::RELEASE)
+            Keyboard::feed((unsigned char) key, 0);
+
+    });
+    window.setKeyboardTextCallback([](std::string const& c) {
+        Keyboard::feedText(c, false, 0);
+    });
+    window.setPasteCallback([](std::string const& str) {
+        for (int i = 0; i < str.length(); i++) {
+            char c = str[i];
+            int l = 1;
+            if ((c & 0b11110000) == 0b11100000)
+                l = 3;
+            else if ((c & 0b11100000) == 0b11000000)
+                l = 2;
+            Keyboard::feedText(mcpe::string(&str[i], (size_t) l), false, 0);
+        }
+    });
+    window.setCloseCallback([]() {
+        client->quit();
+    });
     Log::trace("Launcher", "Initialized display");
 
     //(*AppPlatform::_singleton)->_fireAppFocusGained();
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
-    eglutMainLoop();
+    window.runLoop();
 
     // this is an ugly hack to workaround the close app crashes MCPE causes
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9TaskGroupD2Ev");
