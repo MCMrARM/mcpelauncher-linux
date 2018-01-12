@@ -36,12 +36,12 @@ if (PLAYAPI_ENABLED)
 endif()
 
 include_directories(${PNG_INCLUDE_DIRS})
-include_directories(eglut)
+include_directories(libs/eglut)
 include_directories(libs/rapidxml)
-include_directories(hybris/include)
+include_directories(libs/hybris/include)
 
-set(HYBRIS_SOURCES hybris/src/cache.c hybris/src/dlfcn.c hybris/src/hooks.c hybris/src/hooks_shm.c hybris/src/logging.c hybris/src/properties.c hybris/src/strlcpy.c hybris/src/ctype.c hybris/src/sysconf.c hybris/src/jb/dlfcn.c hybris/src/jb/linker.c hybris/src/jb/linker_environ.c hybris/src/jb/linker_format.c hybris/src/jb/rt.c)
-set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)
+set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hooks.c libs/hybris/src/hooks_shm.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/strlcpy.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c)
+set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
 set(COMMON_SOURCE_FILES src/common.cpp src/hook.cpp src/linux_appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/base64.cpp src/base64.h src/async_result_util.h src/extract.cpp src/extract.h src/path_helper.cpp src/path_helper.h src/log.cpp src/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h)
 set(CLIENT_SOURCE_FILES src/main.cpp src/amdfix.s src/linux_appplatform.cpp src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/xboxlive.h src/xboxlive.cpp src/cll.cpp src/cll.h)

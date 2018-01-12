@@ -9,8 +9,8 @@
 #include "log.h"
 
 extern "C" {
-#include "../hybris/include/hybris/dlfcn.h"
-#include "../hybris/src/jb/linker.h"
+#include <hybris/dlfcn.h>
+#include "../libs/hybris/src/jb/linker.h"
 }
 
 struct soinfo_hookinfo {

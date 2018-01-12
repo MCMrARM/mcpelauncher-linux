@@ -15,7 +15,6 @@
 #include <dlfcn.h>
 #include "minecraft/ImagePickingCallback.h"
 #include "minecraft/FilePickerSettings.h"
-#include "../hybris/src/jb/linker.h"
 #include "log.h"
 #include "common.h"
 #include "path_helper.h"
@@ -24,7 +23,7 @@
 #endif
 
 extern "C" {
-#include "../hybris/include/hybris/dlfcn.h"
+#include <hybris/dlfcn.h>
 }
 
 const char* LinuxAppPlatform::TAG = "AppPlatform";

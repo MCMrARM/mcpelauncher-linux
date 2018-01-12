@@ -52,9 +52,9 @@
 extern "C" {
 
 #include <eglut.h>
-#include "../hybris/include/hybris/dlfcn.h"
-#include "../hybris/include/hybris/hook.h"
-#include "../hybris/src/jb/linker.h"
+#include <hybris/dlfcn.h>
+#include <hybris/hook.h>
+#include "../libs/hybris/src/jb/linker.h"
 
 }
 

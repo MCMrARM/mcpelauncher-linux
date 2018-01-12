@@ -12,8 +12,8 @@
 #include "log.h"
 
 extern "C" {
-#include "../hybris/include/hybris/hook.h"
-#include "../hybris/include/hybris/dlfcn.h"
+#include <hybris/hook.h>
+#include <hybris/dlfcn.h>
 }
 
 static const char* TAG = "Launcher";
