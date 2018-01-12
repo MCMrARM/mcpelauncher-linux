@@ -7,19 +7,16 @@ class GLFWGameWindow : public GameWindow {
 
 private:
     GLFWwindow* window;
+    double lastMouseX = 0.0, lastMouseY = 0.0;
 
-/*
     static int getKeyMinecraft(int keyCode);
 
-    static void _eglutIdleFunc();
-    static void _eglutDisplayFunc();
-    static void _eglutReshapeFunc(int w, int h);
-    static void _eglutMouseFunc(int x, int y);
-    static void _eglutMouseButtonFunc(int x, int y, int btn, int action);
-    static void _eglutKeyboardFunc(char str[5], int action);
-    static void _eglutKeyboardSpecialFunc(int key, int action);
-    static void _eglutPasteFunc(const char* str, int len);
-    static void _eglutCloseWindowFunc();*/
+    static void _glfwWindowSizeCallback(GLFWwindow* window, int w, int h);
+    static void _glfwCursorPosCallback(GLFWwindow* window, double x, double y);
+    static void _glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void _glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void _glfwCharCallback(GLFWwindow* window, unsigned int ch);
+    static void _glfwWindowCloseCallback(GLFWwindow* window);
 
 public:
     GLFWGameWindow(const std::string& title, int width, int height, GraphicsApi api);
