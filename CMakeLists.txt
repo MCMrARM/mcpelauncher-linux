@@ -15,8 +15,24 @@ find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(X11 REQUIRED)
 
+include(ExternalProject)
+
+set(GLFW_ENABLED false)
 set(CEF_ENABLED true)
 set(PLAYAPI_ENABLED true)
+
+if (GLFW_ENABLED)
+    ExternalProject_Add(
+            glfw
+            URL "https://github.com/glfw/glfw/archive/3.2.1.tar.gz"
+            URL_HASH SHA1=bee9cd9a8b4925184070ade5bc287c5635830eb0
+            INSTALL_DIR ${CMAKE_BINARY_DIR}/ext/glfw
+            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext/glfw" "-DBUILD_SHARED_LIBS=OFF" "-DCMAKE_C_FLAGS=-m32" "-DCMAKE_LINK_FLAGS=-m32" "-DCMAKE_LIBRARY_ARCHITECTURE=i386-linux-gnu"
+    )
+    set(GLFW_LIBRARIES ${CMAKE_BINARY_DIR}/ext/glfw/lib/libglfw3.a)
+    set(GLFW_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ext/glfw/include/)
+endif()
+
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/cef)
     message(WARNING "CEF not found. Xbox Live login and APK download features will be disabled.\nTo set up CEF please run setup_cef.sh in the source directory.")
     set(CEF_ENABLED false)
@@ -36,7 +52,6 @@ if (PLAYAPI_ENABLED)
 endif()
 
 include_directories(${PNG_INCLUDE_DIRS})
-include_directories(libs/eglut)
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
@@ -45,10 +60,11 @@ set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
 set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h)
 set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/amdfix.s src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h)
-set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h src/client/window_eglut.cpp src/client/window_eglut.h)
+set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h)
 set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/client/google_login_browser.h src/client/google_login_browser.cpp src/client/google_play_helper.cpp src/client/google_play_helper.h)
+set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
+set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
 set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h)
-
 if (CEF_ENABLED)
     link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
     set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_CEF})
@@ -56,10 +72,17 @@ endif()
 if (PLAYAPI_ENABLED)
     set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_PLAYAPI})
 endif()
+if (GLFW_ENABLED)
+    include_directories(${GLFW_INCLUDE_DIR})
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_GLFW})
+else()
+    include_directories(libs/eglut)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_EGLUT} ${EGLUT_SOURCES})
+endif()
 
 set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
-add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z png curl zip crypto)
 target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
 
@@ -77,6 +100,13 @@ if (PLAYAPI_ENABLED)
     target_link_libraries(mcpelauncher gplayapi)
 else()
     target_compile_definitions(mcpelauncher PRIVATE DISABLE_PLAYAPI)
+endif()
+if (GLFW_ENABLED)
+    add_dependencies(mcpelauncher glfw)
+    target_link_libraries(mcpelauncher ${GLFW_LIBRARIES} ${X11_Xcursor_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinerama_LIB})
+    target_compile_definitions(mcpelauncher PRIVATE USE_GLFW)
+else()
+    target_compile_definitions(mcpelauncher PRIVATE USE_EGLUT)
 endif()
 
 function (add_non_source_dir_custom_command command...)

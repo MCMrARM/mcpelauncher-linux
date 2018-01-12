@@ -13,7 +13,6 @@
 #include <X11/Xlib.h>
 #include <functional>
 #include <sys/mman.h>
-#include <EGL/egl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include "../common/symbols/gles_symbols.h"
@@ -37,7 +36,6 @@
 #include "../common/hook.h"
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
-#include "window_eglut.h"
 #ifndef DISABLE_CEF
 #include "../common/browser.h"
 #include "../xbox/xbox_login_browser.h"
@@ -46,12 +44,21 @@
 #endif
 #ifndef DISABLE_PLAYAPI
 #include "google_login_browser.h"
-
+#endif
+#ifdef USE_EGLUT
+#include <EGL/egl.h>
+extern "C" {
+#include <eglut.h>
+}
+#include "window_eglut.h"
+#endif
+#ifdef USE_GLFW
+#include <GLFW/glfw3.h>
+#include "window_glfw.h"
 #endif
 
 extern "C" {
 
-#include <eglut.h>
 #include <hybris/dlfcn.h>
 #include <hybris/hook.h>
 #include "../../libs/hybris/src/jb/linker.h"
@@ -318,7 +325,12 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Loading hybris libraries");
     stubSymbols(android_symbols, (void*) androidStub);
     stubSymbols(egl_symbols, (void*) eglStub);
+#ifdef USE_EGLUT
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
+#endif
+#ifdef USE_GLFW
+    hybris_hook("eglGetProcAddress", (void*) glfwGetProcAddress);
+#endif
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     hookAndroidLog();
     if (!load_empty_library("libc.so") || !load_empty_library("libm.so"))
@@ -436,8 +448,15 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Creating window");
 
+#ifdef USE_EGLUT
     eglutInit(argc, argv);
     EGLUTWindow window ("Minecraft", windowWidth, windowHeight, GraphicsApi::OPENGL_ES2);
+#endif
+#ifdef USE_GLFW
+    if (!glfwInit())
+        return -1;
+    GLFWGameWindow window ("Minecraft", windowWidth, windowHeight, GraphicsApi::OPENGL_ES2);
+#endif
     window.setIcon(PathHelper::getIconPath());
     window.show();
 
