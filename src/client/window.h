@@ -4,7 +4,7 @@
 #include <functional>
 
 enum class GraphicsApi {
-    OPENGL_ES2
+    OPENGL, OPENGL_ES2
 };
 enum class KeyAction {
     PRESS, REPEAT, RELEASE

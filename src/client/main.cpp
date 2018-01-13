@@ -47,6 +47,7 @@
 #endif
 #ifdef USE_EGLUT
 #include <EGL/egl.h>
+#include <GLES2/gl2.h>
 extern "C" {
 #include <eglut.h>
 }
@@ -206,6 +207,28 @@ xbox::services::xbox_live_result<void> xblLogCLL(void* th, mcpe::string const& a
     return ret;
 }
 
+static void (*glGenVertexArrays)(GLsizei n, GLuint *arrays);
+static void (*glBindVertexArray)(GLuint array);
+
+static void (*reflectShaderUniformsOriginal)(void*);
+void reflectShaderUniformsHook(void* th) {
+    GLuint vertexArr;
+    glGenVertexArrays(1, &vertexArr);
+    glBindVertexArray(vertexArr);
+    *((GLuint*) ((unsigned int) th + 0x7C)) = vertexArr;
+    reflectShaderUniformsOriginal(th);
+}
+static void (*bindVertexArrayOriginal)(void*, void*, void*);
+void bindVertexArrayHook(void* th, void* a, void* b) {
+    unsigned int vertexArr = *((GLuint*) ((unsigned int) th + 0x7C));
+    glBindVertexArray(vertexArr);
+    bindVertexArrayOriginal(th, a, b);
+}
+
+bool supportsImmediateModeHook() {
+    return false;
+}
+
 static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
     std::cerr << "X error received: "
               << "type " << event->type << ", "
@@ -274,6 +297,7 @@ int main(int argc, char *argv[]) {
     int windowWidth = 720;
     int windowHeight = 480;
     float pixelSize = 2.f;
+    GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
             i++;
@@ -291,6 +315,11 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "--amd-fix") == 0) {
             std::cout << "--amd-fix: Enabling AMD Workaround.\n";
             workaroundAMD = true;
+#ifdef USE_GLFW
+        } else if (strcmp(argv[i], "--gl-core") == 0) {
+            std::cout << "--gl-core: Using OpenGL Core profile.\n";
+            graphicsApi = GraphicsApi::OPENGL;
+#endif
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
             std::cout << "--help               Shows this help information\n";
@@ -300,6 +329,9 @@ int main(int argc, char *argv[]) {
             std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n";
             std::cout << "--no-stacktrace      Disables stack trace printing\n";
             std::cout << "--amd-workaround     Fixes crashes on pre-i686 and AMD CPUs\n\n";
+#ifdef USE_GLFW
+            std::cout << "--gl-core            Uses OpenGL 3.2+ core profile instead of GLES\n\n";
+#endif
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";
@@ -424,6 +456,37 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
     patchCallInstruction((void*) patchOff, (void*) &xblLogCLL, true);
 
+    if (graphicsApi == GraphicsApi::OPENGL) {
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERKSsS2_S2_S2_");
+        if (((unsigned char*) patchOff)[0x12F + 3] != 0x7C) {
+            Log::error("Launcher", "Graphics patch error: unexpected byte");
+            return -1;
+        }
+        ((unsigned char*) patchOff)[0x12F + 3] += 4;
+
+        reflectShaderUniformsOriginal = (void (*)(void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERKSsRNS_13ShaderProgramES4_S4_") + (0xEB62 - 0xEAD0);
+        patchCallInstruction((void*) patchOff, (void*) &reflectShaderUniformsHook, false);
+
+        bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce9ShaderOGL10bindShaderERNS_13RenderContextERKNS_12VertexFormatEPvj") + (0xEA5 - 0xE40);
+        patchCallInstruction((void*) patchOff, (void*) &bindVertexArrayHook, false);
+
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN2gl21supportsImmediateModeEv");
+        patchCallInstruction((void*) patchOff, (void*) &supportsImmediateModeHook, true);
+
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZNK3mce9BufferOGL10bindBufferERNS_13RenderContextE");
+        ((unsigned char*) patchOff)[0x2C] = 0x90;
+        ((unsigned char*) patchOff)[0x2D] = 0x90;
+
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce16ShaderProgramOGL20compileShaderProgramERKSs");
+        const char* versionStr = "#version 410\n";
+        patchOff += 0xA2 - 0x30;
+        ((unsigned char*) patchOff)[0] = 0xB9;
+        *((size_t*) (patchOff + 1)) = (size_t) versionStr;
+        ((unsigned char*) patchOff)[5] = 0x90;
+    }
+
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
@@ -450,12 +513,14 @@ int main(int argc, char *argv[]) {
 
 #ifdef USE_EGLUT
     eglutInit(argc, argv);
-    EGLUTWindow window ("Minecraft", windowWidth, windowHeight, GraphicsApi::OPENGL_ES2);
+    EGLUTWindow window ("Minecraft", windowWidth, windowHeight, graphicsApi);
 #endif
 #ifdef USE_GLFW
     if (!glfwInit())
         return -1;
-    GLFWGameWindow window ("Minecraft", windowWidth, windowHeight, GraphicsApi::OPENGL_ES2);
+    GLFWGameWindow window ("Minecraft", windowWidth, windowHeight, graphicsApi);
+    glGenVertexArrays = (void (*)(GLsizei, GLuint*)) glfwGetProcAddress("glGenVertexArrays");
+    glBindVertexArray = (void (*)(GLuint)) glfwGetProcAddress("glBindVertexArray");
 #endif
     window.setIcon(PathHelper::getIconPath());
     window.show();
