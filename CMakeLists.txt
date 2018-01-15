@@ -14,6 +14,7 @@ set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(X11 REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 include(ExternalProject)
 
@@ -71,8 +72,7 @@ if (PLAYAPI_ENABLED)
     set_target_properties(gplaydl PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
-include_directories(${PNG_INCLUDE_DIRS})
-include_directories(${LIBZIP_INCLUDE_DIRS})
+include_directories(${PNG_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
@@ -112,7 +112,7 @@ endif()
 set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
 add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
-target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${LIBZIP_LIBRARIES} rt EGL GLESv2 uuid z png curl crypto)
+target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} rt EGL GLESv2 uuid z png curl)
 target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
 
 add_executable(server ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${SERVER_SOURCE_FILES})
