@@ -6,7 +6,6 @@
 #include <fcntl.h>
 #include "../common/symbols/android_symbols.h"
 #include "../common/symbols/egl_symbols.h"
-#include "../common/symbols/gles_symbols.h"
 #include "../common/symbols/fmod_symbols.h"
 #include "../common/symbols/libm_symbols.h"
 #include "../common/common.h"
@@ -63,7 +62,6 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Loading hybris libraries");
     stubSymbols(android_symbols, (void*) stubFunc);
     stubSymbols(egl_symbols, (void*) stubFunc);
-    stubSymbols(gles_symbols, (void*) stubFunc);
     stubSymbols(fmod_symbols, (void*) stubFunc);
     hybris_hook("eglGetProcAddress", (void*) stubFunc);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
