@@ -278,7 +278,9 @@ int main(int argc, char *argv[]) {
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
     BrowserApp::RegisterRenderProcessHandler<XboxLoginRenderHandler>();
+#ifdef GAMEPAD_SUPPORT
     BrowserApp::RegisterRenderProcessHandler<GamepadMapperRenderHandler>();
+#endif
 #ifndef DISABLE_PLAYAPI
     BrowserApp::RegisterRenderProcessHandler<GoogleLoginRenderHandler>();
 #endif
@@ -287,6 +289,7 @@ int main(int argc, char *argv[]) {
     if (exit_code >= 0)
         return exit_code;
 
+#ifdef GAMEPAD_SUPPORT
     if (argc > 1 && strcmp(argv[1], "mapGamepad") == 0) {
         LinuxGamepadManager::instance.init();
         std::atomic<bool> shouldStop (false);
@@ -301,6 +304,7 @@ int main(int argc, char *argv[]) {
         t.join();
         return 0;
     }
+#endif
     {
         bool found = true;
         try {
@@ -590,7 +594,9 @@ int main(int argc, char *argv[]) {
     client->init(ctx);
     Log::info("Launcher", "Game initialized");
 
+#ifdef GAMEPAD_SUPPORT
     LinuxGamepadManager::instance.init();
+#endif
 
     if (client->getPrimaryUserOptions()->getFullscreen())
         window.setFullscreen(true);
@@ -610,7 +616,9 @@ int main(int argc, char *argv[]) {
             return;
         }
         platform->runMainThreadTasks();
+#ifdef GAMEPAD_SUPPORT
         LinuxGamepadManager::instance.pool();
+#endif
         client->update();
     });
     window.setWindowSizeCallback([&client, pixelSize](int w, int h) {
