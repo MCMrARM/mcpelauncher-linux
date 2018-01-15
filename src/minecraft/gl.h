@@ -3,10 +3,10 @@
 #include "string.h"
 
 struct gl {
-    static mcpe::string (*getOpenGLVendor)();
-    static mcpe::string (*getOpenGLRenderer)();
-    static mcpe::string (*getOpenGLVersion)();
-    static mcpe::string (*getOpenGLExtensions)();
+    static mcpe::string getOpenGLVendor();
+    static mcpe::string getOpenGLRenderer();
+    static mcpe::string getOpenGLVersion();
+    static mcpe::string getOpenGLExtensions();
 };
 
 namespace mce {
@@ -15,8 +15,7 @@ namespace Platform {
 
 struct OGL {
 
-    static void (*OGL_initBindings)();
-    static void initBindings() { OGL_initBindings(); }
+    static void InitBindings();
 
 };
 

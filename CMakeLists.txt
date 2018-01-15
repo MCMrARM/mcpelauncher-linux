@@ -15,8 +15,24 @@ find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(X11 REQUIRED)
 
+include(ExternalProject)
+
+set(GLFW_ENABLED false)
 set(CEF_ENABLED true)
 set(PLAYAPI_ENABLED true)
+
+if (GLFW_ENABLED)
+    ExternalProject_Add(
+            glfw
+            URL "https://github.com/glfw/glfw/archive/3.2.1.tar.gz"
+            URL_HASH SHA1=bee9cd9a8b4925184070ade5bc287c5635830eb0
+            INSTALL_DIR ${CMAKE_BINARY_DIR}/ext/glfw
+            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext/glfw" "-DBUILD_SHARED_LIBS=OFF" "-DCMAKE_C_FLAGS=-m32" "-DCMAKE_LINK_FLAGS=-m32" "-DCMAKE_LIBRARY_ARCHITECTURE=i386-linux-gnu"
+    )
+    set(GLFW_LIBRARIES ${CMAKE_BINARY_DIR}/ext/glfw/lib/libglfw3.a)
+    set(GLFW_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ext/glfw/include/)
+endif()
+
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/cef)
     message(WARNING "CEF not found. Xbox Live login and APK download features will be disabled.\nTo set up CEF please run setup_cef.sh in the source directory.")
     set(CEF_ENABLED false)
@@ -36,24 +52,43 @@ if (PLAYAPI_ENABLED)
 endif()
 
 include_directories(${PNG_INCLUDE_DIRS})
-include_directories(eglut)
 include_directories(libs/rapidxml)
+include_directories(libs/hybris/include)
 
-set(HYBRIS_SOURCES hybris/src/cache.c hybris/src/dlfcn.c hybris/src/hooks.c hybris/src/hooks_shm.c hybris/src/logging.c hybris/src/properties.c hybris/src/strlcpy.c hybris/src/ctype.c hybris/src/sysconf.c hybris/src/jb/dlfcn.c hybris/src/jb/linker.c hybris/src/jb/linker_environ.c hybris/src/jb/linker_format.c hybris/src/jb/rt.c)
-set(EGLUT_SOURCES eglut/eglut.c eglut/eglut_x11.c)
+set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hooks.c libs/hybris/src/hooks_shm.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/strlcpy.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c)
+set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
-set(SOURCE_FILES src/main.cpp src/common.cpp src/hook.cpp src/amdfix.s src/linux_appplatform.cpp src/minecraft/types.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/base64.cpp src/base64.h src/msa.cpp src/msa.h src/msa_token.h src/msa_network.cpp src/msa_network.h src/xboxlive.h src/xboxlive.cpp src/cll.cpp src/cll.h src/async_result_util.h src/extract.cpp src/extract.h src/path_helper.cpp src/path_helper.h src/gamepad.cpp src/gamepad.h eglut/eglut_x11.h)
-set(SOURCE_FILES_CEF)
+set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h)
+set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/amdfix.s src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h src/client/gamepad.cpp src/client/gamepad.h)
+set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h src/client/gamepad_mapper_browser.cpp src/client/gamepad_mapper_browser.h)
+set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/client/google_login_browser.h src/client/google_login_browser.cpp src/client/google_play_helper.cpp src/client/google_play_helper.h)
+set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
+set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
+set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h)
 if (CEF_ENABLED)
     link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
-    set(SOURCE_FILES ${SOURCE_FILES} ${SOURCE_FILES_CEF} src/browser.cpp src/browser.h src/xbox_login_browser.h src/xbox_login_browser.cpp src/initial_setup_browser.cpp src/initial_setup_browser.h src/gamepad_mapper_browser.cpp src/gamepad_mapper_browser.h)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_CEF})
 endif()
 if (PLAYAPI_ENABLED)
-    set(SOURCE_FILES ${SOURCE_FILES} gplay_api/src/config.h gplay_api/src/config.cpp src/google_login_browser.h src/google_login_browser.cpp src/google_play_helper.cpp src/google_play_helper.h)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_PLAYAPI})
 endif()
-add_executable(mcpelauncher ${HYBRIS_SOURCES} ${EGLUT_SOURCES} ${SOURCE_FILES})
+if (GLFW_ENABLED)
+    include_directories(${GLFW_INCLUDE_DIR})
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_GLFW})
+else()
+    include_directories(libs/eglut)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_EGLUT} ${EGLUT_SOURCES})
+endif()
+
+set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
+
+add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z png curl zip crypto evdev udev)
-target_compile_definitions(mcpelauncher PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
+target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
+
+add_executable(server ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${SERVER_SOURCE_FILES})
+target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt uuid z zip)
+target_compile_definitions(server ${HYBRIS_DEFINES} SERVER)
 
 if (CEF_ENABLED)
     include_directories(libs/cef)
@@ -65,6 +100,13 @@ if (PLAYAPI_ENABLED)
     target_link_libraries(mcpelauncher gplayapi)
 else()
     target_compile_definitions(mcpelauncher PRIVATE DISABLE_PLAYAPI)
+endif()
+if (GLFW_ENABLED)
+    add_dependencies(mcpelauncher glfw)
+    target_link_libraries(mcpelauncher ${GLFW_LIBRARIES} ${X11_Xcursor_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinerama_LIB})
+    target_compile_definitions(mcpelauncher PRIVATE USE_GLFW)
+else()
+    target_compile_definitions(mcpelauncher PRIVATE USE_EGLUT)
 endif()
 
 function (add_non_source_dir_custom_command command...)
@@ -91,7 +133,7 @@ add_custom_command(TARGET mcpelauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
 add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/src/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/initial_setup_resources)
+        ${CMAKE_SOURCE_DIR}/src/client/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/client/initial_setup_resources)
 add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
 add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
@@ -109,8 +151,8 @@ install(DIRECTORY libs/cef/res
         DESTINATION share/mcpelauncher/libs/cef
         PATTERN "*"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(DIRECTORY src/initial_setup_resources
-        DESTINATION share/mcpelauncher/src
+install(DIRECTORY src/client/initial_setup_resources
+        DESTINATION share/mcpelauncher/src/client
         PATTERN "*"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
 install(DIRECTORY libs/native

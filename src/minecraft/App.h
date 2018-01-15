@@ -10,13 +10,9 @@ struct AppContext {
 class App {
 
 public:
-    static void (*App_init)(App*, AppContext&);
-
     void** vtable;
 
-    void init(AppContext& ctx) {
-        App_init(this, ctx);
-    }
+    void init(AppContext& ctx);
 
     void quit() {
         ((void (*)(App*)) vtable[26])(this);

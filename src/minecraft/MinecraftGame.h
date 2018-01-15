@@ -8,37 +8,19 @@ class Options;
 class MinecraftGame : public App {
 
 public:
-    static void (*MinecraftGame_construct)(MinecraftGame*, int, char**);
-    static void (*MinecraftGame_destruct)(MinecraftGame*);
-    static void (*MinecraftGame_update)(MinecraftGame*);
-    static void (*MinecraftGame_setRenderingSize)(MinecraftGame*, int, int);
-    static void (*MinecraftGame_setUISizeAndScale)(MinecraftGame*, int, int, float);
-    static std::shared_ptr<Options> (*MinecraftGame_getPrimaryUserOptions)(MinecraftGame*);
 
-    char filler [0x4000-4];
+    char filler [0x4000];
 
-    MinecraftGame(int carg, char** args) {
-        MinecraftGame_construct(this, carg, args);
-    }
+    MinecraftGame(int carg, char** args);
 
-    ~MinecraftGame() {
-        MinecraftGame_destruct(this);
-    }
+    ~MinecraftGame();
 
-    void update() {
-        MinecraftGame_update(this);
-    }
+    void update();
 
-    void setRenderingSize(int w, int h) {
-        MinecraftGame_setRenderingSize(this, w, h);
-    }
+    void setRenderingSize(int, int);
 
-    void setUISizeAndScale(int w, int h, float px) {
-        MinecraftGame_setUISizeAndScale(this, w, h, px);
-    }
+    void setUISizeAndScale(int, int, float);
 
-    std::shared_ptr<Options> getPrimaryUserOptions() {
-        return MinecraftGame_getPrimaryUserOptions(this);
-    }
+    std::shared_ptr<Options> getPrimaryUserOptions();
 
 };
