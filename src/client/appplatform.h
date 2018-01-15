@@ -125,7 +125,6 @@ public:
         Log::trace(TAG, "getDeviceId: linux");
         return "linux";
     }
-    mcpe::string createUUID();
     bool isFirstSnoopLaunch() {
         Log::trace(TAG, "isFirstSnoopLaunch: true");
         return true;

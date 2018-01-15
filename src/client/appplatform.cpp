@@ -93,7 +93,6 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android30_updateAvailableMemorySnapshotEv", (void*) &LinuxAppPlatform::_updateAvailableMemorySnapshot);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android26_updateTotalMemorySnapshotEv", (void*) &LinuxAppPlatform::_updateTotalMemorySnapshot);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11getDeviceIdEv", (void*) &LinuxAppPlatform::getDeviceId);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android10createUUIDEv", (void*) &LinuxAppPlatform::createUUID);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", (void*) &LinuxAppPlatform::isFirstSnoopLaunch);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", (void*) &LinuxAppPlatform::hasHardwareInformationChanged);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", (void*) &LinuxAppPlatform::isTablet);
@@ -196,17 +195,6 @@ long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     struct statvfs buf;
     statvfs(dataDir.c_str(), &buf);
     return (long long int) buf.f_bsize * buf.f_bfree;
-}
-
-mcpe::string LinuxAppPlatform::createUUID() {
-    srand(time(NULL));
-
-    uuid_t id;
-    uuid_generate(id);
-    char out [256];
-    uuid_unparse(id, out);
-    printf("uuid: %s\n", out);
-    return std::string(out);
 }
 
 void LinuxAppPlatform::_updateUsedMemorySnapshot() {
