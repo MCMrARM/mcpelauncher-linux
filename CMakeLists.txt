@@ -20,6 +20,7 @@ include(ExternalProject)
 set(GLFW_ENABLED false)
 set(CEF_ENABLED true)
 set(PLAYAPI_ENABLED true)
+set(LIBZIP_FROM_SOURCES false)
 set(GAMEPAD_SUPPORT_ENABLED true)
 
 if (GLFW_ENABLED)
@@ -28,10 +29,28 @@ if (GLFW_ENABLED)
             URL "https://github.com/glfw/glfw/archive/3.2.1.tar.gz"
             URL_HASH SHA1=bee9cd9a8b4925184070ade5bc287c5635830eb0
             INSTALL_DIR ${CMAKE_BINARY_DIR}/ext/glfw
-            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext/glfw" "-DBUILD_SHARED_LIBS=OFF" "-DCMAKE_C_FLAGS=-m32" "-DCMAKE_LINK_FLAGS=-m32" "-DCMAKE_LIBRARY_ARCHITECTURE=i386-linux-gnu"
+            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext/glfw" "-DBUILD_SHARED_LIBS=OFF" "-DCMAKE_C_FLAGS=-m32" "-DCMAKE_LINK_FLAGS=-m32" "-DCMAKE_LIBRARY_ARCHITECTURE=${CMAKE_LIBRARY_ARCHITECTURE}"
     )
     set(GLFW_LIBRARIES ${CMAKE_BINARY_DIR}/ext/glfw/lib/libglfw3.a)
     set(GLFW_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ext/glfw/include/)
+endif()
+set(LIBZIP_LIBRARIES zip)
+set(LIBZIP_INCLUDE_DIR )
+if (LIBZIP_FROM_SOURCES)
+    ExternalProject_Add(
+            libzip
+            URL "https://github.com/nih-at/libzip/archive/rel-1-4-0.tar.gz"
+            URL_HASH SHA1=7b38ace94d806f200bd34d67e40c9924291b6745
+            INSTALL_DIR ${CMAKE_BINARY_DIR}/ext/libzip
+            CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext/libzip" "-DBUILD_SHARED_LIBS=OFF" "CMAKE_CXX_FLAGS=-m32" "-DCMAKE_C_FLAGS=-m32" "-DCMAKE_LINK_FLAGS=-m32" "-DCMAKE_LIBRARY_ARCHITECTURE=${CMAKE_LIBRARY_ARCHITECTURE}"
+    )
+    set(LIBZIP_LIBRARIES ${CMAKE_BINARY_DIR}/ext/libzip/lib/libzip.a)
+    set(LIBZIP_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ext/libzip/include/)
+
+    find_package(BZip2)
+    if (BZIP2_FOUND)
+        set(LIBZIP_LIBRARIES ${LIBZIP_LIBRARIES} ${BZIP2_LIBRARY})
+    endif()
 endif()
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/cef)
@@ -53,6 +72,7 @@ if (PLAYAPI_ENABLED)
 endif()
 
 include_directories(${PNG_INCLUDE_DIRS})
+include_directories(${LIBZIP_INCLUDE_DIRS})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
@@ -92,7 +112,7 @@ endif()
 set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
 add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
-target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt EGL GLESv2 uuid z png curl zip crypto)
+target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${LIBZIP_LIBRARIES} rt EGL GLESv2 uuid z png curl crypto)
 target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
 
 add_executable(server ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${SERVER_SOURCE_FILES})
@@ -120,6 +140,9 @@ endif()
 if (GAMEPAD_SUPPORT_ENABLED)
     target_link_libraries(mcpelauncher evdev udev)
     target_compile_definitions(mcpelauncher PRIVATE GAMEPAD_SUPPORT)
+endif()
+if (LIBZIP_FROM_SOURCES)
+    add_dependencies(mcpelauncher libzip)
 endif()
 
 function (add_non_source_dir_custom_command command...)
