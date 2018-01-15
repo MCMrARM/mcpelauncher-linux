@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
         bool found = true;
         try {
             PathHelper::findDataFile("libs/libminecraftpe.so");
-        } catch (std::exception e) {
+        } catch (std::exception& e) {
             found = false;
         }
         if (!found || (argc > 1 && strcmp(argv[1], "setup") == 0)) {
@@ -383,7 +383,7 @@ int main(int argc, char *argv[]) {
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
     Log::trace("Launcher", "Loading native libraries");
-    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6").c_str(), fmod_symbols);
+    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6"), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     if (fmodLib == nullptr || libmLib == nullptr)
         return -1;
@@ -607,7 +607,7 @@ int main(int argc, char *argv[]) {
             initFunc(client);
     }
 
-    window.setDrawCallback([&client, &window]() {
+    window.setDrawCallback([&window]() {
         if (client->wantToQuit()) {
             delete client;
             window.close();
@@ -619,7 +619,7 @@ int main(int argc, char *argv[]) {
 #endif
         client->update();
     });
-    window.setWindowSizeCallback([&client, pixelSize](int w, int h) {
+    window.setWindowSizeCallback([pixelSize](int w, int h) {
         client->setRenderingSize(w, h);
         client->setUISizeAndScale(w, h, pixelSize);
     });

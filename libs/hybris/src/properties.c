@@ -25,7 +25,11 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
+
 #include <unistd.h>
 #include <errno.h>
 #include <sys/socket.h>

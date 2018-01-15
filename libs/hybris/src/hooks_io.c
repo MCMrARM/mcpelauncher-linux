@@ -186,7 +186,7 @@ static FILE *_get_actual_fp(struct aFILE *fp)
     return fp->actual;
 }
 
-static void my_clearerr(FILE *fp)
+static void my_clearerr(struct aFILE *fp)
 {
     clearerr(_get_actual_fp(fp));
 }
@@ -203,13 +203,13 @@ static struct aFILE* my_fopen(const char *filename, const char *mode)
     return afile;
 }
 
-static struct aFILE* my_fdopen(const char *filename, const char *mode)
+static struct aFILE* my_fdopen(int fd, const char *mode)
 {
-    FILE* file = fdopen(filename, mode);
+    FILE* file = fdopen(fd, mode);
     if (file == NULL)
         return NULL;
     struct aFILE* afile = (struct aFILE*) malloc(sizeof(struct aFILE));
-    afile->_file = fileno(file);
+    afile->_file = (short)fileno(file);
     afile->actual = file;
     return afile;
 }

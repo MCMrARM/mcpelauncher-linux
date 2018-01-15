@@ -42,7 +42,7 @@ int   hybris_dladdr(const void *addr, Dl_info *info)
 }
 
 
-char *hybris_dlerror(void)
+const char *hybris_dlerror(void)
 {
     return android_dlerror();
 }

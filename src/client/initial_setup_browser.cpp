@@ -95,9 +95,9 @@ void InitialSetupBrowserClient::HandlePickFile(std::string const& title, std::st
         std::string outputStdErr;
         ssize_t r;
         if ((r = read(pipes[PIPE_STDOUT][PIPE_READ], ret, 1024)) > 0)
-            outputStdOut += std::string(ret, (size_t) r).c_str();
+            outputStdOut += std::string(ret, (size_t) r);
         if ((r = read(pipes[PIPE_STDERR][PIPE_READ], ret, 1024)) > 0)
-            outputStdErr += std::string(ret, (size_t) r).c_str();
+            outputStdErr += std::string(ret, (size_t) r);
 
         close(pipes[PIPE_STDOUT][PIPE_READ]);
         close(pipes[PIPE_STDERR][PIPE_READ]);
@@ -129,7 +129,7 @@ void InitialSetupBrowserClient::HandleSetupWithFile(std::string const& file) {
     try {
         ExtractHelper::extractApk(file);
         NotifyApkSetupResult(true);
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error& e) {
         NotifyApkSetupResult(false);
     }
 }
@@ -355,7 +355,7 @@ bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value>
         msgArgs->SetBool(0, args[0]->GetBoolValue());
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
-    } else if (name == "setAskTosResult" && args.size() >= 1 && args[0]->IsBool()) {
+    } else if (name == "setAskTosResult" && !args.empty() && args[0]->IsBool()) {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SetAskTosResult");
         CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
         msgArgs->SetBool(0, args[0]->GetBoolValue());
