@@ -11,6 +11,7 @@
 #include "../common/symbols/libm_symbols.h"
 #include "../common/common.h"
 #include "../common/log.h"
+#include "../common/modloader.h"
 #include "../client/appplatform.h"
 #include "../minecraft/symbols.h"
 #include "../minecraft/Api.h"
@@ -74,6 +75,7 @@ int main(int argc, char *argv[]) {
         return -1;
     if (!load_empty_library("libmcpelauncher_mod.so"))
         return -1;
+    load_empty_library("libstdc++.so");
     Log::trace("Launcher", "Loading Minecraft library");
     void* handle = hybris_dlopen((cwd + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
     if (handle == nullptr) {
@@ -88,6 +90,9 @@ int main(int argc, char *argv[]) {
     minecraft_symbols_init(handle);
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
+
+    ModLoader modLoader;
+    modLoader.loadModsFromDirectory("mods/");
 
     Log::info("Launcher", "Starting server initialization");
 
