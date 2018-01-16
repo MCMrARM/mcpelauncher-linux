@@ -403,6 +403,7 @@ int main(int argc, char *argv[]) {
         return -1;
     if (!load_empty_library("libmcpelauncher_mod.so"))
         return -1;
+    load_empty_library("libstdc++.so");
     Log::trace("Launcher", "Loading Minecraft library");
     std::string mcpePath = PathHelper::findDataFile("libs/libminecraftpe.so");
     void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
