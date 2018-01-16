@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Loading whitelist and operator list");
     Whitelist whitelist;
-    OpsList ops;
+    OpsList ops (true);
     Log::trace("Launcher", "Initializing Minecraft API classes");
     minecraft::api::Api api;
     api.vtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api3ApiE") + 2;

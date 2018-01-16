@@ -9,4 +9,6 @@ struct OpsList {
     bool b;
     std::vector<Entry> entries;
 
+    OpsList(bool);
+
 };

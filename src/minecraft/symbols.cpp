@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Mon Jan 15 2018 13:46:52 UTC
+// Generated on Tue Jan 16 2018 15:17:36 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
@@ -97,6 +97,10 @@ void ServerInstance::mainThreadNetworkUpdate_HACK() {
 }
 
 #include "OpsList.h"
+static void (OpsList::*_OpsList_OpsList)(bool);
+OpsList::OpsList(bool p1) {
+    (this->*_OpsList_OpsList)(p1);
+}
 
 #include "GameControllerManager.h"
 GameControllerManager * GameControllerManager::sGamePadManager;
@@ -444,6 +448,8 @@ void minecraft_symbols_init(void* handle) {
     if (_ServerInstance_update == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance6updateEv");
     ((void*&) _ServerInstance_mainThreadNetworkUpdate_HACK) = hybris_dlsym(handle, "_ZN14ServerInstance28mainThreadNetworkUpdate_HACKEv");
     if (_ServerInstance_mainThreadNetworkUpdate_HACK == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance28mainThreadNetworkUpdate_HACKEv");
+    ((void*&) _OpsList_OpsList) = hybris_dlsym(handle, "_ZN7OpsListC2Eb");
+    if (_OpsList_OpsList == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN7OpsListC2Eb");
     ((void*&) GameControllerManager::sGamePadManager) = hybris_dlsym(handle, "_ZN21GameControllerManager15sGamePadManagerE");
     if (GameControllerManager::sGamePadManager == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN21GameControllerManager15sGamePadManagerE");
     ((void*&) _GameControllerManager_setGameControllerConnected) = hybris_dlsym(handle, "_ZN21GameControllerManager26setGameControllerConnectedEib");
