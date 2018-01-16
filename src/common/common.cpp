@@ -46,24 +46,6 @@ void* loadLibraryOS(std::string path, const char** symbols) {
     return handle;
 }
 
-void* loadMod(std::string path) {
-    void* handle = hybris_dlopen(path.c_str(), RTLD_LAZY);
-    if (handle == nullptr) {
-        Log::error(TAG, "Failed to load mod: %s", path.c_str());
-        return nullptr;
-    }
-
-    void (*initFunc)();
-    initFunc = (void (*)()) hybris_dlsym(handle, "mod_init");
-    if (((void*) initFunc) == nullptr) {
-        Log::warn(TAG, "Mod %s does not have an init function", path.c_str());
-        return handle;
-    }
-    initFunc();
-
-    return handle;
-}
-
 void stubSymbols(const char** symbols, void* stubfunc) {
     int i = 0;
     while (true) {

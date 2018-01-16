@@ -35,6 +35,7 @@
 #include "gamepad.h"
 #include "../common/common.h"
 #include "../common/hook.h"
+#include "../common/modloader.h"
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
@@ -415,29 +416,8 @@ int main(int argc, char *argv[]) {
     Log::info("Launcher", "Loaded Minecraft library");
     Log::debug("Launcher", "Minecraft is at offset 0x%x", libBase);
 
-    std::vector<void*> mods;
-    {
-        std::string modsDir = PathHelper::getPrimaryDataDirectory() + "mods/";
-        DIR* dir;
-        struct dirent* ent;
-        if ((dir = opendir(modsDir.c_str())) != NULL) {
-            Log::info("Launcher", "Loading mods");
-            while ((ent = readdir(dir)) != NULL) {
-                if (ent->d_name[0] == '.')
-                    continue;
-                std::string fileName(ent->d_name);
-                int len = fileName.length();
-                if (len < 4 || fileName[len - 3] != '.' || fileName[len - 2] != 's' || fileName[len - 1] != 'o')
-                    continue;
-                Log::info("Launcher", "Loading mod: %s", fileName);
-                void* mod = loadMod(modsDir + fileName);
-                if (mod != nullptr)
-                    mods.push_back(mod);
-            }
-            closedir(dir);
-            Log::info("Launcher", "Loading %li mods", mods.size());
-        }
-    }
+    ModLoader modLoader;
+    modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
     Log::info("Launcher", "Applying patches");
 
@@ -596,13 +576,7 @@ int main(int argc, char *argv[]) {
     if (client->getPrimaryUserOptions()->getFullscreen())
         window.setFullscreen(true);
 
-    if (!mods.empty())
-        Log::info("Launcher", "Initializing mods");
-    for (void* mod : mods) {
-        void (*initFunc)(MinecraftGame*) = (void (*)(MinecraftGame*)) hybris_dlsym(mod, "mod_set_minecraft");
-        if ((void*) initFunc != nullptr)
-            initFunc(client);
-    }
+    modLoader.onGameInitialized(client);
 
     window.setDrawCallback([&client, &window]() {
         if (client->wantToQuit()) {
