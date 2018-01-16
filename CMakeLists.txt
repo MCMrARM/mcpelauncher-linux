@@ -13,18 +13,27 @@ set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(PNG REQUIRED)
-find_package(CURL REQUIRED)
-find_package(X11 REQUIRED)
-find_package(OpenSSL REQUIRED)
+find_package(PNG)
+find_package(CURL)
+find_package(X11)
+find_package(OpenSSL)
 
 include(ExternalProject)
 
+set(BUILD_CLIENT true)
+set(BUILD_SERVER true)
 set(GLFW_ENABLED false)
 set(CEF_ENABLED true)
 set(PLAYAPI_ENABLED true)
 set(LIBZIP_FROM_SOURCES false)
 set(GAMEPAD_SUPPORT_ENABLED true)
+
+if (NOT PNG_FOUND OR NOT CURL_FOUND OR NOT X11_FOUND OR NOT OPENSSL_FOUND)
+    message(WARNING "One of the required dependencies for building the client were not found.\nOnly the server will be built as a result. To build the client please install the missing dependencies, and run cmake again.")
+    set(BUILD_CLIENT false)
+    set(CEF_ENABLED false)
+    set(PLAYAPI_ENABLED false)
+endif()
 
 if (GLFW_ENABLED)
     ExternalProject_Add(
@@ -90,9 +99,12 @@ set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp 
 set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
 set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
 set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h)
+
+set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
+
 if (CEF_ENABLED)
-    link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
     set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_CEF})
+    link_directories(${CMAKE_SOURCE_DIR}/libs/cef/lib/)
 endif()
 if (PLAYAPI_ENABLED)
     set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_PLAYAPI})
@@ -111,40 +123,43 @@ if (GAMEPAD_SUPPORT_ENABLED)
     endif()
 endif()
 
-set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
+if (BUILD_CLIENT)
+    add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+    target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${ZLIB_LIBRARIES} ${PNG_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} rt EGL GLESv2)
+    target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
 
-add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
-target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${ZLIB_LIBRARIES} ${PNG_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} rt EGL GLESv2)
-target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
+    if (CEF_ENABLED)
+        include_directories(libs/cef)
+        target_link_libraries(mcpelauncher libcef.so libcef_dll_wrapper.a)
+    else()
+        target_compile_definitions(mcpelauncher PRIVATE DISABLE_CEF)
+    endif()
+    if (PLAYAPI_ENABLED)
+        target_link_libraries(mcpelauncher gplayapi)
+    else()
+        target_compile_definitions(mcpelauncher PRIVATE DISABLE_PLAYAPI)
+    endif()
+    if (GLFW_ENABLED)
+        add_dependencies(mcpelauncher glfw)
+        target_link_libraries(mcpelauncher ${GLFW_LIBRARIES} ${X11_Xcursor_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinerama_LIB})
+        target_compile_definitions(mcpelauncher PRIVATE USE_GLFW)
+    else()
+        target_compile_definitions(mcpelauncher PRIVATE USE_EGLUT)
+    endif()
+    if (GAMEPAD_SUPPORT_ENABLED)
+        target_link_libraries(mcpelauncher evdev udev)
+        target_compile_definitions(mcpelauncher PRIVATE GAMEPAD_SUPPORT)
+    endif()
+    if (LIBZIP_FROM_SOURCES)
+        add_dependencies(mcpelauncher libzip)
+        add_dependencies(server libzip)
+    endif()
+endif()
 
-add_executable(server ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${SERVER_SOURCE_FILES})
-target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} rt uuid z zip)
-target_compile_definitions(server ${HYBRIS_DEFINES} SERVER)
-
-if (CEF_ENABLED)
-    include_directories(libs/cef)
-    target_link_libraries(mcpelauncher libcef.so libcef_dll_wrapper.a)
-else()
-    target_compile_definitions(mcpelauncher PRIVATE DISABLE_CEF)
-endif()
-if (PLAYAPI_ENABLED)
-    target_link_libraries(mcpelauncher gplayapi)
-else()
-    target_compile_definitions(mcpelauncher PRIVATE DISABLE_PLAYAPI)
-endif()
-if (GLFW_ENABLED)
-    add_dependencies(mcpelauncher glfw)
-    target_link_libraries(mcpelauncher ${GLFW_LIBRARIES} ${X11_Xcursor_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinerama_LIB})
-    target_compile_definitions(mcpelauncher PRIVATE USE_GLFW)
-else()
-    target_compile_definitions(mcpelauncher PRIVATE USE_EGLUT)
-endif()
-if (GAMEPAD_SUPPORT_ENABLED)
-    target_link_libraries(mcpelauncher evdev udev)
-    target_compile_definitions(mcpelauncher PRIVATE GAMEPAD_SUPPORT)
-endif()
-if (LIBZIP_FROM_SOURCES)
-    add_dependencies(mcpelauncher libzip)
+if (BUILD_SERVER)
+    add_executable(server ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${SERVER_SOURCE_FILES})
+    target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} rt)
+    target_compile_definitions(server ${HYBRIS_DEFINES} SERVER)
 endif()
 
 function (add_non_source_dir_custom_command command...)
@@ -152,56 +167,58 @@ function (add_non_source_dir_custom_command command...)
             COMMAND $<$<NOT:$<STREQUAL:$<TARGET_FILE_DIR:mcpelauncher>,${CMAKE_SOURCE_DIR}>>:${command}>)
 endfunction()
 
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-        $<TARGET_FILE_DIR:mcpelauncher>/src)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs/cef/lib/libcef.so $<TARGET_FILE_DIR:mcpelauncher>/libcef.so)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs/cef/bin/snapshot_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/snapshot_blob.bin)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs/cef/bin/natives_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/natives_blob.bin)
-add_custom_command(TARGET mcpelauncher POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
-add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/src/client/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/client/initial_setup_resources)
-add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
-add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_SOURCE_DIR}/mcpelauncher-icon.png $<TARGET_FILE_DIR:mcpelauncher>/mcpelauncher-icon.png)
+if (BUILD_CLIENT)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+            $<TARGET_FILE_DIR:mcpelauncher>/src)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/libs/cef/lib/libcef.so $<TARGET_FILE_DIR:mcpelauncher>/libcef.so)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/libs/cef/bin/snapshot_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/snapshot_blob.bin)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/libs/cef/bin/natives_blob.bin $<TARGET_FILE_DIR:mcpelauncher>/natives_blob.bin)
+    add_custom_command(TARGET mcpelauncher POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
+    add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/src/client/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/client/initial_setup_resources)
+    add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
+    add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_SOURCE_DIR}/mcpelauncher-icon.png $<TARGET_FILE_DIR:mcpelauncher>/mcpelauncher-icon.png)
 
-install(TARGETS mcpelauncher
-        RUNTIME DESTINATION share/mcpelauncher/bin/)
-install(FILES libs/cef/lib/libcef.so libs/cef/bin/snapshot_blob.bin libs/cef/bin/natives_blob.bin libs/cef/bin/icudtl.dat start_mcpelauncher.sh
-        DESTINATION share/mcpelauncher/bin
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(FILES mcpelauncher-icon.png
-        DESTINATION share/mcpelauncher
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(DIRECTORY libs/cef/res
-        DESTINATION share/mcpelauncher/libs/cef
-        PATTERN "*"
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(DIRECTORY src/client/initial_setup_resources
-        DESTINATION share/mcpelauncher/src/client
-        PATTERN "*"
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(DIRECTORY libs/native
-        DESTINATION share/mcpelauncher/libs
-        PATTERN "*"
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-install(DIRECTORY DESTINATION bin/)
-install(CODE "
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-        ${CMAKE_INSTALL_PREFIX}/share/mcpelauncher/bin/start_mcpelauncher.sh ${CMAKE_INSTALL_PREFIX}/bin/mcpelauncher
-)")
-install(FILES mcpelauncher.desktop DESTINATION share/applications/)
-install(FILES mcpelauncher-icon.png DESTINATION share/pixmaps/)
+    install(TARGETS mcpelauncher
+            RUNTIME DESTINATION share/mcpelauncher/bin/)
+    install(FILES libs/cef/lib/libcef.so libs/cef/bin/snapshot_blob.bin libs/cef/bin/natives_blob.bin libs/cef/bin/icudtl.dat start_mcpelauncher.sh
+            DESTINATION share/mcpelauncher/bin
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+    install(FILES mcpelauncher-icon.png
+            DESTINATION share/mcpelauncher
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+    install(DIRECTORY libs/cef/res
+            DESTINATION share/mcpelauncher/libs/cef
+            PATTERN "*"
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+    install(DIRECTORY src/client/initial_setup_resources
+            DESTINATION share/mcpelauncher/src/client
+            PATTERN "*"
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+    install(DIRECTORY libs/native
+            DESTINATION share/mcpelauncher/libs
+            PATTERN "*"
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
+    install(DIRECTORY DESTINATION bin/)
+    install(CODE "
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_INSTALL_PREFIX}/share/mcpelauncher/bin/start_mcpelauncher.sh ${CMAKE_INSTALL_PREFIX}/bin/mcpelauncher
+    )")
+    install(FILES mcpelauncher.desktop DESTINATION share/applications/)
+    install(FILES mcpelauncher-icon.png DESTINATION share/pixmaps/)
+endif()
