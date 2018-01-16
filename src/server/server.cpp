@@ -204,6 +204,9 @@ int main(int argc, char *argv[]) {
     }
 
     Log::info("Launcher", "Stopping...");
+    instance.startLeaveGame();
+    while (!instance.isLeaveGameDone())
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     workaroundShutdownCrash(handle);
     return 0;
 }

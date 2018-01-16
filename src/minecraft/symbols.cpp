@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Tue Jan 16 2018 15:17:36 UTC
+// Generated on Tue Jan 16 2018 15:29:01 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
@@ -87,9 +87,21 @@ static void (ServerInstance::*_ServerInstance_ServerInstance)(IMinecraftApp &, W
 ServerInstance::ServerInstance(IMinecraftApp & p1, Whitelist const & p2, OpsList const & p3, FilePathManager * p4, std::chrono::duration<long long> p5, mcpe::string p6, mcpe::string p7, mcpe::string p8, IContentAccessibilityProvider const & p9, mcpe::string p10, LevelSettings p11, minecraft::api::Api & p12, int p13, bool p14, int p15, int p16, int p17, bool p18, std::vector<mcpe::string> const & p19, mcpe::string p20, mce::UUID const & p21, MinecraftEventing & p22, NetworkHandler & p23, ResourcePackRepository & p24, ContentTierManager const & p25, ResourcePackManager & p26, ResourcePackManager * p27, std::function<void ( mcpe::string const & )> p28) {
     (this->*_ServerInstance_ServerInstance)(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28);
 }
+static void (ServerInstance::*_ServerInstance_destructor)();
+ServerInstance::~ServerInstance() {
+    (this->*_ServerInstance_destructor)();
+}
 static void (ServerInstance::*_ServerInstance_update)();
 void ServerInstance::update() {
     (this->*_ServerInstance_update)();
+}
+static void (ServerInstance::*_ServerInstance_startLeaveGame)();
+void ServerInstance::startLeaveGame() {
+    (this->*_ServerInstance_startLeaveGame)();
+}
+static bool (ServerInstance::*_ServerInstance_isLeaveGameDone)() const;
+bool ServerInstance::isLeaveGameDone() const {
+    return (this->*_ServerInstance_isLeaveGameDone)();
 }
 static void (ServerInstance::*_ServerInstance_mainThreadNetworkUpdate_HACK)();
 void ServerInstance::mainThreadNetworkUpdate_HACK() {
@@ -444,8 +456,14 @@ void minecraft_symbols_init(void* handle) {
     if (_NetworkHandler_NetworkHandler == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14NetworkHandlerC2Ev");
     ((void*&) _ServerInstance_ServerInstance) = hybris_dlsym(handle, "_ZN14ServerInstanceC2ER13IMinecraftAppRK9WhitelistRK7OpsListP15FilePathManagerNSt6chrono8durationIxSt5ratioILx1ELx1EEEESsSsSsRK19IContentKeyProviderSs13LevelSettingsRN9minecraft3api3ApiEibiiibRKSt6vectorISsSaISsEESsRKN3mce4UUIDER17MinecraftEventingR14NetworkHandlerR22ResourcePackRepositoryRK18ContentTierManagerR19ResourcePackManagerPS15_St8functionIFvRKSsEE");
     if (_ServerInstance_ServerInstance == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstanceC2ER13IMinecraftAppRK9WhitelistRK7OpsListP15FilePathManagerNSt6chrono8durationIxSt5ratioILx1ELx1EEEESsSsSsRK19IContentKeyProviderSs13LevelSettingsRN9minecraft3api3ApiEibiiibRKSt6vectorISsSaISsEESsRKN3mce4UUIDER17MinecraftEventingR14NetworkHandlerR22ResourcePackRepositoryRK18ContentTierManagerR19ResourcePackManagerPS15_St8functionIFvRKSsEE");
+    ((void*&) _ServerInstance_destructor) = hybris_dlsym(handle, "_ZN14ServerInstanceD2Ev");
+    if (_ServerInstance_destructor == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstanceD2Ev");
     ((void*&) _ServerInstance_update) = hybris_dlsym(handle, "_ZN14ServerInstance6updateEv");
     if (_ServerInstance_update == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance6updateEv");
+    ((void*&) _ServerInstance_startLeaveGame) = hybris_dlsym(handle, "_ZN14ServerInstance14startLeaveGameEv");
+    if (_ServerInstance_startLeaveGame == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance14startLeaveGameEv");
+    ((void*&) _ServerInstance_isLeaveGameDone) = hybris_dlsym(handle, "_ZNK14ServerInstance15isLeaveGameDoneEv");
+    if (_ServerInstance_isLeaveGameDone == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZNK14ServerInstance15isLeaveGameDoneEv");
     ((void*&) _ServerInstance_mainThreadNetworkUpdate_HACK) = hybris_dlsym(handle, "_ZN14ServerInstance28mainThreadNetworkUpdate_HACKEv");
     if (_ServerInstance_mainThreadNetworkUpdate_HACK == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance28mainThreadNetworkUpdate_HACKEv");
     ((void*&) _OpsList_OpsList) = hybris_dlsym(handle, "_ZN7OpsListC2Eb");
