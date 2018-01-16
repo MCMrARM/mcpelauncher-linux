@@ -162,7 +162,8 @@ int main(int argc, char *argv[]) {
     Automation::AutomationClient aclient (minecraftApp);
     minecraftApp.automationClient = &aclient;
     Log::debug("Launcher", "Initializing ServerInstance");
-    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)), /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
+    auto idleTimeout = std::chrono::seconds((int) (properties.getFloat("player-idle-timeout", 0) * 60.f));
+    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
     Log::trace("Launcher", "Loading language data");

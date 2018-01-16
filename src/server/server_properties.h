@@ -20,6 +20,10 @@ public:
         return properties.count(name) > 0 ? std::stoi(properties.at(name)) : def;
     }
 
+    float getFloat(std::string const& name, float def = 0.f) {
+        return properties.count(name) > 0 ? std::stof(properties.at(name)) : def;
+    }
+
     bool getBool(std::string const& name, bool def = false) {
         if (properties.count(name) > 0) {
             std::string const& val = properties.at(name);
