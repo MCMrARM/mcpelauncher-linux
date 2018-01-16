@@ -170,10 +170,14 @@ int main(int argc, char *argv[]) {
     char lineBuffer[1024 * 16];
     size_t lineBufferOffset = 0;
 
+    static bool isInterrupted = false;
+    signal(SIGINT, [](int i) {
+        isInterrupted = true;
+    });
 
     auto tp = std::chrono::steady_clock::now();
     int updatesPerSecond = 25;
-    while (true) {
+    while (!isInterrupted) {
         ssize_t r;
         while ((r = read(0, &lineBuffer[lineBufferOffset], sizeof(lineBuffer) - lineBufferOffset)) > 0)
             lineBufferOffset += r;
@@ -198,5 +202,8 @@ int main(int argc, char *argv[]) {
         std::this_thread::sleep_until(tp2 + std::chrono::nanoseconds(1000000000L / updatesPerSecond));
         tp = tp2;
     }
+
+    Log::info("Launcher", "Stopping...");
+    workaroundShutdownCrash(handle);
     return 0;
 }

@@ -132,9 +132,6 @@ mcpe::string xboxReadConfigFile(void* th) {
     s << f.rdbuf();
     return s.str();
 }
-void workerPoolDestroy(void* th) {
-    Log::trace("Launcher", "worker pool-related class destroy %uli", (unsigned long) th);
-}
 xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, mcpe::string const& s) {
     Log::trace("Launcher", "log_telemetry_signin %i %s", (int) b, s.c_str());
     xbox::services::xbox_live_result<void> ret;
@@ -669,13 +666,7 @@ int main(int argc, char *argv[]) {
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     window.runLoop();
 
-    // this is an ugly hack to workaround the close app crashes MCPE causes
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9TaskGroupD2Ev");
-    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN10WorkerPoolD2Ev");
-    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9SchedulerD2Ev");
-    patchCallInstruction((void*) patchOff, (void*) &workerPoolDestroy, true);
+    workaroundShutdownCrash(handle);
 
 #ifndef DISABLE_CEF
     BrowserApp::Shutdown();
