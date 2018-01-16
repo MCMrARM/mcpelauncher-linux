@@ -4,6 +4,7 @@
 #include <chrono>
 #include <fstream>
 #include <fcntl.h>
+#include <thread>
 #include "../common/symbols/android_symbols.h"
 #include "../common/symbols/egl_symbols.h"
 #include "../common/symbols/fmod_symbols.h"
@@ -170,6 +171,8 @@ int main(int argc, char *argv[]) {
     size_t lineBufferOffset = 0;
 
 
+    auto tp = std::chrono::steady_clock::now();
+    int updatesPerSecond = 25;
     while (true) {
         ssize_t r;
         while ((r = read(0, &lineBuffer[lineBufferOffset], sizeof(lineBuffer) - lineBufferOffset)) > 0)
@@ -188,9 +191,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        auto tp2 = std::chrono::steady_clock::now();
         instance.update();
         instance.mainThreadNetworkUpdate_HACK();
-        Scheduler::singleton()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(std::chrono::milliseconds(50)));
+        Scheduler::singleton()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(tp2 - tp));
+        std::this_thread::sleep_until(tp2 + std::chrono::nanoseconds(1000000000L / updatesPerSecond));
+        tp = tp2;
     }
     return 0;
 }
