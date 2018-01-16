@@ -275,7 +275,7 @@ output("// This file was automatically generated using tools/process_headers.py"
 output("// Generated on " + datetime.datetime.utcnow().strftime("%a %b %d %Y %H:%M:%S UTC"))
 output("")
 output("#include <hybris/dlfcn.h>")
-output("#include \"../log.h\"")
+output("#include \"../common/log.h\"")
 output("")
 header_dir = "../src/minecraft/"
 for file in os.listdir(header_dir):
