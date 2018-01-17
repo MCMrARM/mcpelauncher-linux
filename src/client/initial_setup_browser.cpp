@@ -355,7 +355,7 @@ bool InitialSetupV8Handler::Execute(const CefString& name, CefRefPtr<CefV8Value>
         msgArgs->SetBool(0, args[0]->GetBoolValue());
         handler.GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
-    } else if (name == "setAskTosResult" && !args.empty() && args[0]->IsBool()) {
+    } else if (name == "setAskTosResult" && args.size() >= 1 && args[0]->IsBool()) {
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SetAskTosResult");
         CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
         msgArgs->SetBool(0, args[0]->GetBoolValue());

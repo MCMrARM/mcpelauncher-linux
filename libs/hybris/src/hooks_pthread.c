@@ -733,7 +733,7 @@ static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
     if (hybris_is_pointer_in_shm((void*)value))
         realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
-    if ((int)realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
+    if ((unsigned int)realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
         realrwlock = hybris_alloc_init_rwlock();
         *((unsigned int *)rwlock) = (unsigned int) realrwlock;
     }

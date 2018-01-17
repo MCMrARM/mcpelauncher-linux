@@ -197,7 +197,7 @@ static struct aFILE* my_fopen(const char *filename, const char *mode)
     if (file == NULL)
         return NULL;
     struct aFILE* afile = (struct aFILE*) malloc(sizeof(struct aFILE));
-    afile->_file = fileno(file);
+    afile->_file = (short) fileno(file);
     afile->actual = file;
     afile->_flags = 0;
     return afile;
@@ -209,7 +209,7 @@ static struct aFILE* my_fdopen(int fd, const char *mode)
     if (file == NULL)
         return NULL;
     struct aFILE* afile = (struct aFILE*) malloc(sizeof(struct aFILE));
-    afile->_file = (short)fileno(file);
+    afile->_file = (short) fileno(file);
     afile->actual = file;
     return afile;
 }
