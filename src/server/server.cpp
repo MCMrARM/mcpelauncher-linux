@@ -35,6 +35,7 @@
 #include "../minecraft/ResourcePackStack.h"
 #include "server_minecraft_app.h"
 #include "server_properties.h"
+#include "../common/hook.h"
 
 extern "C" {
 #include <hybris/dlfcn.h>
@@ -66,6 +67,7 @@ int main(int argc, char *argv[]) {
     stubSymbols(egl_symbols, (void*) stubFunc);
     stubSymbols(fmod_symbols, (void*) stubFunc);
     hybris_hook("eglGetProcAddress", (void*) stubFunc);
+    hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     hookAndroidLog();
     if (!load_empty_library("libc.so") || !load_empty_library("libm.so"))
@@ -77,11 +79,13 @@ int main(int argc, char *argv[]) {
         return -1;
     load_empty_library("libstdc++.so");
     Log::trace("Launcher", "Loading Minecraft library");
-    void* handle = hybris_dlopen((cwd + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
+    std::string mcpePath = cwd + "libs/libminecraftpe.so";
+    void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         Log::error("Launcher", "Failed to load Minecraft: %s", hybris_dlerror());
         return -1;
     }
+    addHookLibrary(handle, mcpePath);
 
     unsigned int libBase = ((soinfo*) handle)->base;
     Log::info("Launcher", "Loaded Minecraft library");
@@ -92,7 +96,7 @@ int main(int argc, char *argv[]) {
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
     ModLoader modLoader;
-    modLoader.loadModsFromDirectory("mods/");
+    modLoader.loadModsFromDirectory(cwd + "mods/");
 
     Log::info("Launcher", "Starting server initialization");
 

@@ -8,7 +8,7 @@
 void* ModLoader::loadMod(std::string const& path) {
     void* handle = hybris_dlopen(path.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
-        Log::error("ModLoader", "Failed to load mod: %s", path.c_str());
+        Log::error("ModLoader", "Failed to load mod %s: %s", path.c_str(), hybris_dlerror());
         return nullptr;
     }
 
