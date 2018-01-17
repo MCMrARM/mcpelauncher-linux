@@ -18,6 +18,10 @@
  *
  */
 
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
+
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
@@ -25,7 +29,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#define __USE_GNU
 #include <unistd.h>
 #include <errno.h>
 #include <sys/socket.h>

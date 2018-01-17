@@ -21,7 +21,10 @@
 
 #include "hooks_shm.h"
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -162,7 +165,7 @@ extern void __cxa_finalize(void * d);
  * implementation of our internal property handling
  */
 
-int my_system_property_get(const char *name, const char *value)
+int my_system_property_get(const char *name, char *value)
 {
 	return property_get(name, value, NULL);
 }

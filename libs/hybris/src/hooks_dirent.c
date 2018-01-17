@@ -136,7 +136,7 @@ static int my_scandirat(int fd, const char *dir,
             result[nItems++] = filter_r;
         }
         if (nItems && compar != NULL) // sort
-            qsort(result, nItems, sizeof(struct bionic_dirent *), compar);
+            qsort(result, nItems, sizeof(struct bionic_dirent *), (__compar_fn_t) compar);
 
         *namelist = result;
     }
@@ -150,7 +150,7 @@ static int my_scandir(const char *dir,
                       int (*compar) (const struct bionic_dirent **,
                                      const struct bionic_dirent **))
 {
-    return my_scandirat(AT_FDCWD, dir, namelist, filter, compar);
+    return my_scandirat(AT_FDCWD, dir, namelist, filter, (__compar_fn_t) compar);
 }
 
 

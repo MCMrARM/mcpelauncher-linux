@@ -28,7 +28,7 @@ void *hybris_dlopen(const char *filename, int flag);
 void *hybris_dlsym(void *handle, const char *symbol);
 int   hybris_dlclose(void *handle);
 int   hybris_dladdr(const void *addr, Dl_info *info);
-char *hybris_dlerror(void);
+const char *hybris_dlerror(void);
 
 #ifdef __cplusplus
 }

@@ -195,18 +195,6 @@ static int my_pthread_attr_getstacksize(pthread_attr_t const *__attr, size_t *st
     return pthread_attr_getstacksize(realattr, stack_size);
 }
 
-static int my_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *stack_addr)
-{
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
-    return pthread_attr_setstackaddr(realattr, stack_addr);
-}
-
-static int my_pthread_attr_getstackaddr(pthread_attr_t const *__attr, void **stack_addr)
-{
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
-    return pthread_attr_getstackaddr(realattr, stack_addr);
-}
-
 static int my_pthread_attr_setstack(pthread_attr_t *__attr, void *stack_base, size_t stack_size)
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
@@ -745,7 +733,7 @@ static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
     if (hybris_is_pointer_in_shm((void*)value))
         realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
-    if (realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
+    if ((unsigned int)realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
         realrwlock = hybris_alloc_init_rwlock();
         *((unsigned int *)rwlock) = (unsigned int) realrwlock;
     }
@@ -878,8 +866,6 @@ static struct _hook pthread_hooks[] = {
     {"pthread_attr_getschedparam", my_pthread_attr_getschedparam},
     {"pthread_attr_setstacksize", my_pthread_attr_setstacksize},
     {"pthread_attr_getstacksize", my_pthread_attr_getstacksize},
-    {"pthread_attr_setstackaddr", my_pthread_attr_setstackaddr},
-    {"pthread_attr_getstackaddr", my_pthread_attr_getstackaddr},
     {"pthread_attr_setstack", my_pthread_attr_setstack},
     {"pthread_attr_getstack", my_pthread_attr_getstack},
     {"pthread_attr_setguardsize", my_pthread_attr_setguardsize},
