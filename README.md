@@ -33,6 +33,6 @@ If the extract script fails with an error about the .apk not being x86, it means
 You'll need to purchase MCPE on Google Play and use the first time setup.
 
 ## License and thanks
-Most of the code in this repo is licensed under BSD. This project uses libc, libstdc++, libz and libm - libraries
-extracted from the Android OS. A modified version of libhybris is also included, which is licensed under GPL. This project
-also uses the EGLUT library and FMOD library (for sound).
+This project is licensed under GPL, some parts of the sources are under BSD.
+
+This project uses modified versions od Hybris, EGLUT and RapidXML. The properiaty FMOD library is also used for sound support.
