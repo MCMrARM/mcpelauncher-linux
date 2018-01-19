@@ -3,7 +3,7 @@ MCPE Linux Launcher
 
 ## Required packages on Ubuntu
 
-- Minimal: `cmake gcc-multilib g++-multilib zlib1g-dev:i386 libx11-dev:i386 libzip-dev:i386 libpng-dev:i386 libcurl4-openssl-dev:i386 libssl-dev:i386 libgles2-mesa-dev:i386`
+- Minimal: `cmake gcc-multilib g++-multilib zlib1g-dev:i386 libx11-dev:i386 libzip-dev:i386 libpng-dev:i386 libcurl4-openssl-dev:i386 libssl-dev:i386 libgles2-mesa-dev:i386 libudev-dev:i386 libevdev-dev:i386`
 - CEF (supports Xbox Live): `libgtk2.0-0:i386 libgtkglext1:i386 libasound2:i386 libnss3:i386 libxss1:i386 libgconf2-4:i386 libxtst6:i386 libudev1:i386`
 - First Time Setup (allows you to log in to Google Play and download the .apk): `protobuf-compiler libprotobuf-dev:i386` (requires the CEF dependencies as well)
 
@@ -33,6 +33,6 @@ If the extract script fails with an error about the .apk not being x86, it means
 You'll need to purchase MCPE on Google Play and use the first time setup.
 
 ## License and thanks
-Most of the code in this repo is licensed under BSD. This project uses libc, libstdc++, libz and libm - libraries
-extracted from the Android OS. A modified version of libhybris is also included, which is licensed under GPL. This project
-also uses the EGLUT library and FMOD library (for sound).
+This project is licensed under GPL, some parts of the sources are under BSD.
+
+This project uses modified versions od Hybris, EGLUT and RapidXML. The properiaty FMOD library is also used for sound support.
