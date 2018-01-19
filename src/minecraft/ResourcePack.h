@@ -2,6 +2,7 @@
 
 #include <string>
 #include <functional>
+#include "Resource.h"
 class MinecraftEventing;
 class IPackTelemetry;
 class FilePathManager;
@@ -67,7 +68,7 @@ public:
 
 };
 
-class ResourcePackManager {
+class ResourcePackManager : public ResourceLoader {
 
 public:
 

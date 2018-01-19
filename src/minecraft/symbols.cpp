@@ -1,8 +1,14 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Tue Jan 16 2018 15:29:01 UTC
+// Generated on Fri Jan 19 2018 14:32:18 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
+
+#include "Resource.h"
+static void (*_Resource_registerLoader)(ResourceFileSystem, std::unique_ptr<ResourceLoader>);
+void Resource::registerLoader(ResourceFileSystem p1, std::unique_ptr<ResourceLoader> p2) {
+    _Resource_registerLoader(p1, std::move(p2));
+}
 
 #include "UserManager.h"
 static std::unique_ptr<Social::UserManager> (*_Social_UserManager_CreateUserManager)();
@@ -83,8 +89,8 @@ static void (NetworkHandler::*_NetworkHandler_NetworkHandler)();
 NetworkHandler::NetworkHandler() {
     (this->*_NetworkHandler_NetworkHandler)();
 }
-static void (ServerInstance::*_ServerInstance_ServerInstance)(IMinecraftApp &, Whitelist const &, OpsList const &, FilePathManager *, std::chrono::duration<long long>, mcpe::string, mcpe::string, mcpe::string, IContentAccessibilityProvider const &, mcpe::string, LevelSettings, minecraft::api::Api &, int, bool, int, int, int, bool, std::vector<mcpe::string> const &, mcpe::string, mce::UUID const &, MinecraftEventing &, NetworkHandler &, ResourcePackRepository &, ContentTierManager const &, ResourcePackManager &, ResourcePackManager *, std::function<void ( mcpe::string const & )>);
-ServerInstance::ServerInstance(IMinecraftApp & p1, Whitelist const & p2, OpsList const & p3, FilePathManager * p4, std::chrono::duration<long long> p5, mcpe::string p6, mcpe::string p7, mcpe::string p8, IContentAccessibilityProvider const & p9, mcpe::string p10, LevelSettings p11, minecraft::api::Api & p12, int p13, bool p14, int p15, int p16, int p17, bool p18, std::vector<mcpe::string> const & p19, mcpe::string p20, mce::UUID const & p21, MinecraftEventing & p22, NetworkHandler & p23, ResourcePackRepository & p24, ContentTierManager const & p25, ResourcePackManager & p26, ResourcePackManager * p27, std::function<void ( mcpe::string const & )> p28) {
+static void (ServerInstance::*_ServerInstance_ServerInstance)(IMinecraftApp &, Whitelist const &, OpsList const &, FilePathManager *, std::chrono::seconds, mcpe::string, mcpe::string, mcpe::string, IContentAccessibilityProvider const &, mcpe::string, LevelSettings, minecraft::api::Api &, int, bool, int, int, int, bool, std::vector<mcpe::string> const &, mcpe::string, mce::UUID const &, MinecraftEventing &, NetworkHandler &, ResourcePackRepository &, ContentTierManager const &, ResourcePackManager &, ResourcePackManager *, std::function<void ( mcpe::string const & )>);
+ServerInstance::ServerInstance(IMinecraftApp & p1, Whitelist const & p2, OpsList const & p3, FilePathManager * p4, std::chrono::seconds p5, mcpe::string p6, mcpe::string p7, mcpe::string p8, IContentAccessibilityProvider const & p9, mcpe::string p10, LevelSettings p11, minecraft::api::Api & p12, int p13, bool p14, int p15, int p16, int p17, bool p18, std::vector<mcpe::string> const & p19, mcpe::string p20, mce::UUID const & p21, MinecraftEventing & p22, NetworkHandler & p23, ResourcePackRepository & p24, ContentTierManager const & p25, ResourcePackManager & p26, ResourcePackManager * p27, std::function<void ( mcpe::string const & )> p28) {
     (this->*_ServerInstance_ServerInstance)(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28);
 }
 static void (ServerInstance::*_ServerInstance_destructor)();
@@ -270,6 +276,30 @@ static void (FilePathManager::*_FilePathManager_FilePathManager)(mcpe::string, b
 FilePathManager::FilePathManager(mcpe::string p1, bool p2) {
     (this->*_FilePathManager_FilePathManager)(p1, p2);
 }
+static mcpe::string (FilePathManager::*_FilePathManager_getRootPath)() const;
+mcpe::string FilePathManager::getRootPath() const {
+    return (this->*_FilePathManager_getRootPath)();
+}
+static mcpe::string (FilePathManager::*_FilePathManager_getUserDataPath)() const;
+mcpe::string FilePathManager::getUserDataPath() const {
+    return (this->*_FilePathManager_getUserDataPath)();
+}
+static void (FilePathManager::*_FilePathManager_setPackagePath)(mcpe::string);
+void FilePathManager::setPackagePath(mcpe::string p1) {
+    (this->*_FilePathManager_setPackagePath)(p1);
+}
+static mcpe::string (FilePathManager::*_FilePathManager_getPackagePath)() const;
+mcpe::string FilePathManager::getPackagePath() const {
+    return (this->*_FilePathManager_getPackagePath)();
+}
+static void (FilePathManager::*_FilePathManager_setSettingsPath)(mcpe::string);
+void FilePathManager::setSettingsPath(mcpe::string p1) {
+    (this->*_FilePathManager_setSettingsPath)(p1);
+}
+static mcpe::string (FilePathManager::*_FilePathManager_getSettingsPath)() const;
+mcpe::string FilePathManager::getSettingsPath() const {
+    return (this->*_FilePathManager_getSettingsPath)();
+}
 
 #include "App.h"
 static void (App::*_App_init)(AppContext &);
@@ -296,6 +326,12 @@ void AppPlatform::_fireAppFocusGained() {
 static void (AppPlatform::*_AppPlatform_initialize)();
 void AppPlatform::initialize() {
     (this->*_AppPlatform_initialize)();
+}
+
+#include "AppResourceLoader.h"
+static void (AppResourceLoader::*_AppResourceLoader_AppResourceLoader)(std::function<mcpe::string ( )>);
+AppResourceLoader::AppResourceLoader(std::function<mcpe::string ( )> p1) {
+    (this->*_AppResourceLoader_AppResourceLoader)(p1);
 }
 
 #include "CommandOutputSender.h"
@@ -414,6 +450,8 @@ mcpe::string Common::getGameVersionStringNet() {
 }
 
 void minecraft_symbols_init(void* handle) {
+    ((void*&) _Resource_registerLoader) = hybris_dlsym(handle, "_ZN8Resource14registerLoaderE18ResourceFileSystemSt10unique_ptrI14ResourceLoaderSt14default_deleteIS2_EE");
+    if (_Resource_registerLoader == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN8Resource14registerLoaderE18ResourceFileSystemSt10unique_ptrI14ResourceLoaderSt14default_deleteIS2_EE");
     ((void*&) _Social_UserManager_CreateUserManager) = hybris_dlsym(handle, "_ZN6Social11UserManager17CreateUserManagerEv");
     if (_Social_UserManager_CreateUserManager == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN6Social11UserManager17CreateUserManagerEv");
     ((void*&) _xbox_services_xbox_services_error_code_category) = hybris_dlsym(handle, "_ZN4xbox8services33xbox_services_error_code_categoryEv");
@@ -538,6 +576,18 @@ void minecraft_symbols_init(void* handle) {
     if (_Scheduler_processCoroutines == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN9Scheduler17processCoroutinesENSt6chrono8durationIxSt5ratioILx1ELx1000000000EEEE");
     ((void*&) _FilePathManager_FilePathManager) = hybris_dlsym(handle, "_ZN15FilePathManagerC2ESsb");
     if (_FilePathManager_FilePathManager == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN15FilePathManagerC2ESsb");
+    ((void*&) _FilePathManager_getRootPath) = hybris_dlsym(handle, "_ZNK15FilePathManager11getRootPathEv");
+    if (_FilePathManager_getRootPath == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZNK15FilePathManager11getRootPathEv");
+    ((void*&) _FilePathManager_getUserDataPath) = hybris_dlsym(handle, "_ZNK15FilePathManager15getUserDataPathEv");
+    if (_FilePathManager_getUserDataPath == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZNK15FilePathManager15getUserDataPathEv");
+    ((void*&) _FilePathManager_setPackagePath) = hybris_dlsym(handle, "_ZN15FilePathManager14setPackagePathESs");
+    if (_FilePathManager_setPackagePath == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN15FilePathManager14setPackagePathESs");
+    ((void*&) _FilePathManager_getPackagePath) = hybris_dlsym(handle, "_ZNK15FilePathManager14getPackagePathEv");
+    if (_FilePathManager_getPackagePath == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZNK15FilePathManager14getPackagePathEv");
+    ((void*&) _FilePathManager_setSettingsPath) = hybris_dlsym(handle, "_ZN15FilePathManager15setSettingsPathESs");
+    if (_FilePathManager_setSettingsPath == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN15FilePathManager15setSettingsPathESs");
+    ((void*&) _FilePathManager_getSettingsPath) = hybris_dlsym(handle, "_ZNK15FilePathManager15getSettingsPathEv");
+    if (_FilePathManager_getSettingsPath == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZNK15FilePathManager15getSettingsPathEv");
     ((void*&) _App_init) = hybris_dlsym(handle, "_ZN3App4initER10AppContext");
     if (_App_init == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN3App4initER10AppContext");
     ((void*&) AppPlatform::myVtable) = hybris_dlsym(handle, "_ZTV11AppPlatform");
@@ -548,6 +598,8 @@ void minecraft_symbols_init(void* handle) {
     if (_AppPlatform__fireAppFocusGained == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN11AppPlatform19_fireAppFocusGainedEv");
     ((void*&) _AppPlatform_initialize) = hybris_dlsym(handle, "_ZN11AppPlatform10initializeEv");
     if (_AppPlatform_initialize == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN11AppPlatform10initializeEv");
+    ((void*&) _AppResourceLoader_AppResourceLoader) = hybris_dlsym(handle, "_ZN17AppResourceLoaderC2ESt8functionIFSsvEE");
+    if (_AppResourceLoader_AppResourceLoader == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN17AppResourceLoaderC2ESt8functionIFSsvEE");
     ((void*&) _CommandOutputSender_translate) = hybris_dlsym(handle, "_ZN19CommandOutputSender9translateERKSt6vectorISsSaISsEE");
     if (_CommandOutputSender_translate == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN19CommandOutputSender9translateERKSt6vectorISsSaISsEE");
     ((void*&) _CommandOutputSender_CommandOutputSender) = hybris_dlsym(handle, "_ZN19CommandOutputSenderC2ERN10Automation16AutomationClientE");

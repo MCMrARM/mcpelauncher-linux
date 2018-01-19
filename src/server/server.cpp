@@ -36,6 +36,8 @@
 #include "server_minecraft_app.h"
 #include "server_properties.h"
 #include "../common/hook.h"
+#include "../minecraft/Resource.h"
+#include "../minecraft/AppResourceLoader.h"
 
 extern "C" {
 #include <hybris/dlfcn.h>
@@ -49,11 +51,6 @@ void stubFunc() {
 
 int main(int argc, char *argv[]) {
     registerCrashHandler();
-
-    // We're going to look at the CWD instead of the proper assets folders because to support other paths I'd likely
-    // have to register a proper asset loader in MCPE, and the default one just falls back to the current directory for
-    // assets, so let's at least use the CWD for as much stuff as possible.
-    std::string cwd = PathHelper::getWorkingDir();
 
     ServerProperties properties;
     {
@@ -79,7 +76,7 @@ int main(int argc, char *argv[]) {
         return -1;
     load_empty_library("libstdc++.so");
     Log::trace("Launcher", "Loading Minecraft library");
-    std::string mcpePath = cwd + "libs/libminecraftpe.so";
+    std::string mcpePath = PathHelper::findDataFile("libs/libminecraftpe.so");
     void* handle = hybris_dlopen(mcpePath.c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         Log::error("Launcher", "Failed to load Minecraft: %s", hybris_dlerror());
@@ -96,7 +93,7 @@ int main(int argc, char *argv[]) {
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
     ModLoader modLoader;
-    modLoader.loadModsFromDirectory(cwd + "mods/");
+    modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
     Log::info("Launcher", "Starting server initialization");
 
@@ -114,7 +111,7 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Initializing Minecraft API classes");
     minecraft::api::Api api;
     api.vtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api3ApiE") + 2;
-    api.envPath = cwd;
+    api.envPath = PathHelper::getWorkingDir();
     api.playerIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api15PlayerInterfaceE") + 2;
     api.entityIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api15EntityInterfaceE") + 2;
     api.networkIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api16NetworkInterfaceE") + 2;
@@ -135,18 +132,30 @@ int main(int argc, char *argv[]) {
     levelSettings.texturepacksRequired = false;
 
     Log::trace("Launcher", "Initializing FilePathManager");
-    FilePathManager pathmgr (cwd, false);
+    FilePathManager pathmgr (platform->getCurrentStoragePath(), false);
+    pathmgr.setPackagePath(platform->getPackagePath());
+    pathmgr.setSettingsPath(pathmgr.getRootPath());
+    Log::trace("Launcher", "Initializing resource loaders");
+    Resource::registerLoader((ResourceFileSystem) 1, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return pathmgr.getPackagePath(); })));
+    // Resource::registerLoader((ResourceFileSystem) 7, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return pathmgr.getDataUrl(); })));
+    Resource::registerLoader((ResourceFileSystem) 8, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return pathmgr.getUserDataPath(); })));
+    Resource::registerLoader((ResourceFileSystem) 4, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return pathmgr.getSettingsPath(); })));
+    // Resource::registerLoader((ResourceFileSystem) 5, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return pathmgr.getExternalFilePath(); })));
+    // Resource::registerLoader((ResourceFileSystem) 2, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return ""; })));
+    // Resource::registerLoader((ResourceFileSystem) 3, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return ""; })));
+    // Resource::registerLoader((ResourceFileSystem) 9, std::unique_ptr<ResourceLoader>(new ScreenshotLoader));
+    // Resource::registerLoader((ResourceFileSystem) 0xA, std::unique_ptr<ResourceLoader>(new AppResourceLoader([&pathmgr] { return ""; })));
+
     Log::trace("Launcher", "Initializing MinecraftEventing (create instance)");
-    MinecraftEventing eventing (cwd);
+    MinecraftEventing eventing (pathmgr.getRootPath());
     /*Log::trace("Launcher", "Social::UserManager::CreateUserManager()");
     auto userManager = Social::UserManager::CreateUserManager();*/
     Log::trace("Launcher", "Initializing MinecraftEventing (init call)");
     eventing.init();
     Log::trace("Launcher", "Initializing ResourcePackManager");
     ContentTierManager ctm;
-    ResourcePackManager resourcePackManager ([cwd]() {
-        return cwd;
-    }, ctm);
+    ResourcePackManager* resourcePackManager = new ResourcePackManager([&pathmgr]() { return pathmgr.getRootPath(); }, ctm);
+    Resource::registerLoader((ResourceFileSystem) 0, std::unique_ptr<ResourceLoader>(resourcePackManager));
     Log::trace("Launcher", "Initializing PackManifestFactory");
     PackManifestFactory packManifestFactory (eventing);
     Log::trace("Launcher", "Initializing SkinPackKeyProvider");
@@ -158,7 +167,7 @@ int main(int argc, char *argv[]) {
     Log::trace("Launcher", "Adding vanilla resource pack");
     std::unique_ptr<ResourcePackStack> stack (new ResourcePackStack());
     stack->add(PackInstance(resourcePackRepo.vanillaPack, -1, false), resourcePackRepo, false);
-    resourcePackManager.setStack(std::move(stack), (ResourcePackStackType) 3, false);
+    resourcePackManager->setStack(std::move(stack), (ResourcePackStackType) 3, false);
     Log::trace("Launcher", "Initializing NetworkHandler");
     NetworkHandler handler;
     Log::trace("Launcher", "Initializing Automation::AutomationClient");
@@ -167,12 +176,12 @@ int main(int argc, char *argv[]) {
     minecraftApp.automationClient = &aclient;
     Log::debug("Launcher", "Initializing ServerInstance");
     auto idleTimeout = std::chrono::seconds((int) (properties.getFloat("player-idle-timeout", 0) * 60.f));
-    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, resourcePackManager, nullptr, [](mcpe::string const& s) {
+    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, /* (query?) port */ properties.getInt("server-port", 19132), /* (maybe not) port */ 19132, properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, *resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
     Log::trace("Launcher", "Loading language data");
-    I18n::loadLanguages(resourcePackManager, nullptr, "en_US");
-    resourcePackManager.onLanguageChanged();
+    I18n::loadLanguages(*resourcePackManager, nullptr, "en_US");
+    resourcePackManager->onLanguageChanged();
     Log::info("Launcher", "Server initialized");
 
     int flags = fcntl(0, F_GETFL, 0);
