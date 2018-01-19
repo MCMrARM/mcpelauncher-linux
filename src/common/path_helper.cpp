@@ -11,6 +11,10 @@ PathHelper::PathInfo PathHelper::pathInfo;
 PathHelper::PathInfo::PathInfo() {
     appDir = findAppDir();
     homeDir = findUserHome();
+    if (fileExists(getWorkingDir() + "libs/libminecraftpe.so")) {
+        overrideDataDir = getWorkingDir();
+        return;
+    }
     char* env = getenv("XDG_DATA_HOME");
     if (env != nullptr)
         dataHome = std::string(env);
@@ -82,6 +86,12 @@ bool PathHelper::fileExists(std::string const& path) {
 }
 
 std::string PathHelper::findDataFile(std::string const& path) {
+    if (!pathInfo.overrideDataDir.empty()) {
+        std::string p = pathInfo.overrideDataDir + path;
+        if (fileExists(p))
+            return p;
+        throw std::runtime_error("Failed to find data file: " + path);
+    }
     std::string p = pathInfo.appDir + "/" + path;
     if (fileExists(p))
         return p;

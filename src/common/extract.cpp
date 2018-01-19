@@ -51,9 +51,7 @@ void ExtractHelper::extractFile(zip* za, zip_uint64_t fileId, std::string const&
     zip_fclose(src);
 }
 
-void ExtractHelper::extractApk(std::string const& apk) {
-    std::string basePath = PathHelper::getPrimaryDataDirectory();
-
+void ExtractHelper::extractApk(std::string const& apk, std::string const& basePath) {
     printf("Deleting assets/\n");
     nftw(std::string(basePath + "assets/").c_str(), removeFile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
 

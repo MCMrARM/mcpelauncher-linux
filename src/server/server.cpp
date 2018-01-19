@@ -38,6 +38,7 @@
 #include "../common/hook.h"
 #include "../minecraft/Resource.h"
 #include "../minecraft/AppResourceLoader.h"
+#include "../common/extract.h"
 
 extern "C" {
 #include <hybris/dlfcn.h>
@@ -50,6 +51,11 @@ void stubFunc() {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc == 3 && strcmp(argv[1], "extract") == 0) {
+        ExtractHelper::extractApk(argv[2], PathHelper::getWorkingDir());
+        return 0;
+    }
+
     registerCrashHandler();
 
     ServerProperties properties;

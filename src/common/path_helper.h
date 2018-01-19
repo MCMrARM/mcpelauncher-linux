@@ -14,6 +14,7 @@ private:
         std::string dataHome;
         std::vector<std::string> dataDirs;
         std::string cacheHome;
+        std::string overrideDataDir;
 
         PathInfo();
     };
@@ -33,10 +34,14 @@ public:
     static std::string findDataFile(std::string const& path);
 
     static std::string getPrimaryDataDirectory() {
+        if (!pathInfo.overrideDataDir.empty())
+            return pathInfo.overrideDataDir;
         return pathInfo.dataHome + "/" + appDirName + "/";
     }
 
     static std::string getCacheDirectory() {
+        if (!pathInfo.overrideDataDir.empty())
+            return pathInfo.overrideDataDir;
         return pathInfo.cacheHome + "/" + appDirName + "/";
     }
 
