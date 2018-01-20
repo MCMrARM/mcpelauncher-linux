@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 if [ "$(uname)" == "Darwin" ]; then
   BIN_LIBS_DOWNLOAD_URL="https://github.com/MCMrARM/mcpelauncher-mac-bin/archive/1f7ab4c5af6454d1d9641014a0b29594e062829e.zip"
-elif [ "$(uname)" == "Linux"]; then
+elif [ "$(uname)" == "Linux" ]; then
   BIN_LIBS_DOWNLOAD_URL="https://github.com/MCMrARM/mcpelauncher-linux-bin/archive/a8ea807aa1109ab7cadafdc40dc7720f14f3389f.zip"
 fi
 

@@ -341,7 +341,7 @@ int main(int argc, char *argv[]) {
     float pixelSize = 2.f;
     #ifdef __APPLE__
     GraphicsApi graphicsApi = GraphicsApi::OPENGL;
-    #elif
+    #else
     GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
     #endif
     for (int i = 1; i < argc; i++) {
@@ -402,7 +402,7 @@ int main(int argc, char *argv[]) {
     #ifdef __APPLE__
     void* fmodLib = loadFmodDarwin(fmod_symbols);
     void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
-    #elif
+    #else
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6"), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     #endif
@@ -528,8 +528,13 @@ int main(int argc, char *argv[]) {
     }
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
+    #ifdef __APPLE__
     linuxHttpRequestInternalVtable[0] = magicast(&LinuxHttpRequestInternal::destroy);
     linuxHttpRequestInternalVtable[1] = magicast(&LinuxHttpRequestInternal::destroy);
+    #else
+    linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
+    linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
+    #endif
 
     if (workaroundAMD) {/*
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +

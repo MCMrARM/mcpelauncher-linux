@@ -87,7 +87,7 @@ public:
 
 std::ostream& operator<<(std::ostream&, const mcpe::string&);
 
-#elif
+#else
 
 #include <string>
 #include <cstring>

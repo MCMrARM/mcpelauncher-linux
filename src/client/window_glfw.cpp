@@ -23,7 +23,7 @@ GLFWGameWindow::GLFWGameWindow(const std::string& title, int width, int height, 
     // Use framebuffer resize instead of window resize (for retina displays)
     #ifdef __APPLE__
     glfwSetFramebufferSizeCallback(window, _glfwWindowSizeCallback);
-    #elif
+    #else
     glfwSetWindowSizeCallback(window, _glfwWindowSizeCallback);
     #endif
     glfwSetCursorPosCallback(window, _glfwCursorPosCallback);
@@ -97,7 +97,7 @@ void GLFWGameWindow::setFullscreen(bool fullscreen) {
         glfwGetWindowPos(window, &windowedX, &windowedY);
         #ifdef __APPLE__
         glfwGetFramebufferSize(window, &windowedWidth, &windowedHeight);
-        #elif
+        #else
         glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
         #endif
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -119,7 +119,7 @@ void GLFWGameWindow::_glfwCursorPosCallback(GLFWwindow* window, double x, double
     #ifdef __APPLE__
     double xr = x * user->getRelativeScale();
     double yr = y * user->getRelativeScale();
-    #elif
+    #else
     double xr = x;
     double xy = y;
     #endif
@@ -141,7 +141,7 @@ void GLFWGameWindow::_glfwMouseButtonCallback(GLFWwindow* window, int button, in
     #ifdef __APPLE__
     double xr = x * user->getRelativeScale();
     double yr = y * user->getRelativeScale();
-    #elif
+    #else
     double xr = x;
     double xy = y;
     #endif

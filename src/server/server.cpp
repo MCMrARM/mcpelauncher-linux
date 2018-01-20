@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
     #ifdef __APPLE__
     void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
-    #elif
+    #else
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
     #endif
     hookAndroidLog();

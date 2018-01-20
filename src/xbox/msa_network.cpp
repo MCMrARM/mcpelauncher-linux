@@ -111,7 +111,7 @@ std::string MSANetwork::generateKey(int keyLength, std::string const& sessionKey
         ((int&) buf[0]) = htonl(i++);
         #ifdef __APPLE__
         HMAC(EVP_sha256(), sessionKey.data(), sessionKey.length(), buf, off, resultBuf, (unsigned int*)&resultSize);
-        #elif
+        #else
         HMAC(EVP_sha256(), sessionKey.data(), sessionKey.length(), buf, off, resultBuf, &resultSize);
         #endif
         ret.append((char*) resultBuf, std::min<size_t>(resultSize, keyLength - ret.size()));
@@ -168,7 +168,7 @@ std::string MSANetwork::createSignature(std::string const& data, std::string con
     size_t signatureSize = 0;
     #ifdef __APPLE__
     HMAC(EVP_sha256(), signatureKey.data(), signatureKey.length(), (unsigned char*) data.data(), data.size(), signatureBuf, (unsigned int*)&signatureSize);
-    #elif
+    #else
     HMAC(EVP_sha256(), signatureKey.data(), signatureKey.length(), (unsigned char*) data.data(), data.size(), signatureBuf, &signatureSize);
     #endif
 

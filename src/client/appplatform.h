@@ -49,7 +49,7 @@ public:
 
     #ifdef __APPLE__
     std::vector<mcpe::function<void ()>> runOnMainThreadQueue;
-    #elif
+    #else
     std::vector<std::function<void ()>> runOnMainThreadQueue;
     #endif
     std::mutex runOnMainThreadMutex;
@@ -185,7 +185,7 @@ public:
 
     #ifdef __APPLE__
     void queueForMainThread(mcpe::function<void ()> f) {
-    #elif
+    #else
     void queueForMainThread(std::function<void ()> f) {
     #endif
         runOnMainThreadMutex.lock();

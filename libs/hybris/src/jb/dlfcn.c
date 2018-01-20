@@ -55,7 +55,7 @@ static const char *dl_errors[] = {
 
 #ifdef __APPLE__
 static pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
-#elif
+#else
 static pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 #endif
 
