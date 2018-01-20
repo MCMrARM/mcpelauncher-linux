@@ -1,7 +1,11 @@
 .idea/
-assets/
-data/
-tmp/
-libs/libminecraftpe.so
-libs/libgnustl_shared.so
+mods/
+libs/hybris/libminecraftpe.so
+libs/cef
+libs/native
+cmake-build-debug/
+__pycache__
 *.apk
+playdl.conf
+device.conf.state
+mcpelauncher-icon.png

@@ -1,0 +1,3 @@
+[submodule "gplay_api"]
+	path = gplay_api
+	url = https://github.com/MCMrARM/Google-Play-API

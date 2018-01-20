@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Minecraft
+Exec=mcpelauncher
+Icon=mcpelauncher-icon
+Terminal=false
+Type=Application
+Categories=Game;
+Comment=Minecraft C++ Edition Launcher
+

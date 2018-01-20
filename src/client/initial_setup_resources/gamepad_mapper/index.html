@@ -1,0 +1,430 @@
+<!doctype html>
+<html>
+<head>
+    <title>Minecraft Launcher</title>
+    <style>
+        html, body {
+            background: #303030;
+            color: #fff;
+            font-family: sans-serif;
+            text-align: center;
+            user-select: none;
+            cursor: default;
+            margin: 0;
+            padding: 0;
+        }
+        #ctr {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #gamepad-image {
+            flex-grow: 1;
+            padding: 5vh;
+        }
+        #action-text-ctr {
+            padding: 5vh;
+            display: flex;
+        }
+        #undo, #done, #skip {
+            background: #444;
+            border-radius: 3px;
+            padding: 8px 16px;
+            font-size: 24px;
+            cursor: pointer;
+            align-self: center;
+        }
+        #done {
+            background: #00B85E;
+            display: none;
+        }
+        #action-text-ctr h1 {
+            display: inline-block;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+<div id="ctr">
+    <object id="gamepad-image" type="image/svg+xml" data="GamepadXbox.svg"></object>
+    <div id="action-text-ctr">
+        <div id="undo">Undo</div>
+        <h1 id="action-text">Please wait</h1>
+        <div id="skip">Skip</div>
+        <div id="done">Done</div>
+    </div>
+</div>
+<script>
+    const steps = [
+        {
+            "text": "Press A",
+            "highlight": "button-a",
+            "mapping": "button:a"
+        },
+        {
+            "text": "Press B",
+            "highlight": "button-b",
+            "mapping": "button:b"
+        },
+        {
+            "text": "Press X",
+            "highlight": "button-x",
+            "mapping": "button:x"
+        },
+        {
+            "text": "Press Y",
+            "highlight": "button-y",
+            "mapping": "button:y"
+        },
+        {
+            "text": "Press Select",
+            "highlight": "button-select",
+            "mapping": "button:select"
+        },
+        {
+            "text": "Press Start",
+            "highlight": "button-start",
+            "mapping": "button:start"
+        },
+        {
+            "text": ["Press d-pad right", "Press d-pad left"],
+            "highlight": ["button-dpad-right", "button-dpad-left"],
+            "mapping": "axis:dpadx"
+        },
+        {
+            "text": ["Press d-pad up", "Press d-pad down"],
+            "highlight": ["button-dpad-up", "button-dpad-down"],
+            "mapping": "axis:dpady"
+        },
+        {
+            "text": ["Move left stick to the right", "Move left stick to the left"],
+            "highlight": "stick-left",
+            "animation": ["move-right 1s infinite", "move-left 1s infinite"],
+            "mapping": "axis:leftx"
+        },
+        {
+            "text": ["Move left stick up", "Move left stick down"],
+            "highlight": "stick-left",
+            "animation": ["move-up 1s infinite", "move-down 1s infinite"],
+            "mapping": "axis:lefty"
+        },
+        {
+            "text": "Press the left stick",
+            "highlight": "stick-left",
+            "mapping": "button:leftstick"
+        },
+        {
+            "text": ["Move right stick to the right", "Move right stick to the left"],
+            "highlight": "stick-right",
+            "animation": ["move-right 1s infinite", "move-left 1s infinite"],
+            "mapping": "axis:rightx"
+        },
+        {
+            "text": ["Move right stick up", "Move right stick down"],
+            "highlight": "stick-right",
+            "animation": ["move-up 1s infinite", "move-down 1s infinite"],
+            "mapping": "axis:righty"
+        },
+        {
+            "text": "Press the right stick",
+            "highlight": "stick-right",
+            "mapping": "button:rightstick"
+        },
+        {
+            "text": "Press the left top shoulder",
+            "highlight": "shoulder-left",
+            "mapping": "button:lb"
+        },
+        {
+            "text": "Press the right top shoulder",
+            "highlight": "shoulder-right",
+            "mapping": "button:rb"
+        },
+        {
+            "text": "Press the left trigger",
+            "highlight": "trigger-left",
+            "mapping": "axis:trleft"
+        },
+        {
+            "text": "Press the right trigger",
+            "highlight": "trigger-right",
+            "mapping": "axis:trright"
+        }
+    ];
+    let svgDoc;
+    let currentStep = -1;
+    let currentSubstep = -1;
+    let currentMappingType = null;
+    let currentMappingId = null;
+    let stepButtonPressed = -1;
+    let stepStick = -1;
+    let stepStickVal = -1;
+    let stepHat = -1;
+    let stepHatVal = -1;
+    let mapping = {};
+    let mappingTestingMode = false;
+    let mappingGamepadId = -1;
+
+    function startStep(stepN, substep) {
+        stepClearHighlight();
+        if (!substep)
+            substep = 0;
+
+        let stepData = steps[stepN];
+        currentStep = stepN;
+        currentSubstep = -1;
+        stepButtonPressed = -1;
+        stepStick = -1;
+        stepStickVal = -1;
+        stepHat = -1;
+        stepHatVal = -1;
+
+        currentMappingId = stepData.mapping;
+        currentMappingType = currentMappingId.split(":")[0];
+
+        let el;
+        if (stepData.highlight instanceof Array)
+            el = svgDoc.getElementById(stepData.highlight[substep]);
+        else
+            el = svgDoc.getElementById(stepData.highlight);
+        let textEl = document.getElementById("action-text");
+        el.classList.add("active");
+
+        if (stepData.text instanceof Array) {
+            currentSubstep = substep;
+            if ("animation" in stepData)
+                el.style.animation = stepData.animation[substep];
+            textEl.textContent = stepData.text[substep];
+        } else {
+            if ("animation" in stepData)
+                el.style.animation = stepData.animation;
+            textEl.textContent = stepData.text;
+        }
+    }
+    function stepClearHighlight() {
+        if (currentStep !== -1 && currentStep !== steps.length) {
+            let oldEl;
+            if (steps[currentStep].highlight instanceof Array)
+                oldEl = svgDoc.getElementById(steps[currentStep].highlight[currentSubstep]);
+            else
+                oldEl = svgDoc.getElementById(steps[currentStep].highlight);
+            oldEl.classList.remove("active");
+            if ("animation" in steps[currentStep])
+                oldEl.style.animation = "";
+        }
+    }
+    function stepFinished() {
+        if (currentStep === steps.length - 1) {
+            stepClearHighlight();
+            currentStep++;
+            currentSubstep = -1;
+            document.getElementById("action-text").textContent = "Mapping finished.";
+            document.getElementById("skip").style.display = "none";
+            document.getElementById("done").style.display = "block";
+            mappingTestingMode = true;
+            return;
+        }
+        startStep(currentStep + 1);
+    }
+    function createMappingString() {
+        let str = "";
+        for (let k in mapping) {
+            if (!mapping.hasOwnProperty(k))
+                continue;
+            let v = mapping[k];
+            if (v.type === "none")
+                continue;
+
+            if (str.length > 0)
+                str += ";";
+            str += k + "=";
+            if (v.type === "button") {
+                str += "b";
+                if ("id" in v)
+                    str += v["id"];
+                else
+                    str += v["left-id"] + "," + v["right-id"];
+            } else if (v.type === "stick") {
+                str += "s" + (v.value === -1 ? "!" : "") + v["id"];
+            } else if (v.type === "hat") {
+                str += "h";
+                if ("id" in v)
+                    str += v["id"];
+                else
+                    str += v["left-id"] + ":" + v["left-value"] + "," + v["right-id"] + ":" + v["right-value"];
+            }
+        }
+        return str;
+    }
+
+    window.addEventListener("load", function() {
+        svgDoc = document.getElementById("gamepad-image").contentDocument;
+        startStep(0);
+        document.getElementById("undo").addEventListener("click", function() {
+            if (currentStep <= 0)
+                mappingGamepadId = -1;
+            if (currentStep === 0 && currentSubstep <= 0)
+                return;
+            document.getElementById("skip").style.display = "block";
+            document.getElementById("done").style.display = "none";
+            mappingTestingMode = false;
+            if (currentSubstep > 0)
+                startStep(currentStep, currentSubstep - 1);
+            else
+                startStep(currentStep - 1);
+        });
+        document.getElementById("skip").addEventListener("click", function() {
+            mapping[currentMappingId] = {"type": "none"};
+            stepFinished();
+        });
+        document.getElementById("done").addEventListener("click", function() {
+            gamepadMapper.setGamepadMapping(mappingGamepadId, createMappingString());
+            //window.close();
+        });
+    });
+
+    function testModeHighlight(mapping, substep, pressed, value) {
+        for (let i = steps.length - 1; i >= 0; --i) {
+            if (steps[i].mapping === mapping) {
+                let el;
+                if (steps[i].highlight instanceof Array)
+                    el = svgDoc.getElementById(steps[i].highlight[substep]);
+                else
+                    el = svgDoc.getElementById(steps[i].highlight);
+                if (mapping === "axis:leftx" || mapping === "axis:rightx" ||
+                    mapping === "axis:lefty" || mapping === "axis:righty") {
+                    if (mapping === "axis:leftx" || mapping === "axis:rightx")
+                        el._translateX = value;
+                    if (mapping === "axis:lefty" || mapping === "axis:righty")
+                        el._translateY = -value;
+                    el.style.transform = "translate(" + ((el._translateX || 0) * 10) + "px," +
+                        ((el._translateY || 0) * 10) + "px)";
+                } else {
+                    if (pressed)
+                        el.classList.add("active");
+                    else
+                        el.classList.remove("active");
+                }
+                return;
+            }
+        }
+    }
+
+    function checkGamepadId(gamepad) {
+        if (mappingGamepadId === -1) {
+            mappingGamepadId = gamepad;
+        } else if (mappingGamepadId !== gamepad) {
+            return false;
+        }
+        return true;
+    }
+
+    gamepadMapper.setGamepadButtonCallback(function(gamepad, btn, pressed) {
+        if (mappingTestingMode) {
+            for (let k in mapping) {
+                if (!mapping.hasOwnProperty(k))
+                    continue;
+                let v = mapping[k];
+                if (v.type === "button") {
+                    if ("id" in v && v.id === btn)
+                        testModeHighlight(k, 0, pressed);
+                    if ("left-id" in v && v["left-id"] === btn)
+                        testModeHighlight(k, 1, pressed, pressed ? -1 : 0);
+                    if ("right-id" in v && v["right-id"] === btn)
+                        testModeHighlight(k, 0, pressed, pressed ? 1 : 0);
+                }
+            }
+            return;
+        }
+        if (!checkGamepadId(gamepad))
+            return;
+        if (pressed && stepButtonPressed === -1) {
+            stepButtonPressed = btn;
+        } else if (!pressed && btn === stepButtonPressed) {
+            if (currentMappingType === "button" || (currentMappingType === "axis" &&
+                    !(steps[currentStep].text instanceof Array))) {
+                mapping[currentMappingId] = {"type": "button", "id": btn};
+                stepFinished();
+            } else if (currentMappingType === "axis") {
+                if (currentSubstep === 0) {
+                    mapping[currentMappingId] = {"type": "button", "right-id": btn};
+                    startStep(currentStep, 1);
+                } else {
+                    if (mapping[currentMappingId].type !== "button")
+                        return;
+                    mapping[currentMappingId]["left-id"] = btn;
+                    stepFinished();
+                }
+            }
+        }
+    });
+    gamepadMapper.setGamepadStickCallback(function(gamepad, stick, value) {
+        if (mappingTestingMode) {
+            for (let k in mapping) {
+                if (!mapping.hasOwnProperty(k))
+                    continue;
+                let v = mapping[k];
+                if (v.type === "stick") {
+                    if ("id" in v && v.id === stick)
+                        testModeHighlight(k, 0, (value * v.value) > 0.9, value * v.value);
+                }
+            }
+            return;
+        }
+        if (!checkGamepadId(gamepad))
+            return;
+        if (Math.abs(value) > 0.9) {
+            stepStick = stick;
+            stepStickVal = value;
+        }
+        if (Math.abs(value) < 0.2 && stick === stepStick) {
+            if (currentMappingType === "button" || currentMappingType === "axis") {
+                mapping[currentMappingId] = {"type": "stick", "id": stick, "value": (stepStickVal > 0 ? 1 : -1)};
+                stepFinished();
+            }
+        }
+    });
+    gamepadMapper.setGamepadHatCallback(function(gamepad, hat, value) {
+        if (mappingTestingMode) {
+            for (let k in mapping) {
+                if (!mapping.hasOwnProperty(k))
+                    continue;
+                let v = mapping[k];
+                if (v.type === "hat") {
+                    if ("id" in v && v.id === hat)
+                        testModeHighlight(k, 0, v.value === value);
+                    if ("left-id" in v && v["left-id"] === hat)
+                        testModeHighlight(k, 1, v["left-value"] === value);
+                    if ("right-id" in v && v["right-id"] === hat)
+                        testModeHighlight(k, 0, v["right-value"] === value);
+                }
+            }
+            return;
+        }
+        if (!checkGamepadId(gamepad))
+            return;
+        if (value !== 0) {
+            stepHat = hat;
+            stepHatVal = value;
+        } else if (value === 0 && hat === stepHat) {
+            if (currentMappingType === "button" || (currentMappingType === "axis" &&
+                    !(steps[currentStep].text instanceof Array))) {
+                mapping[currentMappingId] = {"type": "hat", "id": hat, "value": stepHatVal};
+                stepFinished();
+            } else if (currentMappingType === "axis") {
+                if (currentSubstep === 0) {
+                    mapping[currentMappingId] = {"type": "hat", "right-id": hat, "right-value": stepHatVal};
+                    startStep(currentStep, 1);
+                } else {
+                    if (mapping[currentMappingId].type !== "hat")
+                        return;
+                    mapping[currentMappingId]["left-id"] = hat;
+                    mapping[currentMappingId]["left-value"] = stepHatVal;
+                    stepFinished();
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
