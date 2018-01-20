@@ -339,7 +339,11 @@ int main(int argc, char *argv[]) {
     int windowWidth = 720;
     int windowHeight = 480;
     float pixelSize = 2.f;
+    #ifdef __APPLE__
+    GraphicsApi graphicsApi = GraphicsApi::OPENGL;
+    #elif
     GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
+    #endif
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
             i++;
@@ -608,15 +612,20 @@ int main(int argc, char *argv[]) {
             window.close();
             return;
         }
+
+        platform->runMainThreadTasks();
+
 #ifdef GAMEPAD_SUPPORT
         LinuxGamepadManager::instance.pool();
 #endif
         client->update();
     });
+
     window.setWindowSizeCallback([pixelSize](int w, int h) {
         client->setRenderingSize(w, h);
         client->setUISizeAndScale(w, h, pixelSize);
     });
+
     window.setMouseButtonCallback([](double x, double y, int btn, MouseButtonAction action) {
         Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
     });

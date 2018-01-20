@@ -3,6 +3,8 @@
 #include <codecvt>
 #include <iomanip>
 
+#include <math.h>
+
 GLFWGameWindow::GLFWGameWindow(const std::string& title, int width, int height, GraphicsApi api) :
         GameWindow(title, width, height, api), windowedWidth(width), windowedHeight(height) {
     glfwDefaultWindowHints();
@@ -18,13 +20,20 @@ GLFWGameWindow::GLFWGameWindow(const std::string& title, int width, int height, 
     }
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
+    // Use framebuffer resize instead of window resize (for retina displays)
+    #ifdef __APPLE__
+    glfwSetFramebufferSizeCallback(window, _glfwWindowSizeCallback);
+    #elif
     glfwSetWindowSizeCallback(window, _glfwWindowSizeCallback);
+    #endif
     glfwSetCursorPosCallback(window, _glfwCursorPosCallback);
     glfwSetMouseButtonCallback(window, _glfwMouseButtonCallback);
     glfwSetWindowCloseCallback(window, _glfwWindowCloseCallback);
     glfwSetKeyCallback(window, _glfwKeyCallback);
     glfwSetCharCallback(window, _glfwCharCallback);
     glfwMakeContextCurrent(window);
+
+    setRelativeScale();
 }
 
 GLFWGameWindow::~GLFWGameWindow() {
@@ -33,6 +42,27 @@ GLFWGameWindow::~GLFWGameWindow() {
 
 void GLFWGameWindow::setIcon(std::string const& iconPath) {
     // TODO:
+}
+
+void GLFWGameWindow::setRelativeScale() {
+    int fx, fy;
+    glfwGetFramebufferSize(window, &fx, &fy);
+
+    int wx, wy;
+    glfwGetWindowSize(window, &wx, &wy);
+
+    relativeScale = (int) floor(((fx / wx) + (fy / wy)) / 2);
+}
+
+int GLFWGameWindow::getRelativeScale() {
+    return relativeScale;
+}
+
+void GLFWGameWindow::forceResize() {
+    GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
+    int rw, rh;
+    glfwGetFramebufferSize(window, &rw, &rh);
+    user->onWindowSizeChanged(rw, rh);
 }
 
 void GLFWGameWindow::show() {
@@ -44,6 +74,12 @@ void GLFWGameWindow::close() {
 }
 
 void GLFWGameWindow::runLoop() {
+    // Adjust resolution right before starting the draw loop if on macOS
+    #ifdef __APPLE__
+    GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
+    user->forceResize();
+    #endif
+
     while (!glfwWindowShouldClose(window)) {
         onDraw();
         glfwSwapBuffers(window);
@@ -59,7 +95,11 @@ void GLFWGameWindow::setCursorDisabled(bool disabled) {
 void GLFWGameWindow::setFullscreen(bool fullscreen) {
     if (fullscreen) {
         glfwGetWindowPos(window, &windowedX, &windowedY);
+        #ifdef __APPLE__
+        glfwGetFramebufferSize(window, &windowedWidth, &windowedHeight);
+        #elif
         glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+        #endif
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
         glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
@@ -75,12 +115,21 @@ void GLFWGameWindow::_glfwWindowSizeCallback(GLFWwindow* window, int w, int h) {
 
 void GLFWGameWindow::_glfwCursorPosCallback(GLFWwindow* window, double x, double y) {
     GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
+
+    #ifdef __APPLE__
+    double xr = x * user->getRelativeScale();
+    double yr = y * user->getRelativeScale();
+    #elif
+    double xr = x;
+    double xy = y;
+    #endif
+
     if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-        user->onMouseRelativePosition(x - user->lastMouseX, y - user->lastMouseY);
-        user->lastMouseX = x;
-        user->lastMouseY = y;
+        user->onMouseRelativePosition(xr - user->lastMouseX, yr - user->lastMouseY);
+        user->lastMouseX = xr;
+        user->lastMouseY = yr;
     } else {
-        user->onMousePosition(x, y);
+        user->onMousePosition(xr, yr);
     }
 }
 
@@ -88,7 +137,16 @@ void GLFWGameWindow::_glfwMouseButtonCallback(GLFWwindow* window, int button, in
     GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
     double x, y;
     glfwGetCursorPos(window, &x, &y);
-    user->onMouseButton(x, y, button + 1, action == GLFW_PRESS ? MouseButtonAction::PRESS : MouseButtonAction::RELEASE);
+
+    #ifdef __APPLE__
+    double xr = x * user->getRelativeScale();
+    double yr = y * user->getRelativeScale();
+    #elif
+    double xr = x;
+    double xy = y;
+    #endif
+
+    user->onMouseButton(xr, yr, button + 1, action == GLFW_PRESS ? MouseButtonAction::PRESS : MouseButtonAction::RELEASE);
 }
 
 int GLFWGameWindow::getKeyMinecraft(int keyCode) {
