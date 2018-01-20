@@ -189,6 +189,7 @@ int main(int argc, char *argv[]) {
     I18n::loadLanguages(*resourcePackManager, nullptr, "en_US");
     resourcePackManager->onLanguageChanged();
     Log::info("Launcher", "Server initialized");
+    modLoader.onServerInstanceInitialized(&instance);
 
     int flags = fcntl(0, F_GETFL, 0);
     fcntl(0, F_SETFL, flags | O_NONBLOCK);
