@@ -61,8 +61,16 @@ int main(int argc, char *argv[]) {
     ServerProperties properties;
     {
         std::ifstream propertiesFile("server.properties");
-        if (propertiesFile)
+        if (propertiesFile) {
             properties.load(propertiesFile);
+        } else {
+            try {
+                propertiesFile.open(PathHelper::findDataFile("server.properties"));
+                if (propertiesFile)
+                    properties.load(propertiesFile);
+            } catch (std::runtime_error& e) {
+            }
+        }
     }
 
     Log::trace("Launcher", "Loading hybris libraries");
