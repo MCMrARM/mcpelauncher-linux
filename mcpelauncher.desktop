@@ -1,10 +1,11 @@
 [Desktop Entry]
+Name=MCPE launcher
 Version=1.0
-Name=Minecraft
-Exec=mcpelauncher
-Icon=mcpelauncher-icon
-Terminal=false
+Exec=/usr/local/bin/mcpelauncher
+Comment=Minecraft [Bedrock Engine]
+Icon=/usr/local/share/pixmaps/mcpelauncher-icon.png
 Type=Application
+Terminal=false
+StartupNotify=true
+Encoding=UTF-8
 Categories=Game;
-Comment=Minecraft C++ Edition Launcher
-

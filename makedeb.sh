@@ -8,6 +8,7 @@ function print_help {
     -h, --help      print this help
     -c, --cmake     path to cmake ( default: cmake )
     -t, --tempdir   path to store temporary files (default: /tmp )
+    --notroot       Must add this to run the script as non root ( causes bad ownership of files in .deb )
 
   mandatory arguments:
     -e, --email     email address for package maintainer
@@ -41,12 +42,22 @@ while [[ $# -gt 0 ]]; do
       -t|--tempdir)
       TEMPDIR="$2"
       shift 2;;
+      --tempdir)
+      NOTROOT="user override"
+      shift;;
       *)
       unparsed_args+=("$1")
       shift;;
   esac
 done
 set -- "${unparsed_args[@]}"
+
+if [[ $EUID -ne 0 ]] && [ -z "${NOTROOT}" ]; then
+  echo You are Not root
+  echo
+  print_help
+fi
+
 
 if [ -z "$CMAKE" ]; then
   CMAKE=cmake
@@ -105,11 +116,12 @@ cp mcpelauncher.desktop "${MENULAUNCERDIR}"
 #License - to avoid being marked as tainted
 DOCDIR="${BUILDDIR}usr/share/doc/mcpelauncher-linux/"
 mkdir -p "${DOCDIR}"
-cp LICENSE "${DOCDIR}"
+cp LICENSE "${DOCDIR}/copyright"
 
-#fix the symlink in usr/local/bin to be rellative 
+
+#fix the symlink in usr/local/bin to be rellative
 rm "${INSTALLDIR}bin/mcpelauncher"
-ln -s "..share/mcpelauncher/bin/" "${INSTALLDIR}bin/mcpelauncher"
+ln -s "..share/mcpelauncher/bin/mcpelauncher" "${INSTALLDIR}bin/mcpelauncher"
 
 #Create md5sums of all files rellative to install root:
 cd "${BUILDDIR}"
