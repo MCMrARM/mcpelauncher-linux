@@ -71,7 +71,11 @@ int main(int argc, char *argv[]) {
     stubSymbols(fmod_symbols, (void*) stubFunc);
     hybris_hook("eglGetProcAddress", (void*) stubFunc);
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
+    #ifdef __APPLE__
+    void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
+    #elif
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
+    #endif
     hookAndroidLog();
     if (!load_empty_library("libc.so") || !load_empty_library("libm.so"))
         return -1;
