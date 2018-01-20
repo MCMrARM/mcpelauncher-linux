@@ -11,7 +11,9 @@
 #include <locale>
 #include <dirent.h>
 #include <fstream>
+#ifndef USE_GLFW
 #include <X11/Xlib.h>
+#endif
 #include <functional>
 #include <sys/mman.h>
 #include <stdlib.h>
@@ -229,6 +231,16 @@ bool supportsImmediateModeHook() {
     return false;
 }
 
+#ifdef __APPLE__
+template <typename T>
+void* magicast(T whatever) {
+    T* ptr = &whatever;
+    void** pptr = (void**) ptr;
+    return *pptr;
+}
+#endif
+
+#ifndef USE_GLFW
 static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
     std::cerr << "X error received: "
               << "type " << event->type << ", "
@@ -242,6 +254,7 @@ static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
 static int XIOErrorHandlerImpl(Display* display) {
     return 0;
 }
+#endif
 
 
 static void (*clearRenderTargetOrginal)(void*, void*, void*);
@@ -268,9 +281,10 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-
+    #ifndef USE_GLFW
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
+    #endif
 
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
@@ -381,8 +395,13 @@ int main(int argc, char *argv[]) {
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
     Log::trace("Launcher", "Loading native libraries");
+    #ifdef __APPLE__
+    void* fmodLib = loadFmodDarwin(fmod_symbols);
+    void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
+    #elif
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6"), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
+    #endif
     if (fmodLib == nullptr || libmLib == nullptr)
         return -1;
     Log::trace("Launcher", "Loading hybris libraries");
@@ -505,16 +524,18 @@ int main(int argc, char *argv[]) {
     }
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
-    linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
-    linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
+    linuxHttpRequestInternalVtable[0] = magicast(&LinuxHttpRequestInternal::destroy);
+    linuxHttpRequestInternalVtable[1] = magicast(&LinuxHttpRequestInternal::destroy);
 
     if (workaroundAMD) {/*
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
                    (0x40AD97 - 0x40ACD0);
         for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
             ((char *) (void *) patchOff)[i] = 0x90;*/
+        #ifndef __APPLE__
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
         patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
+        #endif
     }
 
     Log::info("Launcher", "Patches were successfully applied");
@@ -539,7 +560,9 @@ int main(int argc, char *argv[]) {
     glGenVertexArrays = (void (*)(GLsizei, GLuint*)) glfwGetProcAddress("glGenVertexArrays");
     glBindVertexArray = (void (*)(GLuint)) glfwGetProcAddress("glBindVertexArray");
 #endif
+    #ifndef __APPLE__
     window.setIcon(PathHelper::getIconPath());
+    #endif
     window.show();
 
     Log::info("Launcher", "Starting game initialization");
@@ -585,7 +608,6 @@ int main(int argc, char *argv[]) {
             window.close();
             return;
         }
-        platform->runMainThreadTasks();
 #ifdef GAMEPAD_SUPPORT
         LinuxGamepadManager::instance.pool();
 #endif
@@ -636,7 +658,7 @@ int main(int argc, char *argv[]) {
     });
     Log::trace("Launcher", "Initialized display");
 
-    //(*AppPlatform::_singleton)->_fireAppFocusGained();
+    // (*AppPlatform::_singleton)->_fireAppFocusGained();
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     window.runLoop();

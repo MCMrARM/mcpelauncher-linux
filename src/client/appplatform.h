@@ -14,6 +14,10 @@
 #include "../minecraft/ImagePickingCallback.h"
 #include "../minecraft/MultiplayerService.h"
 
+#ifdef __APPLE__
+#include "../minecraft/function.h"
+#endif
+
 class ImageData;
 class ImagePickingCallback;
 class FilePickerSettings;
@@ -43,7 +47,11 @@ public:
 
     std::string assetsDir, dataDir;
 
+    #ifdef __APPLE__
+    std::vector<mcpe::function<void ()>> runOnMainThreadQueue;
+    #elif
     std::vector<std::function<void ()>> runOnMainThreadQueue;
+    #endif
     std::mutex runOnMainThreadMutex;
 
     LinuxAppPlatform();
@@ -107,7 +115,7 @@ public:
     }
     mcpe::string getAssetFileFullPath(mcpe::string const& s) {
         Log::trace(TAG, "getAssetFileFullPath: %s", s.c_str());
-        return mcpe::string(assetsDir) + s;
+        return mcpe::string(assetsDir + s.std());
     }
     int getScreenType() {
         if (enablePocketGuis)
@@ -175,7 +183,11 @@ public:
         return true;
     }
 
+    #ifdef __APPLE__
+    void queueForMainThread(mcpe::function<void ()> f) {
+    #elif
     void queueForMainThread(std::function<void ()> f) {
+    #endif
         runOnMainThreadMutex.lock();
         runOnMainThreadQueue.push_back(f);
         runOnMainThreadMutex.unlock();

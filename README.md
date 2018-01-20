@@ -1,7 +1,7 @@
 MCPE Linux Launcher
 ===================
 
-## Required packages on Ubuntu
+## Setup for Ubuntu
 
 - Minimal: `cmake gcc-multilib g++-multilib zlib1g-dev:i386 libx11-dev:i386 libzip-dev:i386 libpng-dev:i386 libcurl4-openssl-dev:i386 libssl-dev:i386 libgles2-mesa-dev:i386 libudev-dev:i386 libevdev-dev:i386`
 - CEF (supports Xbox Live): `libgtk2.0-0:i386 libgtkglext1:i386 libasound2:i386 libnss3:i386 libxss1:i386 libgconf2-4:i386 libxtst6:i386 libudev1:i386`
@@ -13,14 +13,38 @@ libegl1-mesa-dev:i386 packages)
 
 You may also need to do `sudo dpkg --add-architecture i386` if you have never installed i386 packages before.
 
+## Setup for macOS
+
+Make sure you've got XCode set up: `xcode-select --install` (when the dialog pops up, just say you want the tools). Next, make sure you have [Brew](https://brew.sh/) installed
+
+The packages you'll need are as follows:
+
+- cmake
+- git (this will come pre-installed with xcode-select, but make sure it's up-to-date)
+- openssl
+
+Everything else will be built automatically and statically linked against your executable. So **do not** install `libzip`, `ossp-uuid`, `glfw` or any other packages you think you need.
+
+Next, you'll need to build the project. Run the provided scripts `./setup_bin_libs.sh` (to grab FMOD) and `download_icon.sh` (to grab the icon, which is currently not used)
+
+The commands to build using CMake are as follows (ensure you **do not** build from the root directory, rather, always use the `build/` directory)
+
+```console
+$ mkdir build/ && cd build/
+$ cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .. # OpenSSL root is required
+$ make -j$(sysctl -n hw.ncpu) # This will use all the cores on your system
+```
+
+Next, move back into the root directory and start the game with `./start_mcpelauncher.sh`
+
 ## Compiling
 
 If you want to build with CEF first do: `./setup_cef.sh`
-```
-    ./download_icon.sh
-    ./setup_bin_libs.sh
-    cmake .
-    make
+```console
+$ ./download_icon.sh
+$ ./setup_bin_libs.sh
+$ cmake .
+$ make
 ```
 
 ## Running

@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+if [ "$(uname)" == "Darwin" ]; then
+  echo 'CEF is not supported on macOS at this time'
+  exit -1
+fi
+
 CEF_DOWNLOAD_URL="http://opensource.spotify.com/cefbuilds/cef_binary_3.3112.1653.gf69054f_linux32_minimal.tar.bz2"
 CEF_PATH="cef.tar.bz2"
 CEF_TMP_DIR="tmp_cef"
