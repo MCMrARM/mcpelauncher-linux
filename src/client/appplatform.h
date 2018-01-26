@@ -47,11 +47,12 @@ public:
 
     std::string assetsDir, dataDir;
 
-    #ifdef __APPLE__
+#ifdef __APPLE__
     std::vector<mcpe::function<void ()>> runOnMainThreadQueue;
-    #else
+#else
     std::vector<std::function<void ()>> runOnMainThreadQueue;
-    #endif
+#endif
+
     std::mutex runOnMainThreadMutex;
 
     LinuxAppPlatform();
@@ -183,11 +184,11 @@ public:
         return true;
     }
 
-    #ifdef __APPLE__
+#ifdef __APPLE__
     void queueForMainThread(mcpe::function<void ()> f) {
-    #else
+#else
     void queueForMainThread(std::function<void ()> f) {
-    #endif
+#endif
         runOnMainThreadMutex.lock();
         runOnMainThreadQueue.push_back(f);
         runOnMainThreadMutex.unlock();

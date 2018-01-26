@@ -1,6 +1,5 @@
 #pragma once
 
-#ifdef GAMEPAD_SUPPORT
 #include <map>
 #include <memory>
 #include <functional>
@@ -121,4 +120,3 @@ public:
     }
 
 };
-#endif

@@ -99,7 +99,7 @@ std::string MSANetwork::generateKey(int keyLength, std::string const& sessionKey
     ret.reserve((size_t) keyLength);
     unsigned char* buf = new unsigned char[sizeof(int) + keyUsage.length() + sizeof(char) + nonce.length() + sizeof(int)];
     unsigned char resultBuf[EVP_MAX_MD_SIZE];
-    size_t resultSize = 0;
+    unsigned int resultSize = 0;
     size_t off = 0;
     off += sizeof(int);
     memcpy(&buf[off], keyUsage.data(), keyUsage.length()); off += keyUsage.length();
@@ -109,11 +109,7 @@ std::string MSANetwork::generateKey(int keyLength, std::string const& sessionKey
     size_t i = 1;
     while (ret.length() < keyLength) {
         ((int&) buf[0]) = htonl(i++);
-        #ifdef __APPLE__
-        HMAC(EVP_sha256(), sessionKey.data(), sessionKey.length(), buf, off, resultBuf, (unsigned int*)&resultSize);
-        #else
         HMAC(EVP_sha256(), sessionKey.data(), sessionKey.length(), buf, off, resultBuf, &resultSize);
-        #endif
         ret.append((char*) resultBuf, std::min<size_t>(resultSize, keyLength - ret.size()));
     }
     delete[] buf;
@@ -165,13 +161,8 @@ std::string MSANetwork::createSignature(std::string const& data, std::string con
                                         std::string const& keyUsage, std::string const& nonce) {
     std::string signatureKey = generateKey(32, binarySecret, keyUsage, nonce);
     unsigned char signatureBuf[EVP_MAX_MD_SIZE];
-    size_t signatureSize = 0;
-    #ifdef __APPLE__
-    HMAC(EVP_sha256(), signatureKey.data(), signatureKey.length(), (unsigned char*) data.data(), data.size(), signatureBuf, (unsigned int*)&signatureSize);
-    #else
+    unsigned int signatureSize = 0;
     HMAC(EVP_sha256(), signatureKey.data(), signatureKey.length(), (unsigned char*) data.data(), data.size(), signatureBuf, &signatureSize);
-    #endif
-
     return Base64::encode(std::string((char*) signatureBuf, signatureSize));
 }
 

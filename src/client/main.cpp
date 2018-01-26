@@ -34,7 +34,9 @@
 #include "../minecraft/MultiplayerService.h"
 #include "appplatform.h"
 #include "store.h"
+#ifndef __APPLE__
 #include "gamepad.h"
+#endif
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
@@ -339,11 +341,12 @@ int main(int argc, char *argv[]) {
     int windowWidth = 720;
     int windowHeight = 480;
     float pixelSize = 2.f;
-    #ifdef __APPLE__
+#ifdef __APPLE__
     GraphicsApi graphicsApi = GraphicsApi::OPENGL;
-    #else
+#else
     GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
-    #endif
+#endif
+
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
             i++;
@@ -399,13 +402,14 @@ int main(int argc, char *argv[]) {
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
     Log::trace("Launcher", "Loading native libraries");
-    #ifdef __APPLE__
+#ifdef __APPLE__
     void* fmodLib = loadFmodDarwin(fmod_symbols);
     void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
-    #else
+#else
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6"), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
-    #endif
+#endif
+
     if (fmodLib == nullptr || libmLib == nullptr)
         return -1;
     Log::trace("Launcher", "Loading hybris libraries");
@@ -528,23 +532,23 @@ int main(int argc, char *argv[]) {
     }
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
-    #ifdef __APPLE__
+#ifdef __APPLE__
     linuxHttpRequestInternalVtable[0] = magicast(&LinuxHttpRequestInternal::destroy);
     linuxHttpRequestInternalVtable[1] = magicast(&LinuxHttpRequestInternal::destroy);
-    #else
+#else
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
-    #endif
+#endif
 
     if (workaroundAMD) {/*
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
                    (0x40AD97 - 0x40ACD0);
         for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
             ((char *) (void *) patchOff)[i] = 0x90;*/
-        #ifndef __APPLE__
+    #ifndef __APPLE__
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
         patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
-        #endif
+    #endif
     }
 
     Log::info("Launcher", "Patches were successfully applied");
@@ -569,9 +573,9 @@ int main(int argc, char *argv[]) {
     glGenVertexArrays = (void (*)(GLsizei, GLuint*)) glfwGetProcAddress("glGenVertexArrays");
     glBindVertexArray = (void (*)(GLuint)) glfwGetProcAddress("glBindVertexArray");
 #endif
-    #ifndef __APPLE__
+#ifndef __APPLE__
     window.setIcon(PathHelper::getIconPath());
-    #endif
+#endif
     window.show();
 
     Log::info("Launcher", "Starting game initialization");

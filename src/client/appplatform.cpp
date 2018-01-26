@@ -82,7 +82,43 @@ void LinuxAppPlatform::initVtable(void* lib) {
     myVtable = (void**) ::operator new(size * sizeof(void*));
     memcpy(&myVtable[0], &vt[2], (size - 2) * sizeof(void*));
 
-    #ifndef __APPLE__
+#ifdef __APPLE__
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getDataUrlEv", magicast(&LinuxAppPlatform::getDataUrl));
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android14getUserDataUrlEv", magicast(&LinuxAppPlatform::getUserDataUrl));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14getPackagePathEv", magicast(&LinuxAppPlatform::getPackagePath));
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16hideMousePointerEv", magicast(&LinuxAppPlatform::hideMousePointer));
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16showMousePointerEv", magicast(&LinuxAppPlatform::showMousePointer));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11swapBuffersEv", magicast(&LinuxAppPlatform::swapBuffers));
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android15getSystemRegionEv", magicast(&LinuxAppPlatform::getSystemRegion));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25getGraphicsTearingSupportEv", magicast(&LinuxAppPlatform::getGraphicsTearingSupport));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android9pickImageER20ImagePickingCallback", magicast(&LinuxAppPlatform::pickImage));
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform8pickFileER18FilePickerSettings", magicast(&LinuxAppPlatform::pickFile));
+    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform19supportsFilePickingEv", magicast(&LinuxAppPlatform::supportsFilePicking));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getExternalStoragePathEv", magicast(&LinuxAppPlatform::getExternalStoragePath));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getInternalStoragePathEv", magicast(&LinuxAppPlatform::getInternalStoragePath));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android21getCurrentStoragePathEv", magicast(&LinuxAppPlatform::getCurrentStoragePath));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android15getUserdataPathEv", magicast(&LinuxAppPlatform::getUserdataPath));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android24getUserdataPathForLevelsEv", magicast(&LinuxAppPlatform::getUserdataPathForLevels));
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform20getAssetFileFullPathERKSs", magicast(&LinuxAppPlatform::getAssetFileFullPath));
+    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform14useCenteredGUIEv", magicast(&LinuxAppPlatform::useCenteredGUI));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android16getApplicationIdEv", magicast(&LinuxAppPlatform::getApplicationId));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25_updateUsedMemorySnapshotEv", magicast(&LinuxAppPlatform::_updateUsedMemorySnapshot));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android30_updateAvailableMemorySnapshotEv", magicast(&LinuxAppPlatform::_updateAvailableMemorySnapshot));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android26_updateTotalMemorySnapshotEv", magicast(&LinuxAppPlatform::_updateTotalMemorySnapshot));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11getDeviceIdEv", magicast(&LinuxAppPlatform::getDeviceId));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", magicast(&LinuxAppPlatform::isFirstSnoopLaunch));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", magicast(&LinuxAppPlatform::hasHardwareInformationChanged));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", magicast(&LinuxAppPlatform::isTablet));
+    replaceVtableEntry(lib, vta, "_ZN11AppPlatform17setFullscreenModeE14FullscreenMode", magicast(&LinuxAppPlatform::setFullscreenMode));
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getEditionEv", magicast(&LinuxAppPlatform::getEdition));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", magicast(&LinuxAppPlatform::calculateAvailableDiskFreeSpace));
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", magicast(&LinuxAppPlatform::getPlatformUIScalingRules));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", magicast(&LinuxAppPlatform::getPlatformTempPath));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDEv", magicast(&LinuxAppPlatform::createDeviceID_old));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDERSs", magicast(&LinuxAppPlatform::createDeviceID));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", magicast(&LinuxAppPlatform::queueForMainThread));
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", magicast(&LinuxAppPlatform::getMultiplayerServiceListToRegister));
+#else
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getDataUrlEv", (void*) &LinuxAppPlatform::getDataUrl);
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android14getUserDataUrlEv", (void*) &LinuxAppPlatform::getUserDataUrl);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14getPackagePathEv", (void*) &LinuxAppPlatform::getPackagePath);
@@ -119,45 +155,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", (void*) &LinuxAppPlatform::queueForMainThread);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", (void*) &LinuxAppPlatform::getMultiplayerServiceListToRegister);
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform16allowSplitScreenEv", (void*) &LinuxAppPlatform::allowSplitScreen);
-    #endif
-
-    #ifdef __APPLE__
-    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getDataUrlEv", magicast(&LinuxAppPlatform::getDataUrl));
-    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android14getUserDataUrlEv", magicast(&LinuxAppPlatform::getUserDataUrl));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14getPackagePathEv", magicast(&LinuxAppPlatform::getPackagePath));
-    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16hideMousePointerEv", magicast(&LinuxAppPlatform::hideMousePointer));
-    replaceVtableEntry(lib, vta, "_ZN11AppPlatform16showMousePointerEv", magicast(&LinuxAppPlatform::showMousePointer));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11swapBuffersEv", magicast(&LinuxAppPlatform::swapBuffers));
-    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android15getSystemRegionEv", magicast(&LinuxAppPlatform::getSystemRegion));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25getGraphicsTearingSupportEv", magicast(&LinuxAppPlatform::getGraphicsTearingSupport));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android9pickImageER20ImagePickingCallback", magicast(&LinuxAppPlatform::pickImage));
-    replaceVtableEntry(lib, vta, "_ZN11AppPlatform8pickFileER18FilePickerSettings", magicast(&LinuxAppPlatform::pickFile));
-    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform19supportsFilePickingEv", magicast(&LinuxAppPlatform::supportsFilePicking));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getExternalStoragePathEv", magicast(&LinuxAppPlatform::getExternalStoragePath));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getInternalStoragePathEv", magicast(&LinuxAppPlatform::getInternalStoragePath));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android21getCurrentStoragePathEv", magicast(&LinuxAppPlatform::getCurrentStoragePath));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android15getUserdataPathEv", magicast(&LinuxAppPlatform::getUserdataPath));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android24getUserdataPathForLevelsEv", magicast(&LinuxAppPlatform::getUserdataPathForLevels));
-    replaceVtableEntry(lib, vta, "_ZN11AppPlatform20getAssetFileFullPathERKSs", magicast(&LinuxAppPlatform::getAssetFileFullPath));
-    replaceVtableEntry(lib, vta, "_ZNK11AppPlatform14useCenteredGUIEv", magicast(&LinuxAppPlatform::useCenteredGUI));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android16getApplicationIdEv", magicast(&LinuxAppPlatform::getApplicationId));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25_updateUsedMemorySnapshotEv", magicast(&LinuxAppPlatform::_updateUsedMemorySnapshot));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android30_updateAvailableMemorySnapshotEv", magicast(&LinuxAppPlatform::_updateAvailableMemorySnapshot));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android26_updateTotalMemorySnapshotEv", magicast(&LinuxAppPlatform::_updateTotalMemorySnapshot));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11getDeviceIdEv", magicast(&LinuxAppPlatform::getDeviceId));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", magicast(&LinuxAppPlatform::isFirstSnoopLaunch));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", magicast(&LinuxAppPlatform::hasHardwareInformationChanged));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", magicast(&LinuxAppPlatform::isTablet));
-    replaceVtableEntry(lib, vta, "_ZN11AppPlatform17setFullscreenModeE14FullscreenMode", magicast(&LinuxAppPlatform::setFullscreenMode));
-    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getEditionEv", magicast(&LinuxAppPlatform::getEdition));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", magicast(&LinuxAppPlatform::calculateAvailableDiskFreeSpace));
-    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", magicast(&LinuxAppPlatform::getPlatformUIScalingRules));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", magicast(&LinuxAppPlatform::getPlatformTempPath));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDEv", magicast(&LinuxAppPlatform::createDeviceID_old));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14createDeviceIDERSs", magicast(&LinuxAppPlatform::createDeviceID));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", magicast(&LinuxAppPlatform::queueForMainThread));
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", magicast(&LinuxAppPlatform::getMultiplayerServiceListToRegister));
-    #endif
+#endif
 }
 
 void LinuxAppPlatform::hideMousePointer() {
@@ -272,12 +270,12 @@ void LinuxAppPlatform::_updateAvailableMemorySnapshot() {
 }
 
 void LinuxAppPlatform::_updateTotalMemorySnapshot() {
-    #ifndef __APPLE__
+#ifndef __APPLE__
     struct sysinfo memInfo;
     sysinfo (&memInfo);
     long long total = memInfo.totalram;
     total += memInfo.totalswap;
     total *= memInfo.mem_unit;
     totalMemory = total;
-    #endif
+#endif
 }

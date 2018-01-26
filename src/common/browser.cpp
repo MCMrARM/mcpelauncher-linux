@@ -182,7 +182,7 @@ void MyWindowDelegate::OnWindowCreated(CefRefPtr<CefWindow> window) {
         XSetTransientForHint(cef_get_xdisplay(), window->GetWindowHandle(), options.modalParent);
     }
     struct stat sb;
-    #ifndef __APPLE__
+#ifndef __APPLE__
     std::string iconPath = PathHelper::getIconPath();
     if (!stat(iconPath.c_str(), &sb)) {
         FILE* file = fopen(iconPath.c_str(), "r");
@@ -197,7 +197,7 @@ void MyWindowDelegate::OnWindowCreated(CefRefPtr<CefWindow> window) {
         window->SetWindowIcon(image);
         window->SetWindowAppIcon(image);
     }
-    #endif
+#endif
     if (options.visible)
         window->Show();
     if (options.centerScreen) {

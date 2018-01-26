@@ -8,12 +8,11 @@
 #include <unistd.h>
 #include <cxxabi.h>
 #include <execinfo.h>
-#ifndef __APPLE__
-#include <malloc.h>
-#endif
 #ifdef __APPLE__
 #include <signal.h>
 #include <stdlib.h>
+#else
+#include <malloc.h>
 #endif
 #include "log.h"
 
