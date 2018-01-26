@@ -9,7 +9,12 @@ set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -m32")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
+
+if(APPLE)
+    set(CMAKE_LIBRARY_ARCHITECTURE "i386-apple-darwin")
+else()
+    set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
+endif(APPLE)
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -22,12 +27,9 @@ if(APPLE)
     find_package(Cocoa REQUIRED)
     find_package(CoreVideo REQUIRED)
     find_package(IOKit REQUIRED)
-endif(APPLE)
-
-# If users have XQuartz installed, we don't want this picked up
-if(NOT APPLE)
+else()
     find_package(X11)
-endif(NOT APPLE)
+endif(APPLE)
 
 include(ExternalProject)
 
@@ -195,11 +197,13 @@ if (BUILD_CLIENT)
         add_dependencies(mcpelauncher libzip)
     endif()
 
+    target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES})
+
     if(APPLE)
         add_dependencies(mcpelauncher epoll)
-        target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} ${Cocoa_LIBRARIES} ${CoreVideo_LIBRARIES} ${IOKit_LIBRARIES} ${OPENGL_LIBRARIES} epoll)
+        target_link_libraries(mcpelauncher ${Cocoa_LIBRARIES} ${CoreVideo_LIBRARIES} ${IOKit_LIBRARIES} ${OPENGL_LIBRARIES} epoll)
     else()
-        target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${ZLIB_LIBRARIES} ${PNG_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} rt EGL GLESv2)
+        target_link_libraries(mcpelauncher ${X11_X11_LIB} ${PNG_LIBRARIES} rt EGL GLESv2)
     endif(APPLE)
 
     target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
@@ -212,11 +216,13 @@ if (BUILD_SERVER)
         add_dependencies(server libzip)
     endif()
 
+    target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES})
+
     if(APPLE)
         add_dependencies(server epoll)
-        target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} epoll)
+        target_link_libraries(server epoll)
     else()
-        target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} rt)
+        target_link_libraries(server rt)
     endif(APPLE)
 
 
