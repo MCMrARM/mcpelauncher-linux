@@ -121,7 +121,7 @@ cp LICENSE "${DOCDIR}/copyright"
 
 #fix the symlink in usr/local/bin to be rellative
 rm "${INSTALLDIR}bin/mcpelauncher"
-ln -s "..share/mcpelauncher/bin/mcpelauncher" "${INSTALLDIR}bin/mcpelauncher"
+ln -s "..share/mcpelauncher/bin/start_mcpelauncher.sh" "${INSTALLDIR}bin/mcpelauncher"
 
 #Create md5sums of all files rellative to install root:
 cd "${BUILDDIR}"
