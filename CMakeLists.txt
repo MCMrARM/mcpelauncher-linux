@@ -128,14 +128,6 @@ endif(APPLE)
 set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
 set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h src/common/modloader.cpp src/common/modloader.h)
-
-if(APPLE)
-    set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_darwin.cpp src/minecraft/function.h)
-else()
-    set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_linux.cpp)
-    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} src/client/amdfix.s)
-endif(APPLE)
-
 set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h)
 set(CLIENT_SOURCE_FILES_GAMEPAD src/client/gamepad.cpp src/client/gamepad.h)
 set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h)
@@ -144,6 +136,14 @@ set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp 
 set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
 set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
 set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h)
+
+if(APPLE)
+    set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_darwin.cpp src/minecraft/function.h)
+else()
+    set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_linux.cpp)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} src/client/amdfix.s)
+endif(APPLE)
+
 
 set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
