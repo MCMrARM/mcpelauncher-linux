@@ -642,6 +642,7 @@ int main(int argc, char *argv[]) {
     //(*AppPlatform::_singleton)->_fireAppFocusGained();
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
+    Log::trace("Launcher", "Start loop");
     window.runLoop();
 
     workaroundShutdownCrash(handle);

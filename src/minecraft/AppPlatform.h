@@ -8,7 +8,8 @@ public:
 
     void** vtable;
     char filler[0xA0 - sizeof(void**)];
-    long long usedMemory, totalMemory, availableMemory;
+    // A0
+    int hardwareTier;
     char filler2[0x1000];
 
     AppPlatform();

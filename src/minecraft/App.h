@@ -15,11 +15,11 @@ public:
     void init(AppContext& ctx);
 
     void quit() {
-        ((void (*)(App*)) vtable[26])(this);
+        ((void (*)(App*)) vtable[25])(this);
     }
 
     bool wantToQuit() {
-        return ((bool (*)(App*)) vtable[27])(this);
+        return ((bool (*)(App*)) vtable[26])(this);
     }
 
 };
