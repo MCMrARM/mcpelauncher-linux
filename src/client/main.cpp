@@ -36,6 +36,7 @@
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
+#include "../common/openssl_multithread.h"
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
@@ -271,6 +272,8 @@ int main(int argc, char *argv[]) {
 
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
+
+    OpenSSLMultithreadHelper::init();
 
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
