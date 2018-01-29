@@ -13,6 +13,8 @@ struct android_addrinfo {
     char	*ai_canonname;	/* canonical name for hostname */
     struct	sockaddr *ai_addr;	/* binary address */
     struct	android_addrinfo *ai_next;	/* next structure in linked list */
+
+    struct	addrinfo *_real_addrinfo;
 };
 struct android_addrinfo* convert_addrinfo(struct addrinfo* res) {
     struct android_addrinfo* ares = (struct android_addrinfo*) malloc(sizeof(struct android_addrinfo));
@@ -50,7 +52,7 @@ int my_getaddrinfo(const char *node, const char *service,
     }
     if (res != NULL) {
         *ares = convert_addrinfo(res);
-        freeaddrinfo(res);
+        (*ares)->_real_addrinfo = res;
     } else {
         *ares = NULL;
     }
@@ -58,10 +60,9 @@ int my_getaddrinfo(const char *node, const char *service,
 }
 
 void my_freeaddrinfo(struct android_addrinfo *ai) {
+    freeaddrinfo(ai->_real_addrinfo);
     struct android_addrinfo *ai_next;
     while (ai) {
-        if (ai->ai_canonname)
-            free(ai->ai_canonname);
         ai_next = ai->ai_next;
         free(ai);
         ai = ai_next;

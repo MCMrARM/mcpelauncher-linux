@@ -33,6 +33,8 @@
 #define ANDROID_PTHREAD_COND_INITIALIZER             0
 #define ANDROID_PTHREAD_RWLOCK_INITIALIZER           0
 
+static pthread_mutex_t hybris_static_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* Helpers */
 static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
 {
@@ -309,6 +311,18 @@ static int my_pthread_mutex_destroy(pthread_mutex_t *__mutex)
     return ret;
 }
 
+static pthread_mutex_t *my_static_init_mutex(pthread_mutex_t *__mutex) {
+    pthread_mutex_lock(&hybris_static_init_mutex);
+    unsigned int value = (*(unsigned int *) __mutex);
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) value;
+    if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(value);
+        *((unsigned int*) __mutex) = (unsigned int) realmutex;
+    }
+    pthread_mutex_unlock(&hybris_static_init_mutex);
+    return realmutex;
+}
+
 static int my_pthread_mutex_lock(pthread_mutex_t *__mutex)
 {
     if (!__mutex) {
@@ -327,8 +341,7 @@ static int my_pthread_mutex_lock(pthread_mutex_t *__mutex)
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = hybris_alloc_init_mutex(value);
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        realmutex = my_static_init_mutex(__mutex);
     }
 
     return pthread_mutex_lock(realmutex);
@@ -348,8 +361,7 @@ static int my_pthread_mutex_trylock(pthread_mutex_t *__mutex)
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = hybris_alloc_init_mutex(value);
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        realmutex = my_static_init_mutex(__mutex);
     }
 
     return pthread_mutex_trylock(realmutex);
@@ -395,8 +407,7 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
     realmutex = (pthread_mutex_t *) value;
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = hybris_alloc_init_mutex(value);
-        *((int *)__mutex) = (int) realmutex;
+        realmutex = my_static_init_mutex(__mutex);
     }
 
     clock_gettime(CLOCK_REALTIME, &tv);
@@ -543,8 +554,7 @@ static int my_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        realmutex = my_static_init_mutex(mutex);
     }
 
     return pthread_cond_wait(realcond, realmutex);
@@ -577,8 +587,7 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        realmutex = my_static_init_mutex(mutex);
     }
 
     return pthread_cond_timedwait(realcond, realmutex, abstime);
@@ -611,8 +620,7 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        realmutex = my_static_init_mutex(mutex);
     }
 
     struct timespec tv;
