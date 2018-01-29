@@ -80,6 +80,13 @@ std::string PathHelper::getWorkingDir() {
     return std::string(_cwd) + "/";
 }
 
+std::string PathHelper::getParentDir(std::string const& path) {
+    auto i = path.rfind('/', path.length() - 1); // we don't want to get the last / if the string ends up with a slash
+    if (i == std::string::npos)
+        return std::string();
+    return path.substr(0, i);
+}
+
 bool PathHelper::fileExists(std::string const& path) {
     struct stat sb;
     return !stat(path.c_str(), &sb);
@@ -103,7 +110,7 @@ std::string PathHelper::findDataFile(std::string const& path) {
         if (fileExists(p))
             return p;
     }
-    p = pathInfo.appDir + "/../" + path;
+    p = getParentDir(pathInfo.appDir) + "/" + path;
     if (fileExists(p))
         return p;
     throw std::runtime_error("Failed to find data file: " + path);
