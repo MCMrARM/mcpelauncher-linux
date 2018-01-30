@@ -5,8 +5,6 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include <png.h>
-#include <uuid/uuid.h>
 #include <sys/types.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
