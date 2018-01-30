@@ -164,6 +164,7 @@ static void _hybris_shm_init()
  */
 static void _hybris_shm_extend_region()
 {
+    printf("WARN: extend shim region\n");
     ftruncate( _hybris_shm_fd, _current_mapped_size + HYBRIS_DATA_SIZE );
     _hybris_shm_data->max_offset += HYBRIS_DATA_SIZE;
 
