@@ -83,7 +83,7 @@ if (PLAYAPI_ENABLED)
     set_target_properties(gplaydl PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
-include_directories(${ZLIB_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
+include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
@@ -124,6 +124,7 @@ if (GAMEPAD_SUPPORT_ENABLED)
 endif()
 
 if (BUILD_CLIENT)
+    include_directories(${PNG_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
     add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
     target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${ZLIB_LIBRARIES} ${PNG_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} rt EGL GLESv2)
     target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
