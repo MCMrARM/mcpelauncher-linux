@@ -107,12 +107,17 @@ bool patchLibrary(void* lib, void* sym, void* override) {
     return foundEntry;
 }
 
-void hookFunction(void* symbol, void* hook, void** original) {
+int hookFunction(void* symbol, void* hook, void** original) {
     *original = symbol;
     bool foundEntry = false;
     for (auto& handle : hookLibraries)
         if (patchLibrary(handle.first, symbol, hook))
             foundEntry = true;
-    if (!foundEntry)
+
+    if (!foundEntry) {
         Log::error("Hook", "Failed to hook a symbol (%llu)", (long long int) symbol);
+        return -1;
+    }
+
+    return 0;
 }
