@@ -275,10 +275,10 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    #ifndef USE_GLFW
+#ifndef USE_GLFW
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
-    #endif
+#endif
 
     OpenSSLMultithreadHelper::init();
 
@@ -534,10 +534,10 @@ int main(int argc, char *argv[]) {
                    (0x40AD97 - 0x40ACD0);
         for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
             ((char *) (void *) patchOff)[i] = 0x90;*/
-    #ifndef __APPLE__
+#ifndef __APPLE__
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
         patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
-    #endif
+#endif
     }
 
     Log::info("Launcher", "Patches were successfully applied");

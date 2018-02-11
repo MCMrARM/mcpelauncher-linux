@@ -209,14 +209,14 @@ void LinuxAppPlatform::_updateUsedMemorySnapshot() {
 }
 
 void LinuxAppPlatform::_updateAvailableMemorySnapshot() {
-    #ifndef __APPLE__
+#ifndef __APPLE__
     struct sysinfo memInfo;
     sysinfo (&memInfo);
     long long total = memInfo.freeram;
     total += memInfo.freeswap;
     total *= memInfo.mem_unit;
     availableMemory = total;
-    #endif
+#endif
 }
 
 void LinuxAppPlatform::_updateTotalMemorySnapshot() {
