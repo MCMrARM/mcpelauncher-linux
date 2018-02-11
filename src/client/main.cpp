@@ -666,6 +666,7 @@ int main(int argc, char *argv[]) {
     });
     Log::trace("Launcher", "Initialized display");
 
+    window.getWindowSize(windowWidth, windowHeight);
     // (*AppPlatform::_singleton)->_fireAppFocusGained();
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);

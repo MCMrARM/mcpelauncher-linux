@@ -29,11 +29,9 @@ public:
 
     void setIcon(std::string const& iconPath) override;
 
-    int getRelativeScale();
+    int getRelativeScale() const;
 
     void setRelativeScale();
-
-    void forceResize();
 
     void show() override;
 
@@ -44,5 +42,7 @@ public:
     void setCursorDisabled(bool disabled) override;
 
     void setFullscreen(bool fullscreen) override;
+
+    void getWindowSize(int& width, int& height) const override;
 
 };

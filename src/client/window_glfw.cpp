@@ -49,15 +49,12 @@ void GLFWGameWindow::setRelativeScale() {
     relativeScale = (int) floor(((fx / wx) + (fy / wy)) / 2);
 }
 
-int GLFWGameWindow::getRelativeScale() {
+int GLFWGameWindow::getRelativeScale() const {
     return relativeScale;
 }
 
-void GLFWGameWindow::forceResize() {
-    GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
-    int rw, rh;
-    glfwGetFramebufferSize(window, &rw, &rh);
-    user->onWindowSizeChanged(rw, rh);
+void GLFWGameWindow::getWindowSize(int& width, int& height) const {
+    glfwGetFramebufferSize(window, &width, &height);
 }
 
 void GLFWGameWindow::show() {
@@ -69,11 +66,6 @@ void GLFWGameWindow::close() {
 }
 
 void GLFWGameWindow::runLoop() {
-#ifdef __APPLE__
-    GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
-    user->forceResize();
-#endif
-
     while (!glfwWindowShouldClose(window)) {
         onDraw();
         glfwSwapBuffers(window);
