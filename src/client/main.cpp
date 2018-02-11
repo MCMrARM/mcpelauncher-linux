@@ -234,15 +234,6 @@ bool supportsImmediateModeHook() {
     return false;
 }
 
-#ifdef __APPLE__
-template <typename T>
-void* magicast(T whatever) {
-    T* ptr = &whatever;
-    void** pptr = (void**) ptr;
-    return *pptr;
-}
-#endif
-
 #ifndef USE_GLFW
 static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
     std::cerr << "X error received: "
@@ -535,13 +526,8 @@ int main(int argc, char *argv[]) {
     }
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
-#ifdef __APPLE__
-    linuxHttpRequestInternalVtable[0] = magicast(&LinuxHttpRequestInternal::destroy);
-    linuxHttpRequestInternalVtable[1] = magicast(&LinuxHttpRequestInternal::destroy);
-#else
-    linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
-    linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
-#endif
+    linuxHttpRequestInternalVtable[0] = memberFuncCast(&LinuxHttpRequestInternal::destroy);
+    linuxHttpRequestInternalVtable[1] = memberFuncCast(&LinuxHttpRequestInternal::destroy);
 
     if (workaroundAMD) {/*
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +

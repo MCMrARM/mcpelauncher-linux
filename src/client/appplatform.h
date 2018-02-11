@@ -7,6 +7,7 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+#include "../common/common.h"
 #include "../common/log.h"
 #include "../common/path_helper.h"
 #include "../minecraft/gl.h"
@@ -33,6 +34,11 @@ private:
     static std::string _pickFile(std::string commandLine);
 
     static void replaceVtableEntry(void* lib, void** vtable, const char* sym, void* nw);
+
+    template <typename T>
+    static void replaceVtableEntry(void* lib, void** vtable, const char* sym, T nw) {
+        replaceVtableEntry(lib, vtable, sym, memberFuncCast(nw));
+    }
 
 #ifndef SERVER
     GameWindow* window;
