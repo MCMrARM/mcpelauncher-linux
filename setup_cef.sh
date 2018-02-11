@@ -8,8 +8,7 @@ CEF_DOWNLOAD_URL="http://opensource.spotify.com/cefbuilds/cef_binary_3.3112.1653
 CEF_PATH="cef.tar.bz2"
 CEF_TMP_DIR="tmp_cef"
 TARGET_BASE_DIR="${PWD}/libs/cef"
-CPU_CORE_COUNT=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | tail -1)
-CPU_CORE_COUNT=$(($CPU_CORE_COUNT+1))
+CPU_CORE_COUNT=$(nproc)
 
 # Download
 echo "Downloading: ${CEF_DOWNLOAD_URL}"

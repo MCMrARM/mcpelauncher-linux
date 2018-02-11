@@ -61,8 +61,16 @@ int main(int argc, char *argv[]) {
     ServerProperties properties;
     {
         std::ifstream propertiesFile("server.properties");
-        if (propertiesFile)
+        if (propertiesFile) {
             properties.load(propertiesFile);
+        } else {
+            try {
+                propertiesFile.open(PathHelper::findDataFile("server.properties"));
+                if (propertiesFile)
+                    properties.load(propertiesFile);
+            } catch (std::runtime_error& e) {
+            }
+        }
     }
 
     Log::trace("Launcher", "Loading hybris libraries");
@@ -193,6 +201,7 @@ int main(int argc, char *argv[]) {
     I18n::loadLanguages(*resourcePackManager, nullptr, "en_US");
     resourcePackManager->onLanguageChanged();
     Log::info("Launcher", "Server initialized");
+    modLoader.onServerInstanceInitialized(&instance);
 
     int flags = fcntl(0, F_GETFL, 0);
     fcntl(0, F_SETFL, flags | O_NONBLOCK);

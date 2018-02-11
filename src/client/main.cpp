@@ -40,6 +40,7 @@
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
+#include "../common/openssl_multithread.h"
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
@@ -287,6 +288,8 @@ int main(int argc, char *argv[]) {
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
     #endif
+
+    OpenSSLMultithreadHelper::init();
 
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
@@ -661,7 +664,7 @@ int main(int argc, char *argv[]) {
         Keyboard::feedText(c, false, 0);
     });
     window.setPasteCallback([](std::string const& str) {
-        for (int i = 0; i < str.length(); i++) {
+        for (int i = 0; i < str.length(); ) {
             char c = str[i];
             int l = 1;
             if ((c & 0b11110000) == 0b11100000)
@@ -669,6 +672,7 @@ int main(int argc, char *argv[]) {
             else if ((c & 0b11100000) == 0b11000000)
                 l = 2;
             Keyboard::feedText(mcpe::string(&str[i], (size_t) l), false, 0);
+            i += l;
         }
     });
     window.setCloseCallback([]() {

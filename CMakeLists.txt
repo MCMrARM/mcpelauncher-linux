@@ -115,7 +115,7 @@ if(APPLE)
     include_directories(libs/elf)
 endif(APPLE)
 
-include_directories(${ZLIB_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
+include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
@@ -128,7 +128,7 @@ endif(APPLE)
 set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
 set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h src/common/modloader.cpp src/common/modloader.h)
-set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h)
+set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h src/common/openssl_multithread.cpp src/common/openssl_multithread.h)
 set(CLIENT_SOURCE_FILES_GAMEPAD src/client/gamepad.cpp src/client/gamepad.h)
 set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h)
 set(CLIENT_SOURCE_FILES_CEF_GAMEPAD src/client/gamepad_mapper_browser.cpp src/client/gamepad_mapper_browser.h)
@@ -169,6 +169,7 @@ if (GAMEPAD_SUPPORT_ENABLED)
 endif()
 
 if (BUILD_CLIENT)
+    include_directories(${PNG_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
     add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 
     if (CEF_ENABLED)

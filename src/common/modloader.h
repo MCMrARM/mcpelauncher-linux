@@ -5,6 +5,7 @@
 #include <set>
 
 class MinecraftGame;
+class ServerInstance;
 
 class ModLoader {
 
@@ -21,5 +22,7 @@ public:
     void loadModsFromDirectory(std::string const& path);
 
     void onGameInitialized(MinecraftGame* game);
+
+    void onServerInstanceInitialized(ServerInstance* server);
 
 };
