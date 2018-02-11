@@ -398,6 +398,7 @@ int main(int argc, char *argv[]) {
     hybris_hook("eglGetProcAddress", (void*) glfwGetProcAddress);
 #endif
     hybris_hook("mcpelauncher_hook", (void*) hookFunction);
+    hybris_hook("mcpelauncher_log", (void*) &Log::log);
     hookAndroidLog();
     if (!load_empty_library("libc.so") || !load_empty_library("libm.so"))
         return -1;
