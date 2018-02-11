@@ -116,10 +116,11 @@ include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
+set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hooks.c libs/hybris/src/hooks_shm.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c libs/hybris/src/hooks_pthread.c libs/hybris/src/hooks_dirent.c libs/hybris/src/hooks_io.c libs/hybris/src/hooks_net.c)
 if(APPLE)
-    set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hack/hooks.cpp libs/hybris/src/hooks_darwin.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/hooks_shm.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c)
+    set(HYBRIS_SOURCES ${HYBRIS_SOURCES} libs/hybris/src/hooks_net_darwin.c libs/hybris/src/hooks_darwin_pthread_once.cpp)
 else()
-    set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hooks.c libs/hybris/src/hooks_shm.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/strlcpy.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c libs/hybris/src/hooks_pthread.c libs/hybris/src/hooks_dirent.c libs/hybris/src/hooks_io.c libs/hybris/src/hooks_net.c)
+    set(HYBRIS_SOURCES ${HYBRIS_SOURCES} libs/hybris/src/strlcpy.c)
 endif(APPLE)
 
 set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
