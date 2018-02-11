@@ -8,12 +8,8 @@
 #include <unistd.h>
 #include <cxxabi.h>
 #include <execinfo.h>
-#ifdef __APPLE__
-#include <signal.h>
-#include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
+#include <csignal>
+#include <cstdlib>
 #include "log.h"
 
 extern "C" {
@@ -31,28 +27,6 @@ bool loadLibrary(std::string path) {
     }
     return true;
 }
-
-#ifdef __APPLE__
-void* loadFmodDarwin(const char** symbols) {
-    void* handle = dlopen("./libs/native/libfmod.dylib", RTLD_LAZY);
-
-    if (handle == nullptr) {
-        Log::error(TAG, "Failed to load hybris library libs/native/libfmod.dylib: %s", hybris_dlerror());
-        return nullptr;
-    }
-
-    int i = 0;
-    while (true) {
-        const char* sym = symbols[i];
-        if (sym == nullptr)
-            break;
-        void* ptr = dlsym(handle, sym);
-        hybris_hook(sym, ptr);
-        i++;
-    }
-    return handle;
-}
-#endif
 
 void* loadLibraryOS(std::string path, const char** symbols) {
     void* handle = dlopen(path.c_str(), RTLD_LAZY);

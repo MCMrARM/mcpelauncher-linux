@@ -397,7 +397,7 @@ int main(int argc, char *argv[]) {
 
     Log::trace("Launcher", "Loading native libraries");
 #ifdef __APPLE__
-    void* fmodLib = loadFmodDarwin(fmod_symbols);
+    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.dylib"), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
 #else
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6"), fmod_symbols);
