@@ -48,4 +48,6 @@ public:
 
     void setFullscreen(bool fullscreen) override;
 
+    void getWindowSize(int& width, int& height) const override;
+
 };

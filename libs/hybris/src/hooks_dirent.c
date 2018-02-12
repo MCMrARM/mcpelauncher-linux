@@ -37,7 +37,9 @@ static struct bionic_dirent *my_readdir(DIR *dirp)
     }
 
     result.d_ino = real_result->d_ino;
+#ifndef __APPLE__
     result.d_off = real_result->d_off;
+#endif
     result.d_reclen = real_result->d_reclen;
     result.d_type = real_result->d_type;
     memcpy(result.d_name, real_result->d_name, sizeof(result.d_name));
@@ -62,7 +64,9 @@ static int my_readdir_r(DIR *dir, struct bionic_dirent *entry,
             *result = entry;
 
             entry->d_ino = entry_r.d_ino;
+#ifndef __APPLE__
             entry->d_off = entry_r.d_off;
+#endif
             entry->d_reclen = entry_r.d_reclen;
             entry->d_type = entry_r.d_type;
             memcpy(entry->d_name, entry_r.d_name, sizeof(entry->d_name));
@@ -85,6 +89,7 @@ static int my_alphasort(struct bionic_dirent **a,
     return strcoll((*a)->d_name, (*b)->d_name);
 }
 
+#ifndef __APPLE__
 static int my_versionsort(struct bionic_dirent **a,
                           struct bionic_dirent **b)
 {
@@ -136,7 +141,7 @@ static int my_scandirat(int fd, const char *dir,
             result[nItems++] = filter_r;
         }
         if (nItems && compar != NULL) // sort
-            qsort(result, nItems, sizeof(struct bionic_dirent *), (__compar_fn_t) compar);
+            qsort(result, nItems, sizeof(struct bionic_dirent *), (int (*)(const void*, const void*)) compar);
 
         *namelist = result;
     }
@@ -150,8 +155,9 @@ static int my_scandir(const char *dir,
                       int (*compar) (const struct bionic_dirent **,
                                      const struct bionic_dirent **))
 {
-    return my_scandirat(AT_FDCWD, dir, namelist, filter, (__compar_fn_t) compar);
+    return my_scandirat(AT_FDCWD, dir, namelist, filter, compar);
 }
+#endif
 
 
 
@@ -166,10 +172,12 @@ static struct _hook dirent_hooks[] = {
     {"seekdir", seekdir},
     {"telldir", telldir},
     {"dirfd", dirfd},
+#ifndef __APPLE__
     {"scandir", my_scandir},
     {"scandirat", my_scandirat},
-    {"alphasort", my_alphasort},
     {"versionsort", my_versionsort},
+#endif
+    {"alphasort", my_alphasort},
     {NULL, NULL}
 };
 REGISTER_HOOKS(dirent_hooks)

@@ -3,6 +3,8 @@
 #include <codecvt>
 #include <iomanip>
 
+#include <math.h>
+
 GLFWGameWindow::GLFWGameWindow(const std::string& title, int width, int height, GraphicsApi api) :
         GameWindow(title, width, height, api), windowedWidth(width), windowedHeight(height) {
     glfwDefaultWindowHints();
@@ -18,13 +20,15 @@ GLFWGameWindow::GLFWGameWindow(const std::string& title, int width, int height, 
     }
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
-    glfwSetWindowSizeCallback(window, _glfwWindowSizeCallback);
+    glfwSetFramebufferSizeCallback(window, _glfwWindowSizeCallback);
     glfwSetCursorPosCallback(window, _glfwCursorPosCallback);
     glfwSetMouseButtonCallback(window, _glfwMouseButtonCallback);
     glfwSetWindowCloseCallback(window, _glfwWindowCloseCallback);
     glfwSetKeyCallback(window, _glfwKeyCallback);
     glfwSetCharCallback(window, _glfwCharCallback);
     glfwMakeContextCurrent(window);
+
+    setRelativeScale();
 }
 
 GLFWGameWindow::~GLFWGameWindow() {
@@ -33,6 +37,24 @@ GLFWGameWindow::~GLFWGameWindow() {
 
 void GLFWGameWindow::setIcon(std::string const& iconPath) {
     // TODO:
+}
+
+void GLFWGameWindow::setRelativeScale() {
+    int fx, fy;
+    glfwGetFramebufferSize(window, &fx, &fy);
+
+    int wx, wy;
+    glfwGetWindowSize(window, &wx, &wy);
+
+    relativeScale = (int) floor(((fx / wx) + (fy / wy)) / 2);
+}
+
+int GLFWGameWindow::getRelativeScale() const {
+    return relativeScale;
+}
+
+void GLFWGameWindow::getWindowSize(int& width, int& height) const {
+    glfwGetFramebufferSize(window, &width, &height);
 }
 
 void GLFWGameWindow::show() {
@@ -59,7 +81,7 @@ void GLFWGameWindow::setCursorDisabled(bool disabled) {
 void GLFWGameWindow::setFullscreen(bool fullscreen) {
     if (fullscreen) {
         glfwGetWindowPos(window, &windowedX, &windowedY);
-        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+        glfwGetFramebufferSize(window, &windowedWidth, &windowedHeight);
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
         glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
@@ -75,6 +97,10 @@ void GLFWGameWindow::_glfwWindowSizeCallback(GLFWwindow* window, int w, int h) {
 
 void GLFWGameWindow::_glfwCursorPosCallback(GLFWwindow* window, double x, double y) {
     GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
+
+    x *= user->getRelativeScale();
+    y *= user->getRelativeScale();
+
     if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
         user->onMouseRelativePosition(x - user->lastMouseX, y - user->lastMouseY);
         user->lastMouseX = x;
@@ -88,6 +114,10 @@ void GLFWGameWindow::_glfwMouseButtonCallback(GLFWwindow* window, int button, in
     GLFWGameWindow* user = (GLFWGameWindow*) glfwGetWindowUserPointer(window);
     double x, y;
     glfwGetCursorPos(window, &x, &y);
+
+    x *= user->getRelativeScale();
+    y *= user->getRelativeScale();
+
     user->onMouseButton(x, y, button + 1, action == GLFW_PRESS ? MouseButtonAction::PRESS : MouseButtonAction::RELEASE);
 }
 

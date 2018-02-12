@@ -10,6 +10,7 @@ private:
     double lastMouseX = 0.0, lastMouseY = 0.0;
     int windowedX = -1, windowedY = -1;
     int windowedWidth = -1, windowedHeight = -1;
+    int relativeScale;
 
     static int getKeyMinecraft(int keyCode);
 
@@ -21,11 +22,16 @@ private:
     static void _glfwWindowCloseCallback(GLFWwindow* window);
 
 public:
+
     GLFWGameWindow(const std::string& title, int width, int height, GraphicsApi api);
 
     ~GLFWGameWindow() override;
 
     void setIcon(std::string const& iconPath) override;
+
+    int getRelativeScale() const;
+
+    void setRelativeScale();
 
     void show() override;
 
@@ -36,5 +42,7 @@ public:
     void setCursorDisabled(bool disabled) override;
 
     void setFullscreen(bool fullscreen) override;
+
+    void getWindowSize(int& width, int& height) const override;
 
 };

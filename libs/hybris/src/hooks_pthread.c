@@ -1,10 +1,13 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/auxv.h>
-#include <syscall.h>
 #include <signal.h>
-
+#ifdef __APPLE__
+#include "hooks_darwin_pthread_once.h"
+#else
+#include <sys/syscall.h>
+#include <sys/auxv.h>
+#endif
 #include "../include/hybris/hook.h"
 #include "hooks_shm.h"
 
@@ -173,6 +176,7 @@ static int my_pthread_attr_getschedpolicy(pthread_attr_t const *__attr, int *pol
     return pthread_attr_getschedpolicy(realattr, policy);
 }
 
+#ifndef __APPLE__
 static int my_pthread_attr_setschedparam(pthread_attr_t *__attr, struct sched_param const *param)
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
@@ -184,6 +188,7 @@ static int my_pthread_attr_getschedparam(pthread_attr_t const *__attr, struct sc
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
     return pthread_attr_getschedparam(realattr, param);
 }
+#endif
 
 static int my_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t stack_size)
 {
@@ -239,6 +244,7 @@ static int my_pthread_attr_getscope(pthread_attr_t const *__attr)
     return scope;
 }
 
+#ifndef __APPLE__
 static int my_pthread_getattr_np(pthread_t thid, pthread_attr_t *__attr)
 {
     pthread_attr_t *realattr;
@@ -248,6 +254,7 @@ static int my_pthread_getattr_np(pthread_t thid, pthread_attr_t *__attr)
 
     return pthread_getattr_np(thid, realattr);
 }
+#endif
 
 /*
  * pthread_mutex* functions
@@ -257,16 +264,29 @@ static int my_pthread_getattr_np(pthread_t thid, pthread_attr_t *__attr)
  *
  * */
 
+#ifdef __APPLE__
+static pthread_mutexattr_t *hybris_get_real_mutexattr(__const pthread_mutexattr_t *attr) {
+    if (!attr)
+        return NULL;
+    pthread_mutexattr_t *realattr = (pthread_mutexattr_t *) *(unsigned int *) attr;
+    return realattr;
+}
+#endif
+
 static int my_pthread_mutex_init(pthread_mutex_t *__mutex,
                                  __const pthread_mutexattr_t *__mutexattr)
 {
     pthread_mutex_t *realmutex = NULL;
 
-    int pshared = 0;
+#ifdef APPLE
+    __mutexattr = hybris_get_real_mutexattr(__mutexattr);
+#endif
+
+    int pshared = PTHREAD_PROCESS_PRIVATE;
     if (__mutexattr)
         pthread_mutexattr_getpshared(__mutexattr, &pshared);
 
-    if (!pshared) {
+    if (pshared == PTHREAD_PROCESS_PRIVATE) {
         /* non shared, standard mutex: use malloc */
         realmutex = malloc(sizeof(pthread_mutex_t));
 
@@ -393,6 +413,7 @@ static int my_pthread_mutex_unlock(pthread_mutex_t *__mutex)
     return pthread_mutex_unlock(realmutex);
 }
 
+#ifndef __APPLE__
 static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned __msecs)
 {
     struct timespec tv;
@@ -420,12 +441,7 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
 
     return pthread_mutex_timedlock(realmutex, &tv);
 }
-
-static int my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
-                                           int pshared)
-{
-    return pthread_mutexattr_setpshared(__attr, pshared);
-}
+#endif
 
 /*
  * pthread_cond* functions
@@ -440,12 +456,12 @@ static int my_pthread_cond_init(pthread_cond_t *cond,
 {
     pthread_cond_t *realcond = NULL;
 
-    int pshared = 0;
+    int pshared = PTHREAD_PROCESS_PRIVATE;
 
     if (attr)
         pthread_condattr_getpshared(attr, &pshared);
 
-    if (!pshared) {
+    if (pshared == PTHREAD_PROCESS_PRIVATE) {
         /* non shared, standard cond: use malloc */
         realcond = malloc(sizeof(pthread_cond_t));
 
@@ -593,6 +609,7 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
     return pthread_cond_timedwait(realcond, realmutex, abstime);
 }
 
+#ifndef __APPLE__
 static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
                                                  pthread_mutex_t *mutex, const struct timespec *reltime)
 {
@@ -633,6 +650,7 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
     }
     return pthread_cond_timedwait(realcond, realmutex, &tv);
 }
+#endif
 
 /*
  * pthread_rwlockattr_* functions
@@ -667,6 +685,9 @@ static int my_pthread_rwlockattr_setpshared(pthread_rwlockattr_t *__attr,
                                             int pshared)
 {
     pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+#ifdef __APPLE__
+    pshared = pshared == 1 ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE;
+#endif
     return pthread_rwlockattr_setpshared(realattr, pshared);
 }
 
@@ -674,7 +695,16 @@ static int my_pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__attr,
                                             int *pshared)
 {
     pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+#ifdef __APPLE__
+    int ret = pthread_rwlockattr_getpshared(realattr, pshared);
+    if (*pshared == PTHREAD_PROCESS_PRIVATE)
+        *pshared = 0;
+    else if (*pshared == PTHREAD_PROCESS_SHARED)
+        *pshared = 1;
+    return ret;
+#else
     return pthread_rwlockattr_getpshared(realattr, pshared);
+#endif
 }
 
 /*
@@ -690,7 +720,7 @@ static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
 {
     pthread_rwlock_t *realrwlock = NULL;
     pthread_rwlockattr_t *realattr = NULL;
-    int pshared = 0;
+    int pshared = PTHREAD_PROCESS_PRIVATE;
 
     if (__attr != NULL)
         realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
@@ -698,7 +728,7 @@ static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
     if (realattr)
         pthread_rwlockattr_getpshared(realattr, &pshared);
 
-    if (!pshared) {
+    if (pshared == PTHREAD_PROCESS_PRIVATE) {
         /* non shared, standard rwlock: use malloc */
         realrwlock = malloc(sizeof(pthread_rwlock_t));
 
@@ -760,13 +790,6 @@ static int my_pthread_rwlock_tryrdlock(pthread_rwlock_t *__rwlock)
     return pthread_rwlock_tryrdlock(realrwlock);
 }
 
-static int my_pthread_rwlock_timedrdlock(pthread_rwlock_t *__rwlock,
-                                         __const struct timespec *abs_timeout)
-{
-    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
-    return pthread_rwlock_timedrdlock(realrwlock, abs_timeout);
-}
-
 static int my_pthread_rwlock_wrlock(pthread_rwlock_t *__rwlock)
 {
     pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
@@ -779,12 +802,23 @@ static int my_pthread_rwlock_trywrlock(pthread_rwlock_t *__rwlock)
     return pthread_rwlock_trywrlock(realrwlock);
 }
 
+#ifndef __APPLE__
+
+static int my_pthread_rwlock_timedrdlock(pthread_rwlock_t *__rwlock,
+                                         __const struct timespec *abs_timeout)
+{
+    pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
+    return pthread_rwlock_timedrdlock(realrwlock, abs_timeout);
+}
+
 static int my_pthread_rwlock_timedwrlock(pthread_rwlock_t *__rwlock,
                                          __const struct timespec *abs_timeout)
 {
     pthread_rwlock_t *realrwlock = hybris_set_realrwlock(__rwlock);
     return pthread_rwlock_timedwrlock(realrwlock, abs_timeout);
 }
+
+#endif
 
 static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
 {
@@ -815,13 +849,107 @@ static void my_pthread_cleanup_pop(int execute)
 
 static pid_t my_gettid( void )
 {
+#ifdef __APPLE__
+    return (pid_t) (void*) pthread_self();
+#else
     return syscall( __NR_gettid );
+#endif
+}
+
+#ifdef __APPLE__
+
+static int darwin_my_pthread_mutexattr_init(pthread_mutexattr_t *__attr)
+{
+    pthread_mutexattr_t *attr = malloc(sizeof(pthread_mutexattr_t));
+    *((unsigned int *) __attr) = (unsigned int) attr;
+    return pthread_mutexattr_init(attr);
+}
+
+static int darwin_my_pthread_mutexattr_destroy(pthread_mutexattr_t *__attr)
+{
+    pthread_mutexattr_t *attr = hybris_get_real_mutexattr(__attr);
+    int ret = pthread_mutexattr_destroy(attr);
+    free(attr);
+    return ret;
+}
+
+static int darwin_my_pthread_mutexattr_gettype(pthread_mutexattr_t *__attr,
+                                               int *__kind)
+{
+    return pthread_mutexattr_gettype(hybris_get_real_mutexattr(__attr), __kind);
+}
+
+static int darwin_my_pthread_mutexattr_settype(pthread_mutexattr_t *__attr,
+                                               int __kind)
+{
+    return pthread_mutexattr_settype(hybris_get_real_mutexattr(__attr), __kind);
+}
+
+static int darwin_my_pthread_mutexattr_getpshared(pthread_mutexattr_t *__attr,
+                                                  int *pshared)
+{
+    int ret = pthread_mutexattr_getpshared(hybris_get_real_mutexattr(__attr), pshared);
+    if (*pshared == PTHREAD_PROCESS_PRIVATE)
+        *pshared = 0;
+    else if (*pshared == PTHREAD_PROCESS_SHARED)
+        *pshared = 1;
+    return ret;
+}
+
+static int darwin_my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
+                                                  int pshared)
+{
+    pshared = pshared == 1 ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE;
+    return pthread_mutexattr_setpshared(__attr, pshared);
 }
 
 
+struct bionic_sched_param {
+    int sched_priority;
+};
+
+static int darwin_my_pthread_getschedparam(pthread_t thread, int *policy, struct bionic_sched_param *param)
+{
+    struct sched_param realparam;
+    int ret = pthread_getschedparam(thread, policy, &realparam);
+    if (param != NULL)
+      param->sched_priority = realparam.sched_priority;
+    return ret;
+}
+
+static int darwin_my_pthread_setschedparam(pthread_t thread, int policy, struct bionic_sched_param *param)
+{
+    struct sched_param realparam;
+    pthread_getschedparam(thread, NULL, &realparam);
+    realparam.sched_priority = param->sched_priority;
+    return pthread_setschedparam(thread, policy, &realparam);
+}
+
+static int darwin_my_pthread_attr_setschedparam(pthread_attr_t *__attr, struct bionic_sched_param const *param)
+{
+    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    struct sched_param realparam;
+    pthread_attr_getschedparam(realattr, &realparam);
+    realparam.sched_priority = param->sched_priority;
+    return pthread_attr_setschedparam(realattr, &realparam);
+}
+
+static int darwin_my_pthread_attr_getschedparam(pthread_attr_t const *__attr, struct bionic_sched_param *param)
+{
+    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    struct sched_param realparam;
+    int ret = pthread_attr_getschedparam(realattr, &realparam);
+    if (param != NULL)
+        param->sched_priority = realparam.sched_priority;
+    return ret;
+}
+
+
+#endif
+
 static struct _hook pthread_hooks[] = {
     /* pthread.h */
-    {"getauxval", getauxval},
+    // {"getauxval", getauxval},
     {"gettid", my_gettid},
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
@@ -831,20 +959,36 @@ static struct _hook pthread_hooks[] = {
     {"pthread_detach", pthread_detach},
     {"pthread_self", pthread_self},
     {"pthread_equal", pthread_equal},
+#ifdef __APPLE__
+    {"pthread_getschedparam", darwin_my_pthread_getschedparam},
+    {"pthread_setschedparam", darwin_my_pthread_setschedparam},
+#else
     {"pthread_getschedparam", pthread_getschedparam},
     {"pthread_setschedparam", pthread_setschedparam},
+#endif
     {"pthread_mutex_init", my_pthread_mutex_init},
     {"pthread_mutex_destroy", my_pthread_mutex_destroy},
     {"pthread_mutex_lock", my_pthread_mutex_lock},
     {"pthread_mutex_unlock", my_pthread_mutex_unlock},
     {"pthread_mutex_trylock", my_pthread_mutex_trylock},
+#ifndef __APPLE__
     {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
+#endif
+#ifdef __APPLE__
+    {"pthread_mutexattr_init", darwin_my_pthread_mutexattr_init},
+    {"pthread_mutexattr_destroy", darwin_my_pthread_mutexattr_destroy},
+    {"pthread_mutexattr_gettype", darwin_my_pthread_mutexattr_gettype},
+    {"pthread_mutexattr_settype", darwin_my_pthread_mutexattr_settype},
+    {"pthread_mutexattr_getpshared", darwin_my_pthread_mutexattr_getpshared},
+    {"pthread_mutexattr_setpshared", darwin_my_pthread_mutexattr_setpshared},
+#else
     {"pthread_mutexattr_init", pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", pthread_mutexattr_destroy},
     {"pthread_mutexattr_gettype", pthread_mutexattr_gettype},
     {"pthread_mutexattr_settype", pthread_mutexattr_settype},
     {"pthread_mutexattr_getpshared", pthread_mutexattr_getpshared},
-    {"pthread_mutexattr_setpshared", my_pthread_mutexattr_setpshared},
+    {"pthread_mutexattr_setpshared", pthread_mutexattr_setpshared},
+#endif
     {"pthread_condattr_init", pthread_condattr_init},
     {"pthread_condattr_getpshared", pthread_condattr_getpshared},
     {"pthread_condattr_setpshared", pthread_condattr_setpshared},
@@ -857,10 +1001,16 @@ static struct _hook pthread_hooks[] = {
     {"pthread_cond_timedwait", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_monotonic", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_monotonic_np", my_pthread_cond_timedwait},
+#ifndef __APPLE__
     {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait_relative_np},
+#endif
     {"pthread_key_delete", pthread_key_delete},
     {"pthread_setname_np", pthread_setname_np},
+#ifdef __APPLE__
+    {"pthread_once", darwin_my_pthread_once},
+#else
     {"pthread_once", pthread_once},
+#endif
     {"pthread_key_create", pthread_key_create},
     {"pthread_setspecific", pthread_setspecific},
     {"pthread_getspecific", pthread_getspecific},
@@ -870,8 +1020,13 @@ static struct _hook pthread_hooks[] = {
     {"pthread_attr_getdetachstate", my_pthread_attr_getdetachstate},
     {"pthread_attr_setschedpolicy", my_pthread_attr_setschedpolicy},
     {"pthread_attr_getschedpolicy", my_pthread_attr_getschedpolicy},
+#ifdef __APPLE__
+    {"pthread_attr_setschedparam", darwin_my_pthread_attr_setschedparam},
+    {"pthread_attr_getschedparam", darwin_my_pthread_attr_getschedparam},
+#else
     {"pthread_attr_setschedparam", my_pthread_attr_setschedparam},
     {"pthread_attr_getschedparam", my_pthread_attr_getschedparam},
+#endif
     {"pthread_attr_setstacksize", my_pthread_attr_setstacksize},
     {"pthread_attr_getstacksize", my_pthread_attr_getstacksize},
     {"pthread_attr_setstack", my_pthread_attr_setstack},
@@ -880,7 +1035,9 @@ static struct _hook pthread_hooks[] = {
     {"pthread_attr_getguardsize", my_pthread_attr_getguardsize},
     {"pthread_attr_setscope", my_pthread_attr_setscope},
     {"pthread_attr_getscope", my_pthread_attr_getscope},
+#ifndef __APPLE__
     {"pthread_getattr_np", my_pthread_getattr_np},
+#endif
     {"pthread_rwlockattr_init", my_pthread_rwlockattr_init},
     {"pthread_rwlockattr_destroy", my_pthread_rwlockattr_destroy},
     {"pthread_rwlockattr_setpshared", my_pthread_rwlockattr_setpshared},
@@ -892,8 +1049,10 @@ static struct _hook pthread_hooks[] = {
     {"pthread_rwlock_rdlock", my_pthread_rwlock_rdlock},
     {"pthread_rwlock_tryrdlock", my_pthread_rwlock_tryrdlock},
     {"pthread_rwlock_trywrlock", my_pthread_rwlock_trywrlock},
+#ifndef __APPLE__
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
+#endif
     {"__pthread_cleanup_push", my_pthread_cleanup_push},
     {"__pthread_cleanup_pop", my_pthread_cleanup_pop},
     {NULL, NULL}

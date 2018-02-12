@@ -9,3 +9,4 @@ __pycache__
 playdl.conf
 device.conf.state
 mcpelauncher-icon.png
+build/

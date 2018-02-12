@@ -29,7 +29,6 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 #include <strings.h>
 #include <dlfcn.h>
@@ -51,8 +50,10 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <locale.h>
+#ifndef __APPLE__
 #include <sys/syscall.h>
 #include <sys/auxv.h>
+#endif
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -68,8 +69,11 @@
 #include <net/if.h>
 #include <utime.h>
 #include <wctype.h>
-#include <sys/poll.h>
 #include <ctype.h>
+
+#ifdef __APPLE__
+#include <xlocale.h>
+#endif
 
 #include "../include/hybris/hook.h"
 #include "../include/hybris/properties.h"
@@ -89,9 +93,11 @@ static int locale_inited = 0;
 
 uintptr_t _hybris_stack_chk_guard = 0;
 
+#ifndef __APPLE__
 static void __attribute__((constructor)) __init_stack_check_guard() {
     _hybris_stack_chk_guard = *((uintptr_t*) getauxval(AT_RANDOM));
 }
+#endif
 
 
 /*
@@ -133,7 +139,49 @@ size_t my_strlen_chk(const char *s, size_t s_len) {
     return ret;
 }
 
+#ifndef __APPLE__
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
+
+#ifdef __APPLE__
+
+int darwin_my_fdatasync(int fildes) {
+    return fcntl(fildes, F_FULLFSYNC);
+}
+
+// Android uses 32-bit offset while Mac OS uses 64-bit one
+
+ssize_t darwin_my_pread(int fd, void *buf, size_t count, long offset) {
+    return pread(fd, buf, count, offset);
+}
+
+ssize_t darwin_my_pwrite(int fd, const void *buf, size_t count, long offset) {
+    return pwrite(fd, buf, count, offset);
+}
+
+struct android_rlimit
+{
+    unsigned long int rlim_cur;
+    unsigned long int rlim_max;
+};
+
+int darwin_my_getrlimit(int resource, struct android_rlimit *rlim) {
+    if (resource == 7)
+        resource = RLIMIT_NOFILE;
+    struct rlimit os_rlim;
+    int ret = getrlimit(resource, &os_rlim);
+    rlim->rlim_cur = (unsigned long int) os_rlim.rlim_cur;
+    rlim->rlim_max = (unsigned long int) os_rlim.rlim_max;
+    return ret;
+}
+
+int darwin_my_clock_gettime(clockid_t clk_id, struct timespec *tp) {
+    if (clk_id == 1)
+        clk_id = CLOCK_MONOTONIC;
+    return clock_gettime(clk_id, tp);
+}
+
+#endif
 
 static int my_set_errno(int oi_errno)
 {
@@ -205,26 +253,28 @@ static struct _hook main_hooks[] = {
     {"__stack_chk_guard", &_hybris_stack_chk_guard},
     {"printf", printf },
     {"malloc", my_malloc },
-    {"memalign", memalign },
-    {"pvalloc", pvalloc },
+    // {"memalign", memalign },
+    // {"pvalloc", pvalloc },
     {"getxattr", getxattr},
-    {"__assert", __assert },
-    {"__assert2", __assert },
+    // {"__assert", __assert },
+    // {"__assert2", __assert },
     {"uname", uname },
     {"sched_yield", sched_yield},
     {"ldexp", ldexp},
+#ifdef __APPLE__
+    {"getrlimit", darwin_my_getrlimit},
+#else
     {"getrlimit", getrlimit},
+#endif
     {"gettimeofday", gettimeofday},
     {"ioctl", ioctl},
-    {"select", select},
     {"utime", utime},
-    {"poll", poll},
     {"setlocale", setlocale},
     {"__umoddi3", __umoddi3},
     {"__udivdi3", __udivdi3},
     {"__divdi3", __divdi3},
     /* stdlib.h */
-    {"__ctype_get_mb_cur_max", __ctype_get_mb_cur_max},
+    // {"__ctype_get_mb_cur_max", __ctype_get_mb_cur_max},
     {"atof", atof},
     {"atoi", atoi},
     {"atol", atol},
@@ -238,23 +288,23 @@ static struct _hook main_hooks[] = {
     {"strtouq", strtouq},
     {"strtoll", strtoll},
     {"strtoull", strtoull},
-    {"strtol_l", strtol_l},
+    // {"strtol_l", strtol_l},
     {"strtoul_l", strtoul_l},
-    {"strtoll_l", strtoll_l},
-    {"strtoull_l", strtoull_l},
-    {"strtod_l", strtod_l},
+    // {"strtoll_l", strtoll_l},
+    // {"strtoull_l", strtoull_l},
+    // {"strtod_l", strtod_l},
     {"strtof_l", strtof_l},
     {"strtold_l", strtold_l},
-    {"l64a", l64a},
-    {"a64l", a64l},
+    // {"l64a", l64a},
+    // {"a64l", a64l},
     {"random", random},
     {"srandom", srandom},
     {"initstate", initstate},
     {"setstate", setstate},
-    {"random_r", random_r},
-    {"srandom_r", srandom_r},
-    {"initstate_r", initstate_r},
-    {"setstate_r", setstate_r},
+    // {"random_r", random_r},
+    // {"srandom_r", srandom_r},
+    // {"initstate_r", initstate_r},
+    // {"setstate_r", setstate_r},
     {"rand", rand},
     {"srand", srand},
     {"rand_r", rand_r},
@@ -267,44 +317,44 @@ static struct _hook main_hooks[] = {
     {"srand48", srand48},
     {"seed48", seed48},
     {"lcong48", lcong48},
-    {"drand48_r", drand48_r},
-    {"erand48_r", erand48_r},
-    {"lrand48_r", lrand48_r},
-    {"nrand48_r", nrand48_r},
-    {"mrand48_r", mrand48_r},
-    {"jrand48_r", jrand48_r},
-    {"srand48_r", srand48_r},
-    {"seed48_r", seed48_r},
-    {"lcong48_r", lcong48_r},
+    // {"drand48_r", drand48_r},
+    // {"erand48_r", erand48_r},
+    // {"lrand48_r", lrand48_r},
+    // {"nrand48_r", nrand48_r},
+    // {"mrand48_r", mrand48_r},
+    // {"jrand48_r", jrand48_r},
+    // {"srand48_r", srand48_r},
+    // {"seed48_r", seed48_r},
+    // {"lcong48_r", lcong48_r},
     {"calloc", calloc},
     {"realloc", realloc},
     {"free", free},
     {"valloc", valloc},
     {"posix_memalign", posix_memalign},
-    {"aligned_alloc", aligned_alloc},
+    // {"aligned_alloc", aligned_alloc},
     {"abort", abort},
     {"atexit", atexit},
-    {"on_exit", on_exit},
+    // {"on_exit", on_exit},
     {"exit", exit},
-    {"quick_exit", quick_exit},
+    // {"quick_exit", quick_exit},
     {"_Exit", _Exit},
     {"getenv", getenv},
-    {"secure_getenv", secure_getenv},
+    // {"secure_getenv", secure_getenv},
     {"putenv", putenv},
     {"setenv", setenv},
     {"unsetenv", unsetenv},
-    {"clearenv", clearenv},
+    // {"clearenv", clearenv},
     {"mkstemp", mkstemp},
-    {"mkstemp64", mkstemp64},
-    {"mkstemps", mkstemps},
-    {"mkstemps64", mkstemps64},
+    // {"mkstemp64", mkstemp64},
+    // {"mkstemps", mkstemps},
+    // {"mkstemps64", mkstemps64},
     {"mkdtemp", mkdtemp},
     {"mkostemp", mkostemp},
-    {"mkostemp64", mkostemp64},
-    {"mkostemps", mkostemps},
-    {"mkostemps64", mkostemps64},
+    // {"mkostemp64", mkostemp64},
+    // {"mkostemps", mkostemps},
+    // {"mkostemps64", mkostemps64},
     {"system", system},
-    {"canonicalize_file_name", canonicalize_file_name},
+    // {"canonicalize_file_name", canonicalize_file_name},
     {"realpath", realpath},
     {"bsearch", bsearch},
     {"qsort", qsort},
@@ -318,37 +368,37 @@ static struct _hook main_hooks[] = {
     {"ecvt", ecvt},
     {"fcvt", fcvt},
     {"gcvt", gcvt},
-    {"qecvt", qecvt},
-    {"qfcvt", qfcvt},
-    {"qgcvt", qgcvt},
-    {"ecvt_r", ecvt_r},
-    {"fcvt_r", fcvt_r},
-    {"qecvt_r", qecvt_r},
-    {"qfcvt_r", qfcvt_r},
+    // {"qecvt", qecvt},
+    // {"qfcvt", qfcvt},
+    // {"qgcvt", qgcvt},
+    // {"ecvt_r", ecvt_r},
+    // {"fcvt_r", fcvt_r},
+    // {"qecvt_r", qecvt_r},
+    // {"qfcvt_r", qfcvt_r},
     {"mblen", mblen},
     {"mbtowc", mbtowc},
     {"wctomb", wctomb},
     {"mbstowcs", mbstowcs},
     {"wcstombs", wcstombs},
-    {"rpmatch", rpmatch},
+    // {"rpmatch", rpmatch},
     {"getsubopt", getsubopt},
     {"posix_openpt", posix_openpt},
     {"grantpt", grantpt},
     {"unlockpt", unlockpt},
     {"ptsname", ptsname},
-    {"ptsname_r", ptsname_r},
-    {"getpt", getpt},
+    // {"ptsname_r", ptsname_r},
+    // {"getpt", getpt},
     {"getloadavg", getloadavg},
     /* string.h */
     {"memccpy",memccpy},
     {"memchr",memchr},
-    {"memrchr",memrchr},
+    // {"memrchr",memrchr},
     {"memcmp",memcmp},
     {"memcpy",my_memcpy},
     {"memmove",memmove},
     {"memset",memset},
     {"memmem",memmem},
-    //  {"memswap",memswap},
+    // {"memswap",memswap},
     {"strchr",strchr},
     {"strrchr",strrchr},
     {"strlen",my_strlen},
@@ -367,7 +417,7 @@ static struct _hook main_hooks[] = {
     {"strndup",strndup},
     {"strncmp",strncmp},
     {"strncpy",strncpy},
-    //{"strlcat",strlcat},
+    // {"strlcat",strlcat},
     {"strlcpy",strlcpy},
     {"strcspn",strcspn},
     {"strpbrk",strpbrk},
@@ -389,29 +439,12 @@ static struct _hook main_hooks[] = {
     {"strcasecmp",strcasecmp},
     {"strncasecmp",strncasecmp},
     /* errno.h */
+#ifdef __APPLE__
+    {"__errno", __error},
+#else
     {"__errno", __errno_location},
+#endif
     {"__set_errno", my_set_errno},
-    /* socket.h */
-    {"socket", socket},
-    {"socketpair", socketpair},
-    {"bind", bind},
-    {"getsockname", getsockname},
-    {"connect", connect},
-    {"getpeername", getpeername},
-    {"send", send},
-    {"recv", recv},
-    {"sendto", sendto},
-    {"recvfrom", recvfrom},
-    {"sendmsg", sendmsg},
-    {"sendmmsg", sendmmsg},
-    {"recvmsg", recvmsg},
-    {"recvmmsg", recvmmsg},
-    {"getsockopt", getsockopt},
-    {"setsockopt", setsockopt},
-    {"listen", listen},
-    {"accept", accept},
-    {"accept4", accept4},
-    {"shutdown", shutdown},
     {"sysconf", my_sysconf},
     {"dlopen", android_dlopen},
     {"dlerror", android_dlerror},
@@ -427,26 +460,30 @@ static struct _hook main_hooks[] = {
     {"syslog", syslog},
     {"closelog", closelog},
     {"vsyslog", vsyslog},
-    {"timer_create", timer_create},
-    {"timer_settime", timer_settime},
-    {"timer_gettime", timer_gettime},
-    {"timer_delete", timer_delete},
-    {"timer_getoverrun", timer_getoverrun},
+    // {"timer_create", timer_create},
+    // {"timer_settime", timer_settime},
+    // {"timer_gettime", timer_gettime},
+    // {"timer_delete", timer_delete},
+    // {"timer_getoverrun", timer_getoverrun},
     {"writev", writev},
-    {"fcntl", fcntl},
     /* unistd.h */
     {"access", access},
     {"lseek", lseek},
-    {"lseek64", lseek64},
+    // {"lseek64", lseek64},
     {"close", close},
     {"read", read},
     {"write", write},
+#ifdef __APPLE__
+    {"pread", darwin_my_pread},
+    {"pwrite", darwin_my_pwrite},
+#else
     {"pread", pread},
     {"pwrite", pwrite},
-    {"pread64", pread64},
-    {"pwrite64", pwrite64},
+#endif
+    // {"pread64", pread64},
+    // {"pwrite64", pwrite64},
     {"pipe", pipe},
-    {"pipe2", pipe2},
+    // {"pipe2", pipe2},
     {"alarm", alarm},
     {"sleep", sleep},
     {"usleep", usleep},
@@ -457,17 +494,17 @@ static struct _hook main_hooks[] = {
     {"chdir", chdir},
     {"fchdir", fchdir},
     {"getcwd", getcwd},
-    {"get_current_dir_name", get_current_dir_name},
+    // {"get_current_dir_name", get_current_dir_name},
     {"dup", dup},
     {"dup2", dup2},
-    {"dup3", dup3},
-    {"execve", execve},
+    // {"dup3", dup3},
+    // {"execve", execve},
     {"execv", execv},
     {"execle", execle},
     {"execl", execl},
     {"execvp", execvp},
     {"execlp", execlp},
-    {"execvpe", execvpe},
+    // {"execvpe", execvpe},
     {"nice", nice},
     {"_exit", _exit},
     {"pathconf", pathconf},
@@ -476,8 +513,8 @@ static struct _hook main_hooks[] = {
     {"getpid", getpid},
     {"getppid", getppid},
     {"getpgrp", getpgrp},
-    {"__getpgid", __getpgid},
-    {"getpgid", getpgid},
+    // {"__getpgid", __getpgid},
+    // {"getpgid", getpgid},
     {"setpgid", setpgid},
     {"setpgrp", setpgrp},
     {"setsid", setsid},
@@ -487,17 +524,17 @@ static struct _hook main_hooks[] = {
     {"getgid", getgid},
     {"getegid", getegid},
     {"getgroups", getgroups},
-    {"group_member", group_member},
+    // {"group_member", group_member},
     {"setuid", setuid},
     {"setreuid", setreuid},
     {"seteuid", seteuid},
     {"setgid", setgid},
     {"setregid", setregid},
     {"setegid", setegid},
-    {"getresuid", getresuid},
-    {"getresgid", getresgid},
-    {"setresuid", setresuid},
-    {"setresgid", setresgid},
+    // {"getresuid", getresuid},
+    // {"getresgid", getresgid},
+    // {"setresuid", setresuid},
+    // {"setresgid", setresgid},
     {"fork", fork},
     {"vfork", vfork},
     {"ttyname", ttyname},
@@ -517,8 +554,8 @@ static struct _hook main_hooks[] = {
     {"sethostid", sethostid},
     {"getdomainname", getdomainname},
     {"setdomainname", setdomainname},
-    {"vhangup", vhangup},
-    {"profil", profil},
+    // {"vhangup", vhangup},
+    // {"profil", profil},
     {"acct", acct},
     {"getusershell", getusershell},
     {"endusershell", endusershell},
@@ -527,21 +564,25 @@ static struct _hook main_hooks[] = {
     {"chroot", chroot},
     {"getpass", getpass},
     {"fsync", fsync},
-    {"syncfs", syncfs},
+    // {"syncfs", syncfs},
     {"gethostid", gethostid},
     {"sync", sync},
     {"getpagesize", getpagesize},
     {"getdtablesize", getdtablesize},
     {"truncate", truncate},
-    {"truncate64", truncate64},
+    // {"truncate64", truncate64},
     {"ftruncate", ftruncate},
-    {"ftruncate64", ftruncate64},
+    // {"ftruncate64", ftruncate64},
     {"brk", brk},
     {"sbrk", sbrk},
     {"syscall", syscall},
     {"lockf", lockf},
-    {"lockf64", lockf64},
+    // {"lockf64", lockf64},
+#ifdef __APPLE__
+    {"fdatasync", darwin_my_fdatasync},
+#else
     {"fdatasync", fdatasync},
+#endif
     {"swab", swab},
     /* time.h */
     {"clock", clock},
@@ -560,23 +601,27 @@ static struct _hook main_hooks[] = {
     {"ctime", ctime},
     {"asctime_r", asctime_r},
     {"ctime_r", ctime_r},
-    {"__tzname", __tzname},
-    {"__daylight", &__daylight},
-    {"__timezone", &__timezone},
+    // {"__tzname", __tzname},
+    // {"__daylight", &__daylight},
+    // {"__timezone", &__timezone},
     {"tzname", tzname},
     {"tzset", tzset},
     {"daylight", &daylight},
     {"timezone", &timezone},
-    {"stime", stime},
+    // {"stime", stime},
     {"timegm", timegm},
     {"timelocal", timelocal},
-    {"dysize", dysize},
+    // {"dysize", dysize},
     {"nanosleep", nanosleep},
     {"clock_getres", clock_getres},
+#ifdef __APPLE__
+    {"clock_gettime", darwin_my_clock_gettime},
+#else
     {"clock_gettime", clock_gettime},
+#endif
     {"clock_settime", clock_settime},
-    {"clock_nanosleep", clock_nanosleep},
-    {"clock_getcpuclockid", clock_getcpuclockid},
+    // {"clock_nanosleep", clock_nanosleep},
+    // {"clock_getcpuclockid", clock_getcpuclockid},
     /* mman.h */
     {"mmap", mmap},
     {"munmap", munmap},
@@ -587,8 +632,8 @@ static struct _hook main_hooks[] = {
     {"mlockall", mlockall},
     {"munlockall", munlockall},
     /* signal.h */
-    {"__sysv_signal", __sysv_signal},
-    {"sysv_signal", sysv_signal},
+    // {"__sysv_signal", __sysv_signal},
+    // {"sysv_signal", sysv_signal},
     {"signal", signal},
     {"bsd_signal", signal},
     {"kill", kill},
@@ -598,7 +643,7 @@ static struct _hook main_hooks[] = {
     {"sigprocmask", sigprocmask},
     /* sys/epoll.h */
     {"epoll_create", epoll_create},
-    {"epoll_create1", epoll_create1},
+    // {"epoll_create1", epoll_create1},
     {"epoll_ctl", epoll_ctl},
     {"epoll_wait", epoll_wait},
     /* grp.h */
