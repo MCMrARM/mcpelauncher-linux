@@ -112,7 +112,7 @@ if(APPLE)
     include_directories(libs/elf)
 endif()
 
-include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS})
+include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIR})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
