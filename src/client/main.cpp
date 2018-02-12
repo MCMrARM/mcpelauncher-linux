@@ -36,11 +36,11 @@
 #include "store.h"
 #ifndef __APPLE__
 #include "gamepad.h"
+#include "../common/openssl_multithread.h"
 #endif
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
-#include "../common/openssl_multithread.h"
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
@@ -280,7 +280,9 @@ int main(int argc, char *argv[]) {
     XSetIOErrorHandler(XIOErrorHandlerImpl);
 #endif
 
+#ifndef __APPLE__
     OpenSSLMultithreadHelper::init();
+#endif
 
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();

@@ -6,11 +6,17 @@
 #include <rapidxml.hpp>
 #include <rapidxml_print.hpp>
 #include <curl/curl.h>
+#ifdef __APPLE__
+#include <CommonCrypto/CommonCrypto.h>
+#include <CommonCrypto/CommonHMAC.h>
+#include <CommonCrypto/CommonCryptor.h>
+#else
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>
 #include <openssl/err.h>
+#endif
 #include <random>
 #include <netinet/in.h>
 #include "../common/base64.h"
@@ -98,8 +104,12 @@ std::string MSANetwork::generateKey(int keyLength, std::string const& sessionKey
     std::string ret;
     ret.reserve((size_t) keyLength);
     unsigned char* buf = new unsigned char[sizeof(int) + keyUsage.length() + sizeof(char) + nonce.length() + sizeof(int)];
+#ifdef __APPLE__
+    unsigned char resultBuf[CC_SHA256_DIGEST_LENGTH];
+#else
     unsigned char resultBuf[EVP_MAX_MD_SIZE];
     unsigned int resultSize = 0;
+#endif
     size_t off = 0;
     off += sizeof(int);
     memcpy(&buf[off], keyUsage.data(), keyUsage.length()); off += keyUsage.length();
@@ -109,8 +119,13 @@ std::string MSANetwork::generateKey(int keyLength, std::string const& sessionKey
     size_t i = 1;
     while (ret.length() < keyLength) {
         ((int&) buf[0]) = htonl(i++);
+#ifdef __APPLE__
+        CCHmac(kCCHmacAlgSHA256, sessionKey.data(), sessionKey.length(), buf, off, resultBuf);
+        ret.append((char*) resultBuf, std::min<size_t>(CC_SHA256_DIGEST_LENGTH, keyLength - ret.size()));
+#else
         HMAC(EVP_sha256(), sessionKey.data(), sessionKey.length(), buf, off, resultBuf, &resultSize);
         ret.append((char*) resultBuf, std::min<size_t>(resultSize, keyLength - ret.size()));
+#endif
     }
     delete[] buf;
     return ret;
@@ -140,11 +155,16 @@ std::string MSANetwork::generateDeviceDAToken(std::shared_ptr<MSALegacyToken> de
 
 std::string MSANetwork::generateSignedInfoBlock(std::string const& section, std::string const& text) {
     std::string hash;
+#ifdef __APPLE__
+    hash.resize(CC_SHA256_DIGEST_LENGTH);
+    CC_SHA256(text.data(), text.length(), (unsigned char*) &hash[0]);
+#else
     hash.resize(SHA256_DIGEST_LENGTH);
     SHA256_CTX ctx;
     SHA256_Init(&ctx);
     SHA256_Update(&ctx, text.data(), text.length());
     SHA256_Final((unsigned char*) &hash[0], &ctx);
+#endif
 
     std::stringstream ss;
     ss << "<Reference URI=\"#" << section << "\">"
@@ -160,10 +180,16 @@ std::string MSANetwork::generateSignedInfoBlock(std::string const& section, std:
 std::string MSANetwork::createSignature(std::string const& data, std::string const& binarySecret,
                                         std::string const& keyUsage, std::string const& nonce) {
     std::string signatureKey = generateKey(32, binarySecret, keyUsage, nonce);
+#ifdef __APPLE__
+    unsigned char signatureBuf[CC_SHA256_DIGEST_LENGTH];
+    CCHmac(kCCHmacAlgSHA256, signatureKey.data(), signatureKey.length(), (unsigned char*) data.data(), data.size(), signatureBuf);
+    return Base64::encode(std::string((char*) signatureBuf, sizeof(signatureBuf)));
+#else
     unsigned char signatureBuf[EVP_MAX_MD_SIZE];
     unsigned int signatureSize = 0;
     HMAC(EVP_sha256(), signatureKey.data(), signatureKey.length(), (unsigned char*) data.data(), data.size(), signatureBuf, &signatureSize);
     return Base64::encode(std::string((char*) signatureBuf, signatureSize));
+#endif
 }
 
 std::string MSANetwork::decryptData(rapidxml::xml_node<char>* node, std::string const& binarySecret,
@@ -179,6 +205,21 @@ std::string MSANetwork::decryptData(rapidxml::xml_node<char>* node, std::string 
     decryptedData.resize(data.size());
 
     std::string keyData = generateKey(32, binarySecret, "WS-SecureConversationWS-SecureConversation", nonce);
+#ifdef __APPLE__
+    CCCryptorRef cryptor;
+    if (CCCryptorCreate(kCCDecrypt, kCCAlgorithmAES128, kCCOptionPKCS7Padding, (unsigned char*) keyData.data(), kCCKeySizeAES256, data.data(), &cryptor) != kCCSuccess)
+        throw std::runtime_error("CCCryptorCreate failed");
+    size_t len = 0;
+    size_t tempLen;
+    if (CCCryptorUpdate(cryptor, (unsigned char*) &data[16], data.size() - 16, (unsigned char*) &decryptedData[0], decryptedData.size(), &tempLen) != kCCSuccess)
+        throw std::runtime_error("CCCryptorUpdate failed");
+    len += tempLen;
+    if (CCCryptorFinal(cryptor, (unsigned char*) &decryptedData[0], decryptedData.size(), &tempLen) != kCCSuccess)
+        throw std::runtime_error("CCCryptorFinal failed");
+    len += tempLen;
+    CCCryptorRelease(cryptor);
+    decryptedData.resize(len);
+#else
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!EVP_DecryptInit(ctx, EVP_aes_256_cbc(), (unsigned char*) keyData.data(), (unsigned char*) &data[0]))
         throw std::runtime_error("EVP_DecryptInit failed");
@@ -194,6 +235,7 @@ std::string MSANetwork::decryptData(rapidxml::xml_node<char>* node, std::string 
     len += tempLen;
     EVP_CIPHER_CTX_free(ctx);
     decryptedData.resize(len);
+#endif
     return decryptedData;
 }
 

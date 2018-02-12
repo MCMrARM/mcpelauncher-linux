@@ -31,7 +31,6 @@ The packages you'll need are as follows:
 
 - cmake
 - git (this will come pre-installed with xcode-select, but make sure it's up-to-date)
-- openssl
 
 Everything else will be built automatically and statically linked against your executable. So **do not** install `libzip`, `ossp-uuid`, `glfw` or any other packages you think you need.
 
@@ -41,7 +40,7 @@ The commands to build using CMake are as follows:
 
 ```console
 $ mkdir build/ && cd build/
-$ cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .. # OpenSSL root is required
+$ cmake ..
 $ make -j$(sysctl -n hw.ncpu) # This will use all the cores on your system
 ```
 
