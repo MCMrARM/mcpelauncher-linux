@@ -5,7 +5,7 @@
 namespace Social {
 
 struct MultiplayerService {
-    char filler[0x130];
+    char filler[0x134];
 };
 
 struct MultiplayerXBL : public MultiplayerService, public std::enable_shared_from_this<MultiplayerXBL> {
