@@ -55,6 +55,8 @@ public:
 
     virtual void setFullscreen(bool fullscreen) = 0;
 
+    virtual void getWindowSize(int& width, int& height) const = 0;
+
     void setDrawCallback(DrawCallback callback) { drawCallback = std::move(callback); }
 
     void setWindowSizeCallback(WindowSizeCallback callback) { windowSizeCallback = std::move(callback); }

@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <cxxabi.h>
 #include <execinfo.h>
-#include <malloc.h>
+#include <csignal>
+#include <cstdlib>
 #include "log.h"
 
 extern "C" {

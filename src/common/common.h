@@ -10,3 +10,13 @@ void hookAndroidLog();
 void patchCallInstruction(void* patchOff, void* func, bool jump);
 void registerCrashHandler();
 void workaroundShutdownCrash(void* handle);
+
+template <typename T>
+void* memberFuncCast(T func) {
+    union {
+        T func;
+        void* ptr;
+    } u;
+    u.func = func;
+    return u.ptr;
+}

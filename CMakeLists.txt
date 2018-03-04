@@ -3,20 +3,33 @@ project(mcpelauncher)
 
 enable_language(C ASM)
 
-#SET(CMAKE_CXX_COMPILER "g++-4.9")
-#SET(CMAKE_C_COMPILER "gcc-4.9")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -m32")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
+
+if(APPLE)
+    set(CMAKE_LIBRARY_ARCHITECTURE "i386-apple-darwin")
+else()
+    set(CMAKE_LIBRARY_ARCHITECTURE "i386-linux-gnu")
+endif(APPLE)
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG)
 find_package(CURL)
-find_package(X11)
 find_package(OpenSSL)
+
+if(APPLE)
+    find_package(OpenGL REQUIRED)
+    find_package(Cocoa REQUIRED)
+    find_package(CoreVideo REQUIRED)
+    find_package(IOKit REQUIRED)
+else()
+    find_package(X11)
+endif(APPLE)
 
 include(ExternalProject)
 
@@ -28,7 +41,15 @@ set(PLAYAPI_ENABLED true)
 set(LIBZIP_FROM_SOURCES false)
 set(GAMEPAD_SUPPORT_ENABLED true)
 
-if (NOT PNG_FOUND OR NOT CURL_FOUND OR NOT X11_FOUND OR NOT OPENSSL_FOUND)
+if(APPLE)
+    set(GLFW_ENABLED true)
+    set(CEF_ENABLED false)
+    set(PLAYAPI_ENABLED false)
+    set(LIBZIP_FROM_SOURCES true)
+    set(GAMEPAD_SUPPORT_ENABLED false)
+endif(APPLE)
+
+if (NOT CURL_FOUND OR ((NOT PNG_FOUND OR NOT OPENSSL_FOUND OR NOT X11_FOUND) AND NOT APPLE))
     message(WARNING "One of the required dependencies for building the client were not found.\nOnly the server will be built as a result. To build the client please install the missing dependencies, and run cmake again.")
     set(BUILD_CLIENT false)
     set(CEF_ENABLED false)
@@ -66,7 +87,9 @@ if (LIBZIP_FROM_SOURCES)
 endif()
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/libs/cef)
-    message(WARNING "CEF not found. Xbox Live login and APK download features will be disabled.\nTo set up CEF please run setup_cef.sh in the source directory.")
+    if(NOT APPLE)
+        message(WARNING "CEF not found. Xbox Live login and APK download features will be disabled.\nTo set up CEF please run setup_cef.sh in the source directory.")
+    endif(NOT APPLE)
     set(CEF_ENABLED false)
     set(PLAYAPI_ENABLED false)
 endif()
@@ -83,15 +106,27 @@ if (PLAYAPI_ENABLED)
     set_target_properties(gplaydl PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
-include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIRS})
+if(APPLE)
+    add_subdirectory(libs/epoll)
+    include_directories(${Cocoa_INCLUDE_DIRS} ${CoreVideo_INCLUDE_DIRS} ${IOKit_INCLUDE_DIRS})
+    include_directories(libs/elf)
+endif()
+
+include_directories(${ZLIB_INCLUDE_DIRS} ${LIBZIP_INCLUDE_DIR})
 include_directories(libs/rapidxml)
 include_directories(libs/hybris/include)
 
-set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hooks.c libs/hybris/src/hooks_shm.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/strlcpy.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c libs/hybris/src/hooks_pthread.c libs/hybris/src/hooks_dirent.c libs/hybris/src/hooks_io.c libs/hybris/src/hooks_net.c)
+set(HYBRIS_SOURCES libs/hybris/src/cache.c libs/hybris/src/dlfcn.c libs/hybris/src/hooks.c libs/hybris/src/hooks_shm.c libs/hybris/src/logging.c libs/hybris/src/properties.c libs/hybris/src/ctype.c libs/hybris/src/sysconf.c libs/hybris/src/jb/dlfcn.c libs/hybris/src/jb/linker.c libs/hybris/src/jb/linker_environ.c libs/hybris/src/jb/linker_format.c libs/hybris/src/jb/rt.c libs/hybris/src/hooks_pthread.c libs/hybris/src/hooks_dirent.c libs/hybris/src/hooks_io.c libs/hybris/src/hooks_net.c)
+if(APPLE)
+    set(HYBRIS_SOURCES ${HYBRIS_SOURCES} libs/hybris/src/hooks_net_darwin.c libs/hybris/src/hooks_darwin_pthread_once.cpp)
+else()
+    set(HYBRIS_SOURCES ${HYBRIS_SOURCES} libs/hybris/src/strlcpy.c)
+endif(APPLE)
+
 set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
-set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.cpp src/minecraft/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h src/common/modloader.cpp src/common/modloader.h)
-set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/amdfix.s src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h src/common/openssl_multithread.cpp src/common/openssl_multithread.h)
+set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h src/common/modloader.cpp src/common/modloader.h)
+set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/appplatform.cpp src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h)
 set(CLIENT_SOURCE_FILES_GAMEPAD src/client/gamepad.cpp src/client/gamepad.h)
 set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h)
 set(CLIENT_SOURCE_FILES_CEF_GAMEPAD src/client/gamepad_mapper_browser.cpp src/client/gamepad_mapper_browser.h)
@@ -99,6 +134,14 @@ set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp 
 set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
 set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
 set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h)
+
+if(APPLE)
+    set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_darwin.cpp src/minecraft/function.h)
+else()
+    set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_linux.cpp)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} src/client/amdfix.s src/common/openssl_multithread.cpp src/common/openssl_multithread.h)
+endif(APPLE)
+
 
 set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
 
@@ -124,10 +167,11 @@ if (GAMEPAD_SUPPORT_ENABLED)
 endif()
 
 if (BUILD_CLIENT)
-    include_directories(${PNG_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS})
+    include_directories(${CURL_INCLUDE_DIRS})
+    if (NOT APPLE)
+        include_directories(${PNG_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+    endif()
     add_executable(mcpelauncher ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
-    target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${X11_X11_LIB} ${ZLIB_LIBRARIES} ${PNG_LIBRARIES} ${LIBZIP_LIBRARIES} ${OPENSSL_LIBRARIES} ${CURL_LIBRARIES} rt EGL GLESv2)
-    target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
 
     if (CEF_ENABLED)
         include_directories(libs/cef)
@@ -153,13 +197,37 @@ if (BUILD_CLIENT)
     endif()
     if (LIBZIP_FROM_SOURCES)
         add_dependencies(mcpelauncher libzip)
-        add_dependencies(server libzip)
     endif()
+
+    target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} ${CURL_LIBRARIES})
+
+    if(APPLE)
+        add_dependencies(mcpelauncher epoll)
+        target_link_libraries(mcpelauncher ${Cocoa_LIBRARIES} ${CoreVideo_LIBRARIES} ${IOKit_LIBRARIES} ${OPENGL_LIBRARIES} epoll)
+    else()
+        target_link_libraries(mcpelauncher ${X11_X11_LIB} ${PNG_LIBRARIES} ${OPENSSL_LIBRARIES} rt EGL GLESv2)
+    endif(APPLE)
+
+    target_compile_definitions(mcpelauncher ${HYBRIS_DEFINES})
 endif()
 
 if (BUILD_SERVER)
     add_executable(server ${HYBRIS_SOURCES} ${COMMON_SOURCE_FILES} ${SERVER_SOURCE_FILES})
-    target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} rt)
+
+    if(LIBZIP_FROM_SOURCES)
+        add_dependencies(server libzip)
+    endif()
+
+    target_link_libraries(server ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES})
+
+    if(APPLE)
+        add_dependencies(server epoll)
+        target_link_libraries(server epoll)
+    else()
+        target_link_libraries(server rt)
+    endif(APPLE)
+
+
     target_compile_definitions(server ${HYBRIS_DEFINES} SERVER)
 endif()
 

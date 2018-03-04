@@ -23,6 +23,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __APPLE__
+#include <string.h>
+#endif
+
 #include "linker.h"
 #include "linker_format.h"
 
@@ -49,7 +53,11 @@ static const char *dl_errors[] = {
 #define likely(expr)   __builtin_expect (expr, 1)
 #define unlikely(expr) __builtin_expect (expr, 0)
 
+#ifdef __APPLE__
+static pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
+#else
 static pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#endif
 
 static void set_dlerror(int err)
 {
@@ -89,7 +97,7 @@ void *android_dlsym(void *handle, const char *symbol)
 
     pthread_mutex_lock(&dl_lock);
 
-    if(unlikely(handle == 0)) { 
+    if(unlikely(handle == 0)) {
         set_dlerror(DL_ERR_INVALID_LIBRARY_HANDLE);
         goto err;
     }
@@ -288,4 +296,3 @@ soinfo libdl_info = {
     bucket: libdl_buckets,
     chain: libdl_chains,
 };
-    

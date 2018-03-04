@@ -2,10 +2,14 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
+#include <sys/select.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdio_ext.h>
 #include <wchar.h>
+#include <stdio.h>
+#ifndef __APPLE__
+#include <stdio_ext.h>
+#endif
 
 #include "../include/hybris/hook.h"
 #include "../include/hybris/binding.h"
@@ -23,6 +27,29 @@ struct open_redirect open_redirects[] = {
         { NULL, NULL }
 };
 
+#ifdef __APPLE__
+
+int darwin_convert_fd_flags_to_native(int flags)
+{
+    int ret = flags & 4;
+    if (flags & 0100) ret |= O_CREAT;
+    if (flags & 0200) ret |= O_EXCL;
+    if (flags & 01000) ret |= O_TRUNC;
+    if (flags & 02000) ret |= O_APPEND;
+    if (flags & 04000) ret |= O_NONBLOCK;
+    return ret;
+}
+
+int darwin_convert_fd_flags_from_native(int flags)
+{
+    int ret = flags & 4;
+    if (flags & O_CREAT)
+        ret |= 0100;
+    return ret;
+}
+
+#endif
+
 int my_open(const char *pathname, int flags, ...)
 {
     va_list ap;
@@ -39,6 +66,10 @@ int my_open(const char *pathname, int flags, ...)
             entry++;
         }
     }
+
+#ifdef __APPLE__
+    flags = darwin_convert_fd_flags_to_native(flags);
+#endif
 
     if (flags & O_CREAT) {
         va_start(ap, flags);
@@ -80,12 +111,19 @@ void stat_to_bionic_stat(struct stat *s, struct bionic_stat64 *b) {
     b->st_size = s->st_size;
     b->st_blksize = (unsigned long) s->st_blksize;
     b->st_blocks = (unsigned long long) s->st_blocks;
+#ifdef __APPLE__
+    b->st_atim = s->st_atimespec;
+    b->st_mtim = s->st_mtimespec;
+    b->st_ctim = s->st_ctimespec;
+#else
     b->st_atim = s->st_atim;
     b->st_mtim = s->st_mtim;
     b->st_ctim = s->st_ctim;
+#endif
     b->st_ino = s->st_ino;
 }
 
+#ifndef __APPLE__
 void stat64_to_bionic_stat(struct stat64 *s, struct bionic_stat64 *b) {
     b->st_dev = s->st_dev;
     b->__st_ino = s->__st_ino;
@@ -102,6 +140,7 @@ void stat64_to_bionic_stat(struct stat64 *s, struct bionic_stat64 *b) {
     b->st_ctim = s->st_ctim;
     b->st_ino = s->st_ino;
 }
+#endif
 
 int my_stat(const char* path, struct bionic_stat64 *s)
 {
@@ -119,6 +158,7 @@ int my_fstat(int fd, struct bionic_stat64 *s)
     return ret;
 }
 
+#ifndef __APPLE__
 int my_stat64(const char* path, struct bionic_stat64 *s)
 {
     struct stat64 tmp;
@@ -134,6 +174,49 @@ int my_fstat64(int fd, struct bionic_stat64 *s)
     stat64_to_bionic_stat(&tmp, s);
     return ret;
 }
+#endif
+
+#ifdef __APPLE__
+
+struct android_flock {
+    short l_type;
+    short l_whence;
+    long l_start;
+    long l_len;
+    long l_sysid;
+    int l_pid;
+    long pad[4];
+};
+
+int darwin_my_fcntl(int fd, int cmd, ...)
+{
+    int ret = -1;
+    va_list ap;
+    va_start(ap, cmd);
+    if (cmd == 2) {
+        int flags = va_arg(ap, int);
+        ret = fcntl(fd, F_SETFD, flags);
+    } else if (cmd == 4) {
+        int flags = va_arg(ap, int);
+        ret = fcntl(fd, F_SETFL, darwin_convert_fd_flags_to_native(flags));
+    } else if (cmd == 6) {
+        struct android_flock* afl = va_arg(ap, struct android_flock*);
+        struct flock fl;
+        memset(&fl, 0, sizeof(fl));
+        fl.l_type = afl->l_type;
+        fl.l_whence = afl->l_whence;
+        fl.l_start = afl->l_start;
+        fl.l_len = afl->l_len;
+        fl.l_pid = afl->l_pid;
+        ret = fcntl(fd, F_SETLK, &fl);
+    } else {
+        printf("unsupported fcntl %i\n", cmd);
+    }
+    va_end(ap);
+    return ret;
+}
+
+#endif
 
 
 /*
@@ -420,9 +503,14 @@ static char* my_fgetln(FILE *fp, size_t *len)
     return fgetln(_get_actual_fp(fp), len);
 }
 */
+
 static int my_fpurge(struct aFILE* fp)
 {
+#ifdef __APPLE__
+    fpurge(_get_actual_fp(fp));
+#else
     __fpurge(_get_actual_fp(fp));
+#endif
 
     return 0;
 }
@@ -464,14 +552,62 @@ static wint_t my_putwc(wchar_t c, struct aFILE* fp)
     return putwc(c, _get_actual_fp(fp));
 }
 
+#ifdef __APPLE__
+
+int darwin_my_poll(struct pollfd *fds, nfds_t nfds, int timeout)
+{
+    // Mac OS has a broken poll implementation
+    struct timeval t;
+    t.tv_sec = timeout / 1000;
+    t.tv_usec = (timeout % 1000) * 1000;
+
+    fd_set r_fdset, w_fdset, e_fdset;
+    int maxfd = 0;
+    FD_ZERO(&r_fdset);
+    FD_ZERO(&w_fdset);
+    FD_ZERO(&e_fdset);
+    for (nfds_t i = 0; i < nfds; i++) {
+        if (fds[i].fd > maxfd)
+            maxfd = fds[i].fd;
+        if (fds[i].events & POLLIN || fds[i].events & POLLPRI)
+            FD_SET(fds[i].fd, &r_fdset);
+        if (fds[i].events & POLLOUT)
+            FD_SET(fds[i].fd, &w_fdset);
+        FD_SET(fds[i].fd, &e_fdset);
+    }
+    int ret = select(maxfd + 1, &r_fdset, &w_fdset, &e_fdset, &t);
+    for (nfds_t i = 0; i < nfds; i++) {
+        fds[i].revents = 0;
+        if (FD_ISSET(fds[i].fd, &r_fdset))
+            fds[i].revents |= POLLIN;
+        if (FD_ISSET(fds[i].fd, &w_fdset))
+            fds[i].revents |= POLLOUT;
+        if (FD_ISSET(fds[i].fd, &e_fdset))
+            fds[i].revents |= POLLERR;
+    }
+    return ret;
+}
+
+#endif
+
 static struct _hook io_hooks[] = {
     /* fcntl.h */
     {"open", my_open},
+#ifdef __APPLE__
+    {"fcntl", darwin_my_fcntl},
+#else
+    {"fcntl", fcntl},
+#endif
     /* sys/stat.h */
     {"stat", my_stat},
     {"fstat", my_fstat},
+#ifdef __APPLE__
+    {"stat64", my_stat},
+    {"fstat64", my_fstat},
+#else
     {"stat64", my_stat64},
     {"fstat64", my_fstat64},
+#endif
     {"chmod", chmod},
     {"fchmod", fchmod},
     {"umask", umask},
@@ -539,6 +675,13 @@ static struct _hook io_hooks[] = {
     {"getwc", my_getwc},
     {"ungetwc", my_ungetwc},
     {"putwc", my_putwc},
+    /* poll.h */
+#ifdef __APPLE__
+    {"poll", darwin_my_poll},
+#else
+    {"poll", poll},
+#endif
+    {"select", select},
     {NULL, NULL}
 };
 REGISTER_HOOKS(io_hooks)

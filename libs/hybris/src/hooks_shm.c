@@ -94,9 +94,14 @@ static void _sync_mmap_with_shm()
             /* Note that mremap may change the address pointed by _hybris_shm_data.
              * But as we never point directly into _hybris_shm_data, it's fine.
              * */
+#ifdef __APPLE__
+            // TODO: Implement it somehow?
+            abort();
+#else
             _hybris_shm_data = (hybris_shm_data_t *)mremap( _hybris_shm_data, _current_mapped_size,
                                   _hybris_shm_data->max_offset + HYBRIS_SHM_DATA_HEADER_SIZE,
                                   MREMAP_MAYMOVE );
+#endif
 
             _current_mapped_size = _hybris_shm_data->max_offset + HYBRIS_SHM_DATA_HEADER_SIZE;
         }

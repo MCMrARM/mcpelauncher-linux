@@ -11,7 +11,9 @@
 #include <locale>
 #include <dirent.h>
 #include <fstream>
+#ifndef USE_GLFW
 #include <X11/Xlib.h>
+#endif
 #include <functional>
 #include <sys/mman.h>
 #include <stdlib.h>
@@ -32,11 +34,13 @@
 #include "../minecraft/MultiplayerService.h"
 #include "appplatform.h"
 #include "store.h"
+#ifndef __APPLE__
 #include "gamepad.h"
+#include "../common/openssl_multithread.h"
+#endif
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
-#include "../common/openssl_multithread.h"
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
@@ -230,6 +234,7 @@ bool supportsImmediateModeHook() {
     return false;
 }
 
+#ifndef USE_GLFW
 static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
     std::cerr << "X error received: "
               << "type " << event->type << ", "
@@ -243,6 +248,7 @@ static int XErrorHandlerImpl(Display* display, XErrorEvent* event) {
 static int XIOErrorHandlerImpl(Display* display) {
     return 0;
 }
+#endif
 
 
 static void (*clearRenderTargetOrginal)(void*, void*, void*);
@@ -269,11 +275,14 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-
+#ifndef USE_GLFW
     XSetErrorHandler(XErrorHandlerImpl);
     XSetIOErrorHandler(XIOErrorHandlerImpl);
+#endif
 
+#ifndef __APPLE__
     OpenSSLMultithreadHelper::init();
+#endif
 
 #ifndef DISABLE_CEF
     BrowserApp::RegisterRenderProcessHandler<InitialSetupRenderHandler>();
@@ -328,7 +337,12 @@ int main(int argc, char *argv[]) {
     int windowWidth = 720;
     int windowHeight = 480;
     float pixelSize = 2.f;
+#ifdef __APPLE__
+    GraphicsApi graphicsApi = GraphicsApi::OPENGL;
+#else
     GraphicsApi graphicsApi = GraphicsApi::OPENGL_ES2;
+#endif
+
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--scale") == 0) {
             i++;
@@ -384,8 +398,14 @@ int main(int argc, char *argv[]) {
     setenv("LC_ALL", "C", 1); // HACK: Force set locale to one recognized by MCPE so that the outdated C++ standard library MCPE uses doesn't fail to find one
 
     Log::trace("Launcher", "Loading native libraries");
+#ifdef __APPLE__
+    void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.dylib"), fmod_symbols);
+    void* libmLib = loadLibraryOS("libm.dylib", libm_symbols);
+#else
     void* fmodLib = loadLibraryOS(PathHelper::findDataFile("libs/native/libfmod.so.9.6"), fmod_symbols);
     void* libmLib = loadLibraryOS("libm.so.6", libm_symbols);
+#endif
+
     if (fmodLib == nullptr || libmLib == nullptr)
         return -1;
     Log::trace("Launcher", "Loading hybris libraries");
@@ -508,16 +528,18 @@ int main(int argc, char *argv[]) {
     }
 
     linuxHttpRequestInternalVtable = (void**) ::operator new(8);
-    linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
-    linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
+    linuxHttpRequestInternalVtable[0] = memberFuncCast(&LinuxHttpRequestInternal::destroy);
+    linuxHttpRequestInternalVtable[1] = memberFuncCast(&LinuxHttpRequestInternal::destroy);
 
     if (workaroundAMD) {/*
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
                    (0x40AD97 - 0x40ACD0);
         for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
             ((char *) (void *) patchOff)[i] = 0x90;*/
+#ifndef __APPLE__
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
         patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
+#endif
     }
 
     Log::info("Launcher", "Patches were successfully applied");
@@ -542,7 +564,9 @@ int main(int argc, char *argv[]) {
     glGenVertexArrays = (void (*)(GLsizei, GLuint*)) glfwGetProcAddress("glGenVertexArrays");
     glBindVertexArray = (void (*)(GLuint)) glfwGetProcAddress("glBindVertexArray");
 #endif
+#ifndef __APPLE__
     window.setIcon(PathHelper::getIconPath());
+#endif
     window.show();
 
     Log::info("Launcher", "Starting game initialization");
@@ -588,16 +612,20 @@ int main(int argc, char *argv[]) {
             window.close();
             return;
         }
+
         platform->runMainThreadTasks();
+
 #ifdef GAMEPAD_SUPPORT
         LinuxGamepadManager::instance.pool();
 #endif
         client->update();
     });
+
     window.setWindowSizeCallback([pixelSize](int w, int h) {
         client->setRenderingSize(w, h);
         client->setUISizeAndScale(w, h, pixelSize);
     });
+
     window.setMouseButtonCallback([](double x, double y, int btn, MouseButtonAction action) {
         Mouse::feed((char) btn, (char) (action == MouseButtonAction::PRESS ? 1 : 0), (short) x, (short) y, 0, 0);
     });
@@ -640,7 +668,8 @@ int main(int argc, char *argv[]) {
     });
     Log::trace("Launcher", "Initialized display");
 
-    //(*AppPlatform::_singleton)->_fireAppFocusGained();
+    window.getWindowSize(windowWidth, windowHeight);
+    // (*AppPlatform::_singleton)->_fireAppFocusGained();
     client->setRenderingSize(windowWidth, windowHeight);
     client->setUISizeAndScale(windowWidth, windowHeight, pixelSize);
     Log::trace("Launcher", "Start loop");

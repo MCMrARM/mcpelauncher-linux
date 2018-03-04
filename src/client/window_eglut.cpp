@@ -165,3 +165,8 @@ void EGLUTWindow::_eglutCloseWindowFunc() {
         return;
     currentWindow->onClose();
 }
+
+void EGLUTWindow::getWindowSize(int& width, int& height) const {
+    width = this->width;
+    height = this->height;
+}

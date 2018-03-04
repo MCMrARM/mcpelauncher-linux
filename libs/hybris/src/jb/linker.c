@@ -26,7 +26,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef __APPLE__
 #include <linux/auxvec.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1748,7 +1750,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
 
     if (si->flags & (FLAG_EXE | FLAG_LINKER)) {
         /* Locate the needed program segments (DYNAMIC/ARM_EXIDX) for
-         * linkage info if this is the executable or the linker itself. 
+         * linkage info if this is the executable or the linker itself.
          * If this was a dynamic lib, that would have been done at load time.
          *
          * TODO: It's unfortunate that small pieces of this are
