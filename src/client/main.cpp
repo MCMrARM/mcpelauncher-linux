@@ -497,15 +497,15 @@ int main(int argc, char *argv[]) {
         patchCallInstruction((void*) patchOff, (void*) &clearRenderTarget, false);
     }
     if (graphicsApi == GraphicsApi::OPENGL) {
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERKSsS2_S2_S2_");
-        if (((unsigned char*) patchOff)[0x12F + 3] != 0x7C) {
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
+        if (((unsigned char*) patchOff)[0x12F + 3] != 0x89) {
             Log::error("Launcher", "Graphics patch error: unexpected byte");
             return -1;
         }
         ((unsigned char*) patchOff)[0x12F + 3] += 4;
 
         reflectShaderUniformsOriginal = (void (*)(void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERKSsRNS_13ShaderProgramES4_S4_") + (0xEB62 - 0xEAD0);
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0xEB62 - 0xEAD0);
         patchCallInstruction((void*) patchOff, (void*) &reflectShaderUniformsHook, false);
 
         bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
@@ -519,7 +519,7 @@ int main(int argc, char *argv[]) {
         ((unsigned char*) patchOff)[0x2C] = 0x90;
         ((unsigned char*) patchOff)[0x2D] = 0x90;
 
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce16ShaderProgramOGL20compileShaderProgramERKSs");
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce16ShaderProgramOGL20compileShaderProgramERNS_11ShaderCacheE");
         const char* versionStr = "#version 410\n";
         patchOff += 0xA2 - 0x30;
         ((unsigned char*) patchOff)[0] = 0xB9;
