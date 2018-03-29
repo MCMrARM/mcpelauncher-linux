@@ -1,5 +1,6 @@
 #include "cll.h"
 
+#include <iostream>
 #include <sstream>
 #include <cstring>
 #include <functional>
@@ -94,13 +95,9 @@ std::pair<std::string, std::string> CLL::getXTokenAndTicket() {
     return {authXToken, authXTicket};
 }
 
-void CLL::uploadEvents() {
+void CLL::uploadEvents(std::vector<Event> events) {
     using namespace std::chrono;
     std::uniform_int_distribution<long long> ldist(0, std::numeric_limits<long long>::max());
-    std::vector<Event> events;
-    eventsMutex.lock();
-    events = std::move(this->events);
-    eventsMutex.unlock();
     char timestamp[32];
     std::stringstream batch;
     int batched = -1;
@@ -204,7 +201,8 @@ void CLL::sendEvent(std::string const& data, bool compress) {
     std::stringstream output;
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &output);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_stringstream_write_func);
-    curl_easy_perform(curl);
+    if (curl_easy_perform(curl) != CURLE_OK)
+        throw std::runtime_error("curl_easy_perform failed");
     Log::trace("CLL", "Response: %s", data.c_str());
 }
 
@@ -238,15 +236,27 @@ std::string CLL::compress(std::string const& data) {
 
 void CLL::runThread() {
     while (true) {
-        {
-            std::unique_lock<std::mutex> lock(threadMutex);
-            threadLock.wait_for(lock, std::chrono::seconds(10));
+        std::unique_lock<std::mutex> lock(threadMutex);
+        threadLock.wait_for(lock, std::chrono::seconds(10));
+        lock.unlock();
+
+        std::vector<Event> events;
+        eventsMutex.lock();
+        events = std::move(this->events);
+        eventsMutex.unlock();
+        try {
+            uploadEvents(events);
+        } catch (std::exception& exception) {
+            std::cerr << "Failed to upload CLL events: " << exception.what() << "\n";
+
+            eventsMutex.lock();
+            this->events.insert(this->events.begin(),
+                                std::make_move_iterator(events.begin()), std::make_move_iterator(events.end()));
+            eventsMutex.unlock();
         }
-        uploadEvents();
-        {
-            std::unique_lock<std::mutex> lock(threadMutex);
-            if (shouldStopThread)
-                break;
-        }
+
+        lock.lock();
+        if (shouldStopThread)
+            break;
     }
 }

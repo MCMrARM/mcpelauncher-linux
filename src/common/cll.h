@@ -43,7 +43,7 @@ private:
 
     void runThread();
 
-    void uploadEvents();
+    void uploadEvents(std::vector<Event> events);
 
     void sendEvent(std::string const& data, bool compress = false);
 
