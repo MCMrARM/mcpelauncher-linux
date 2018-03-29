@@ -133,7 +133,7 @@ set(CLIENT_SOURCE_FILES_CEF_GAMEPAD src/client/gamepad_mapper_browser.cpp src/cl
 set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/client/google_login_browser.h src/client/google_login_browser.cpp src/client/google_play_helper.cpp src/client/google_play_helper.h)
 set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
 set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
-set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h)
+set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h src/server/stub_key_provider.cpp src/server/stub_key_provider.h)
 
 if(APPLE)
     set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/string_darwin.cpp src/minecraft/function.h)

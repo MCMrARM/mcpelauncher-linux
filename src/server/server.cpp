@@ -39,6 +39,7 @@
 #include "../minecraft/Resource.h"
 #include "../minecraft/AppResourceLoader.h"
 #include "../common/extract.h"
+#include "stub_key_provider.h"
 
 extern "C" {
 #include <hybris/dlfcn.h>
@@ -178,6 +179,8 @@ int main(int argc, char *argv[]) {
     PackManifestFactory packManifestFactory (eventing);
     Log::trace("Launcher", "Initializing SkinPackKeyProvider");
     SkinPackKeyProvider skinPackKeyProvider;
+    Log::trace("Launcher", "Initializing StubKeyProvider");
+    StubKeyProvider stubKeyProvider;
     Log::trace("Launcher", "Initializing PackSourceFactory");
     PackSourceFactory packSourceFactory (nullptr);
     Log::trace("Launcher", "Initializing ResourcePackRepository");
@@ -194,7 +197,12 @@ int main(int argc, char *argv[]) {
     minecraftApp.automationClient = &aclient;
     Log::debug("Launcher", "Initializing ServerInstance");
     auto idleTimeout = std::chrono::seconds((int) (properties.getFloat("player-idle-timeout", 0) * 60.f));
-    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), skinPackKeyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, properties.getInt("server-port", 19132), properties.getInt("server-port-v6", 19133), properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, *resourcePackManager, nullptr, [](mcpe::string const& s) {
+    IContentKeyProvider* keyProvider = &stubKeyProvider;
+    // In an older version of the server launcher there was a bug that would cause the worlds to be encrypted with the
+    // skin packs key. To allow those worlds to be ever loaded again, a server property is added.
+    if (properties.getBool("level-skinpack-encrypted"))
+        keyProvider = &skinPackKeyProvider;
+    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), *keyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, properties.getInt("server-port", 19132), properties.getInt("server-port-v6", 19133), properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, *resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
     });
     Log::trace("Launcher", "Loading language data");
