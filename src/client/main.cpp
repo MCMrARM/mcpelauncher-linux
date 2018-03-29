@@ -34,6 +34,7 @@
 #include "../minecraft/MultiplayerService.h"
 #include "appplatform.h"
 #include "store.h"
+#include "fake_jni.h"
 #ifndef __APPLE__
 #include "gamepad.h"
 #include "../common/openssl_multithread.h"
@@ -120,13 +121,6 @@ void abortLinuxHttpRequestInternal(LinuxHttpRequestInternal* requestInternal) {
 static MinecraftGame* client;
 static LinuxAppPlatform* platform;
 
-void detachFromJavaStub() {
-    Log::trace("Launcher", "detach_from_java stub called");
-}
-void* getJVMEnvStub() {
-    Log::trace("Launcher", "get_jvm_env stub called");
-    return nullptr;
-}
 bool verifyCertChainStub() {
     Log::trace("Launcher", "verify_cert_chain_platform_specific stub called");
     return true;
@@ -147,23 +141,37 @@ xbox::services::xbox_live_result<void> xboxLogTelemetrySignin(void* th, bool b, 
     return ret;
 }
 mcpe::string xboxGetLocalStoragePath() {
-    return "data/";
+    return PathHelper::getPrimaryDataDirectory();
 }
-xbox::services::xbox_live_result<void> xboxInitSignInActivity(void*, int requestCode) {
+xbox::services::xbox_live_result<void> xboxInitSignInActivity(xbox::services::system::user_auth_android* th,
+                                                              int requestCode) {
     Log::trace("Launcher", "init_sign_in_activity %i", requestCode);
     xbox::services::xbox_live_result<void> ret;
     ret.code = 0;
     ret.error_code_category = xbox::services::xbox_services_error_code_category();
 
+    auto local_conf = xbox::services::local_config::get_local_config_singleton();
+    th->cid = local_conf->get_value_from_local_storage("cid").std();
+
     if (requestCode == 1) { // silent signin
         auto account = XboxLiveHelper::getMSAStorageManager()->getAccount();
         xbox::services::system::java_rps_ticket ticket;
         if (account) {
-            auto tokens = account->requestTokens({{"user.auth.xboxlive.com", "mbi_ssl"}});
+            std::unordered_map<MSASecurityScope, MSATokenResponse> tokens;
+            try {
+                tokens = account->requestTokens({{"user.auth.xboxlive.com", "mbi_ssl"}});
+            } catch (std::exception& e) {
+                std::cerr << "Xbox Live sign in failed: " << e.what() << "\n";
+                ticket.error_code = 0x800704CF;
+                ret.error_code_category = xbox::services::xbox_services_error_code_category();
+                xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
+                return ret;
+            }
             auto xboxLiveToken = tokens[{"user.auth.xboxlive.com"}];
             if (!xboxLiveToken.hasError()) {
                 ticket.token = std::static_pointer_cast<MSACompactToken>(xboxLiveToken.getToken())->getBinaryToken();
                 ticket.error_code = 0;
+                ticket.error_text = "Got ticket";
                 xbox::services::system::user_auth_android::s_rpsTicketCompletionEvent->set(ticket);
                 return ret;
             }
@@ -457,12 +465,6 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN26HTTPRequestInternalAndroid5abortEv");
     patchCallInstruction((void*) patchOff, (void*) &abortLinuxHttpRequestInternal, true);
 
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat10threadpool16detach_from_javaEPv");
-    patchCallInstruction((void*) patchOff, (void*) &detachFromJavaStub, true);
-
-    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN9crossplat11get_jvm_envEv");
-    patchCallInstruction((void*) patchOff, (void*) &getJVMEnvStub, true);
-
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3web4http6client7details35verify_cert_chain_platform_specificERN5boost4asio3ssl14verify_contextERKSs");
     patchCallInstruction((void*) patchOff, (void*) &verifyCertChainStub, true);
 
@@ -571,11 +573,11 @@ int main(int argc, char *argv[]) {
 
     Log::info("Launcher", "Starting game initialization");
 
-    void** ptr = (void**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
-    *ptr = (void*) 1; // this just needs not to be null
+    JavaVM** jvmPtr = (JavaVM**) hybris_dlsym(handle, "_ZN9crossplat3JVME");
+    *jvmPtr = FakeJNI::instance.getVM();
 
     std::shared_ptr<xbox::services::java_interop> javaInterop = xbox::services::java_interop::get_java_interop_singleton();
-    javaInterop->activity = (void*) 1; // this just needs not to be null as well
+    javaInterop->activity = (void*) 1; // this just needs not to be null
 
     Log::trace("Launcher", "Initializing AppPlatform (vtable)");
     LinuxAppPlatform::initVtable(handle);

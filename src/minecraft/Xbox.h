@@ -139,16 +139,6 @@ struct task_xbox_live_result_token_and_signature_result {
 }
 
 
-struct unknown_auth_flow_class {
-
-    // xbox::services::system::user_auth_android::auth_flow_callback
-    char filler[0x58];
-    pplx::task_completion_event_auth_flow_result auth_flow_event;
-    char filler2[0x8c-0x58-0xc];
-    xbox::services::system::auth_flow_result auth_flow_result;
-
-};
-
 namespace xbox {
 namespace services {
 namespace system {
@@ -186,9 +176,16 @@ struct user_auth_android {
 
     static std::shared_ptr<xbox::services::system::user_auth_android> get_instance();
 
-    unknown_auth_flow_class* auth_flow;
-    int filler;
-    mcpe::string xbox_user_id;
+    char filler[0x8]; // 8
+    mcpe::string xbox_user_id; // c
+    char filler2[0x24-0xc]; // 24
+    mcpe::string cid; // 28
+    char filler3[0x58-0x28];
+    pplx::task_completion_event_auth_flow_result auth_flow_event;
+    char filler4[0x8c-0x58-0xc];
+    xbox::services::system::auth_flow_result auth_flow_result;
+
+    // xbox::services::system::user_auth_android::auth_flow_callback
 
 
 };

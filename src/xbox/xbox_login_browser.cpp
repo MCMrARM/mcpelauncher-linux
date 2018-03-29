@@ -50,13 +50,13 @@ void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_andro
 
     XboxLoginResult result = resultState.Get();
     if (result.success) {
-        XboxLiveHelper::invokeXbLogin(auth, result.binaryToken);
-        auth->auth_flow->auth_flow_result.code = 0;
-        auth->auth_flow->auth_flow_result.cid = result.cid;
-        auth->auth_flow->auth_flow_event.set(auth->auth_flow->auth_flow_result);
+        XboxLiveHelper::invokeXbLogin(auth, result.binaryToken, result.cid);
+        auth->auth_flow_result.code = 0;
+        auth->auth_flow_result.cid = result.cid;
+        auth->auth_flow_event.set(auth->auth_flow_result);
     } else {
-        auth->auth_flow->auth_flow_result.code = 2;
-        auth->auth_flow->auth_flow_event.set(auth->auth_flow->auth_flow_result);
+        auth->auth_flow_result.code = 2;
+        auth->auth_flow_event.set(auth->auth_flow_result);
     }
 }
 
