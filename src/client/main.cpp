@@ -276,6 +276,14 @@ void pshufb(char* dest, char* src) {
 extern "C"
 void pshufb_xmm4_xmm0();
 
+void destroyXsapiSingleton(void* handle) {
+    unsigned int off = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services19get_xsapi_singletonEb");
+    unsigned int ebx = off + 0xb;
+    ebx += *((unsigned int*) (off + 0xc + 2));
+    unsigned int ptr = ebx + *((unsigned int*) (off + (0x661 - 0x4F0) + 2));
+    ((std::shared_ptr<xbox::services::xsapi_singleton>*) ptr)->reset();
+}
+
 using namespace std;
 int main(int argc, char *argv[]) {
     if (argc == 3 && strcmp(argv[1], "extract") == 0) {
@@ -610,7 +618,6 @@ int main(int argc, char *argv[]) {
 
     window.setDrawCallback([&window]() {
         if (client->wantToQuit()) {
-            delete client;
             window.close();
             return;
         }
@@ -682,6 +689,13 @@ int main(int argc, char *argv[]) {
     BrowserApp::Shutdown();
 #endif
     XboxLiveHelper::shutdown();
+
+    delete client;
+
+    auto userAndroidInstance = xbox::services::system::user_impl_android::get_instance();
+    if (userAndroidInstance)
+        userAndroidInstance->user_signed_out();
+    destroyXsapiSingleton(handle);
 
     return 0;
 }

@@ -50,6 +50,12 @@ struct local_config {
 
 };
 
+struct xsapi_singleton {
+
+    ~xsapi_singleton();
+
+};
+
 namespace system {
 
 struct java_rps_ticket {
@@ -91,6 +97,18 @@ struct auth_flow_result {
 
 struct token_and_signature_result {
     mcpe::string token, signature, xbox_user_id, gamertag, xbox_user_hash, age_group, privileges, user_settings_restrictions, user_enforcement_restrictions, user_title_restrictions, web_account_id, reserved;
+};
+
+struct user_impl {
+
+    void user_signed_out();
+
+};
+
+struct user_impl_android : public user_impl {
+
+    static std::shared_ptr<xbox::services::system::user_impl_android> get_instance();
+
 };
 
 }
