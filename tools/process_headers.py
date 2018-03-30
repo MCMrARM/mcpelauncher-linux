@@ -282,7 +282,7 @@ for file in os.listdir(header_dir):
     file_path = os.path.join(header_dir, file)
     if not os.path.isfile(file_path) or not file.endswith(".h"):
         continue
-    if file == "symbols.h" or file == "string.h":
+    if file == "symbols.h" or file == "string.h" or file == "string_linux.h" or file == "string_darwin.h" or file == "function.h":
         continue
     output("#include \"" + file + "\"")
     process_header(file_path)
