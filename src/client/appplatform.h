@@ -158,6 +158,9 @@ public:
             return "pocket";
         return "win10";
     }
+    int getBuildPlatform() const {
+        return 7; // Win10
+    }
     int getPlatformUIScalingRules() {
         return enablePocketGuis ? 2 : 0;
     }

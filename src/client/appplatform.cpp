@@ -98,6 +98,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android8isTabletEv", &LinuxAppPlatform::isTablet);
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform17setFullscreenModeE14FullscreenMode", &LinuxAppPlatform::setFullscreenMode);
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android10getEditionEv", &LinuxAppPlatform::getEdition);
+    replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android16getBuildPlatformEv", &LinuxAppPlatform::getBuildPlatform);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android31calculateAvailableDiskFreeSpaceERKSs", &LinuxAppPlatform::calculateAvailableDiskFreeSpace);
     replaceVtableEntry(lib, vta, "_ZNK19AppPlatform_android25getPlatformUIScalingRulesEv", &LinuxAppPlatform::getPlatformUIScalingRules);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android19getPlatformTempPathEv", &LinuxAppPlatform::getPlatformTempPath);
