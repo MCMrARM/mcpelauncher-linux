@@ -61,6 +61,8 @@ public:
 
     ResourcePackRepository(MinecraftEventing&, PackManifestFactory&, IContentAccessibilityProvider&, FilePathManager*, PackSourceFactory&);
 
+    void addWorldResourcePacks(mcpe::string const&);
+
 };
 
 struct ContentTierManager {

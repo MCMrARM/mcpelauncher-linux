@@ -14,6 +14,8 @@ public:
 
     mcpe::string getUserDataPath() const;
 
+    mcpe::string getWorldsPath() const;
+
     void setPackagePath(mcpe::string);
     mcpe::string getPackagePath() const;
 
