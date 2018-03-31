@@ -1,6 +1,6 @@
 #pragma once
 
-#include "msa.h"
+#include "../msa/msa.h"
 #include "../common/cll.h"
 #include "../minecraft/Xbox.h"
 #include <map>

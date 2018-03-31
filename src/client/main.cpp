@@ -42,7 +42,7 @@
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
-#include "../xbox/xboxlive.h"
+#include "xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
 #include "../ui/browser/browser.h"

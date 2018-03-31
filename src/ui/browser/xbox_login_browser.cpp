@@ -8,8 +8,8 @@
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
-#include "../../xbox/msa.h"
-#include "../../xbox/xboxlive.h"
+#include "../../msa/msa.h"
+#include "../../client/xboxlive.h"
 #include "../../common/base64.h"
 
 extern "C" {
