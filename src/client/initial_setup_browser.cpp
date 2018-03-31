@@ -8,6 +8,7 @@
 #include "../common/log.h"
 #include "../common/extract.h"
 #include "../common/path_helper.h"
+#include "../ui/file_picker/file_picker_factory.h"
 
 #ifndef DISABLE_PLAYAPI
 #include "google_play_helper.h"
@@ -42,85 +43,24 @@ InitialSetupBrowserClient::InitialSetupBrowserClient() {
 }
 
 void InitialSetupBrowserClient::HandlePickFile(std::string const& title, std::string const& ext) {
-    struct stat sb;
-    if (stat("/usr/bin/zenity", &sb)) {
+    try {
+        auto picker = FilePickerFactory::createFilePicker();
+        picker->setTitle(title);
+        picker->setFileNameFilters({ext});
+
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFileResult");
         CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
-        msgArgs->SetString(1, "Could not find zenity.\n\nTo be able to pick files, please install the `zenity` utility.");
+        if (picker->show())
+            msgArgs->SetString(0, picker->getPickedFile());
+        else
+            msgArgs->SetString(1, "");
+        GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
+    } catch (std::exception& err) {
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFileResult");
+        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
+        msgArgs->SetString(1, err.what());
         GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
         return;
-    }
-
-    char ret[1024];
-
-    int pipes[3][2];
-    static const int PIPE_STDOUT = 0;
-    static const int PIPE_STDERR = 1;
-    static const int PIPE_STDIN = 2;
-    static const int PIPE_READ = 0;
-    static const int PIPE_WRITE = 1;
-
-    pipe(pipes[PIPE_STDOUT]);
-    pipe(pipes[PIPE_STDERR]);
-    pipe(pipes[PIPE_STDIN]);
-
-    int pid;
-    if (!(pid = fork())) {
-        char* argv[] = {"/usr/bin/zenity", "--file-selection", "--title", const_cast<char*>(title.c_str()),
-                        "--file-filter", const_cast<char*>(ext.c_str()), 0};
-
-        dup2(pipes[PIPE_STDOUT][PIPE_WRITE], STDOUT_FILENO);
-        dup2(pipes[PIPE_STDERR][PIPE_WRITE], STDERR_FILENO);
-        dup2(pipes[PIPE_STDIN][PIPE_READ], STDIN_FILENO);
-        close(pipes[PIPE_STDIN][PIPE_WRITE]);
-        close(pipes[PIPE_STDOUT][PIPE_WRITE]);
-        close(pipes[PIPE_STDERR][PIPE_WRITE]);
-        close(pipes[PIPE_STDIN][PIPE_READ]);
-        close(pipes[PIPE_STDOUT][PIPE_READ]);
-        close(pipes[PIPE_STDERR][PIPE_READ]);
-        int r = execv(argv[0], argv);
-        Log::error("InitialSetupBrowserClient", "HandlePickFile: execv() error %i", r);
-        close(STDOUT_FILENO);
-        close(STDERR_FILENO);
-        close(STDIN_FILENO);
-        exit(r);
-    } else {
-        close(pipes[PIPE_STDIN][PIPE_WRITE]);
-        close(pipes[PIPE_STDIN][PIPE_READ]);
-
-        close(pipes[PIPE_STDOUT][PIPE_WRITE]);
-        close(pipes[PIPE_STDERR][PIPE_WRITE]);
-
-        std::string outputStdOut;
-        std::string outputStdErr;
-        ssize_t r;
-        if ((r = read(pipes[PIPE_STDOUT][PIPE_READ], ret, 1024)) > 0)
-            outputStdOut += std::string(ret, (size_t) r);
-        if ((r = read(pipes[PIPE_STDERR][PIPE_READ], ret, 1024)) > 0)
-            outputStdErr += std::string(ret, (size_t) r);
-
-        close(pipes[PIPE_STDOUT][PIPE_READ]);
-        close(pipes[PIPE_STDERR][PIPE_READ]);
-
-        int status;
-        waitpid(pid, &status, 0);
-        status = WEXITSTATUS(status);
-        Log::trace("InitialSetupBrowserClient", "HandlePickFile: Status = %i", status);
-
-        Log::trace("InitialSetupBrowserClient", "Stdout = %s", outputStdOut.c_str());
-        Log::trace("InitialSetupBrowserClient", "Stderr = %s", outputStdErr.c_str());
-
-        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PickFileResult");
-        CefRefPtr<CefListValue> msgArgs = msg->GetArgumentList();
-        if (status == 0 || status == 1) {
-            auto iof = outputStdOut.find('\n');
-            if (iof != std::string::npos)
-                outputStdOut = outputStdOut.substr(0, iof);
-            msgArgs->SetString(0, outputStdOut);
-        } else {
-            msgArgs->SetString(1, outputStdOut + outputStdErr);
-        }
-        GetPrimaryBrowser()->SendProcessMessage(PID_RENDERER, msg);
     }
 }
 

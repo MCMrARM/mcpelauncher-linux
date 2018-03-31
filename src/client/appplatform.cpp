@@ -20,6 +20,7 @@
 #include "../common/path_helper.h"
 #ifndef SERVER
 #include "../ui/game_window/window.h"
+#include "../ui/file_picker/file_picker_factory.h"
 #endif
 
 extern "C" {
@@ -109,48 +110,25 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform16allowSplitScreenEv", &LinuxAppPlatform::allowSplitScreen);
 }
 
-void LinuxAppPlatform::hideMousePointer() {
+
 #ifndef SERVER
+
+void LinuxAppPlatform::hideMousePointer() {
     window->setCursorDisabled(true);
-#endif
 }
 void LinuxAppPlatform::showMousePointer() {
-#ifndef SERVER
     window->setCursorDisabled(false);
-#endif
-}
-
-std::string LinuxAppPlatform::_pickFile(std::string commandLine) {
-    Log::trace(TAG, "Launching file picker with args: %s", commandLine.c_str());
-    char file[1024];
-    FILE *f = popen(commandLine.c_str(), "r");
-    if (fgets(file, 1024, f) == nullptr) {
-        Log::trace(TAG, "No file selected");
-        return "";
-    }
-    file[strlen(file) - 1] = '\0';
-    Log::trace(TAG, "Selected file: %s", file);
-    return std::string(file);
 }
 
 void LinuxAppPlatform::pickImage(ImagePickingCallback &callback) {
     Log::trace(TAG, "pickImage");
-    std::string file = _pickFile("zenity --file-selection --title 'Select image' --file-filter '*.png'");
-    if (file.empty()) {
+    auto picker = FilePickerFactory::createFilePicker();
+    picker->setTitle("Select image");
+    picker->setFileNameFilters({ "*.png" });
+    if (picker->show())
+        callback.onImagePickingSuccess(picker->getPickedFile());
+    else
         callback.onImagePickingCanceled();
-    } else {
-        callback.onImagePickingSuccess(file);
-    }
-}
-
-std::string replaceAll(std::string s, std::string a, std::string b) {
-    while (true) {
-        size_t p = s.find(a);
-        if (p == std::string::npos)
-            break;
-        s.replace(p, a.length(), b);
-    }
-    return s;
 }
 
 void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
@@ -161,36 +139,46 @@ void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
     for (FilePickerSettings::FileDescription &d : settings.fileDescriptions) {
         std::cout << " - " << d.ext << " " << d.desc << "\n";
     }
-    std::stringstream ss;
-    ss << "zenity --file-selection --title '" << replaceAll(settings.pickerTitle.std(), "'", "\\'") << "'";
+
+    auto picker = FilePickerFactory::createFilePicker();
+    picker->setTitle(settings.pickerTitle.std());
     if (settings.type == FilePickerSettings::PickerType::SAVE)
-        ss << " --save";
-    if (settings.fileDescriptions.size() > 0) {
-        ss << " --file-filter '";
-        bool first = true;
-        for (FilePickerSettings::FileDescription &d : settings.fileDescriptions) {
-            if (first)
-                first = false;
-            else
-                ss << "|";
-            ss << "*." << d.ext;
-        }
-        ss << "'";
-    }
-    std::string file = _pickFile(ss.str());
-    if (file.empty()) {
+        picker->setMode(FilePicker::Mode::SAVE);
+    std::vector<std::string> filters;
+    for (auto const& filter : settings.fileDescriptions)
+        filters.push_back(std::string("*.") + filter.ext.std());
+    picker->setFileNameFilters(filters);
+    if (picker->show())
+        settings.pickedCallback(settings, picker->getPickedFile());
+    else
         settings.cancelCallback(settings);
-    } else {
-        settings.pickedCallback(settings, file);
-    }
 }
 
 void LinuxAppPlatform::setFullscreenMode(int mode) {
     Log::trace(TAG, "Changing fullscreen mode: %i", mode);
-#ifndef SERVER
     window->setFullscreen(mode != 0);
-#endif
 }
+
+#else
+
+// Stubs
+
+void LinuxAppPlatform::hideMousePointer() {
+}
+
+void LinuxAppPlatform::showMousePointer() {
+}
+
+void LinuxAppPlatform::pickImage(ImagePickingCallback &callback) {
+}
+
+void LinuxAppPlatform::pickFile(FilePickerSettings &settings) {
+}
+
+void LinuxAppPlatform::setFullscreenMode(int mode) {
+}
+
+#endif
 
 long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     struct statvfs buf;
