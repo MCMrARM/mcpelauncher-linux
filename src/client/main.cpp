@@ -60,11 +60,11 @@
 extern "C" {
 #include <eglut.h>
 }
-#include "window_eglut.h"
+#include "../ui/game_window/window_eglut.h"
 #endif
 #ifdef USE_GLFW
 #include <GLFW/glfw3.h>
-#include "window_glfw.h"
+#include "../ui/game_window/window_glfw.h"
 #endif
 
 extern "C" {

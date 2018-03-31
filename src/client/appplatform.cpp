@@ -19,7 +19,7 @@
 #include "../common/common.h"
 #include "../common/path_helper.h"
 #ifndef SERVER
-#include "window.h"
+#include "../ui/game_window/window.h"
 #endif
 
 extern "C" {
