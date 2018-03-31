@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "string.h"
+#include "std/string.h"
 
 class CommandOrigin;
 class CommandOutputSender;

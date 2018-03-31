@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "string.h"
+#include "std/string.h"
 
 class CommandOutputMessage {
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "../minecraft/string.h"
+#include "../minecraft/std/string.h"
 #include "../common/log.h"
 
 struct StoreListener;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "string.h"
+#include "std/string.h"
 
 struct gl {
     static mcpe::string getOpenGLVendor();

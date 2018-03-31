@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include "../minecraft/string.h"
+#include "../minecraft/std/string.h"
 #include "../minecraft/UUID.h"
 #include "../minecraft/ResourcePack.h"
 

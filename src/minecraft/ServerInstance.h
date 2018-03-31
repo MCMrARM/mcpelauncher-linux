@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include "string.h"
+#include "std/string.h"
 #include "LevelSettings.h"
 
 class IMinecraftApp;
