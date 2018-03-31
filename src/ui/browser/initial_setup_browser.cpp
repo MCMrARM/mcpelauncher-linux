@@ -32,7 +32,7 @@ bool InitialSetupBrowserClient::OpenBrowser() {
 
         CefBrowserSettings browserSettings;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
-                client, "file://" + PathHelper::findDataFile("src/client/initial_setup_resources/index.html"), browserSettings, NULL, NULL);
+                client, "file://" + PathHelper::findDataFile("src/ui/browser/resources/initial_setup/index.html"), browserSettings, NULL, NULL);
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 

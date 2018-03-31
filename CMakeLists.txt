@@ -268,7 +268,7 @@ if (BUILD_CLIENT)
             COMMAND ${CMAKE_COMMAND} -E create_symlink
             ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
     add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
-            ${CMAKE_SOURCE_DIR}/src/client/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/client/initial_setup_resources)
+            ${CMAKE_SOURCE_DIR}/src/ui/browser/resources $<TARGET_FILE_DIR:mcpelauncher>/src/ui/browser/resources)
     add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
             ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
     add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
@@ -286,7 +286,7 @@ if (BUILD_CLIENT)
             DESTINATION share/mcpelauncher/libs/cef
             PATTERN "*"
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-    install(DIRECTORY src/client/initial_setup_resources
+    install(DIRECTORY src/ui/browser/initial_setup_resources
             DESTINATION share/mcpelauncher/src/client
             PATTERN "*"
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
