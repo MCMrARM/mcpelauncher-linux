@@ -4,11 +4,11 @@
 #include <sys/stat.h>
 #include "include/views/cef_browser_view.h"
 #include "initial_setup_browser.h"
-#include "../common/common.h"
-#include "../common/log.h"
-#include "../common/extract.h"
-#include "../common/path_helper.h"
-#include "../ui/file_picker/file_picker_factory.h"
+#include "../../common/common.h"
+#include "../../common/log.h"
+#include "../../common/extract.h"
+#include "../../common/path_helper.h"
+#include "../file_picker/file_picker_factory.h"
 
 #ifndef DISABLE_PLAYAPI
 #include "google_play_helper.h"

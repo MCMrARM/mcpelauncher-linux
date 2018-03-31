@@ -2,7 +2,7 @@
 
 #include <codecvt>
 #include <locale>
-#include "../common/log.h"
+#include "../../common/log.h"
 
 AsyncResult<GoogleLoginResult> GoogleLoginBrowserClient::resultState;
 std::string const GoogleLoginRenderHandler::Name = "GoogleLoginRenderHandler";

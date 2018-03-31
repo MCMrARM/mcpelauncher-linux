@@ -3,8 +3,8 @@
 #include <sys/wait.h>
 #include "include/views/cef_browser_view.h"
 #include "gamepad_mapper_browser.h"
-#include "gamepad.h"
-#include "../common/path_helper.h"
+#include "../../client/gamepad.h"
+#include "../../common/path_helper.h"
 
 AsyncResult<bool> GamepadMapperBrowserClient::resultState;
 std::string const GamepadMapperRenderHandler::Name = "GamepadMapperRenderHandler";

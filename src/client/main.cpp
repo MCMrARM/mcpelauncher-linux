@@ -45,14 +45,14 @@
 #include "../xbox/xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
-#include "../common/browser.h"
-#include "../xbox/xbox_login_browser.h"
-#include "initial_setup_browser.h"
-#include "gamepad_mapper_browser.h"
+#include "../ui/browser/browser.h"
+#include "../ui/browser/xbox_login_browser.h"
+#include "../ui/browser/initial_setup_browser.h"
+#include "../ui/browser/gamepad_mapper_browser.h"
 #include "../common/path_helper.h"
 #endif
 #ifndef DISABLE_PLAYAPI
-#include "google_login_browser.h"
+#include "../ui/browser/google_login_browser.h"
 #endif
 #ifdef USE_EGLUT
 #include <EGL/egl.h>

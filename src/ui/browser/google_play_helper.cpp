@@ -6,10 +6,10 @@
 #include <playapi/device_info.h>
 #include <zlib.h>
 #include <iostream>
-#include "../../gplay_api/src/config.h"
+#include "../../../gplay_api/src/config.h"
 #include "initial_setup_browser.h"
-#include "../common/extract.h"
-#include "../common/path_helper.h"
+#include "../../common/extract.h"
+#include "../../common/path_helper.h"
 
 std::string const GooglePlayHelper::DOWNLOAD_PACKAGE = "com.mojang.minecraftpe";
 
