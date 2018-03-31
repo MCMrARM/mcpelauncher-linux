@@ -15,7 +15,7 @@ class GamepadMapperV8Handler;
 class GamepadMapperBrowserClient : public BrowserClient {
 
 private:
-    static AsyncResult<bool> resultState;
+    AsyncResult<bool> resultState;
 
 public:
     static void OpenBrowser();

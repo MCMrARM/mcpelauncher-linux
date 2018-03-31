@@ -14,14 +14,16 @@
 #include "google_play_helper.h"
 #endif
 
-AsyncResult<bool> InitialSetupBrowserClient::resultState;
 std::string const InitialSetupRenderHandler::Name = "InitialSetupRenderHandler";
 
 bool InitialSetupBrowserClient::OpenBrowser() {
     Log::trace("InitialSetupBrowserClient", "OpenBrowser");
 
-    BrowserApp::RunWithContext([] {
+    AsyncResult<CefRefPtr<InitialSetupBrowserClient>> clientRef;
+
+    BrowserApp::RunWithContext([&clientRef] {
         CefRefPtr<InitialSetupBrowserClient> client = new InitialSetupBrowserClient();
+        clientRef.Set(client);
 
         MyWindowDelegate::Options options;
         options.w = 720;
@@ -34,8 +36,7 @@ bool InitialSetupBrowserClient::OpenBrowser() {
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 
-    resultState.Clear();
-    return resultState.Get();
+    return clientRef.Get()->resultState.Get();
 }
 
 InitialSetupBrowserClient::InitialSetupBrowserClient() {

@@ -2,6 +2,7 @@
 #include "../common/base64.h"
 #include "../common/path_helper.h"
 #include "../common/log.h"
+#include "../ui/browser/xbox_login_browser.h"
 
 #include <fstream>
 
@@ -51,6 +52,19 @@ void XboxLiveHelper::invokeXbLogin(xbox::services::system::user_auth_android* au
     auth->auth_flow_result.user_enforcement_restrictions = ret.data.user_enforcement_restrictions;
     auth->auth_flow_result.user_title_restrictions = ret.data.user_title_restrictions;
     auth->auth_flow_result.cid = cid;
+}
+
+void XboxLiveHelper::openLoginBrowser(xbox::services::system::user_auth_android* auth) {
+    auto result = XboxLoginBrowserClient::OpenBrowser();
+    if (result.success) {
+        XboxLiveHelper::invokeXbLogin(auth, result.binaryToken, result.cid);
+        auth->auth_flow_result.code = 0;
+        auth->auth_flow_result.cid = result.cid;
+        auth->auth_flow_event.set(auth->auth_flow_result);
+    } else {
+        auth->auth_flow_result.code = 2;
+        auth->auth_flow_event.set(auth->auth_flow_result);
+    }
 }
 
 std::map<std::string, std::string> SimpleMSAStorageManager::readProperties(std::istream& stream) {

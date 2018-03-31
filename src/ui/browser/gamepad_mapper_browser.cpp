@@ -6,13 +6,14 @@
 #include "../../client/gamepad.h"
 #include "../../common/path_helper.h"
 
-AsyncResult<bool> GamepadMapperBrowserClient::resultState;
 std::string const GamepadMapperRenderHandler::Name = "GamepadMapperRenderHandler";
 
 void GamepadMapperBrowserClient::OpenBrowser() {
     printf("GamepadMapperBrowserClient::OpenBrowser\n");
 
-    BrowserApp::RunWithContext([] {
+    AsyncResult<CefRefPtr<GamepadMapperBrowserClient>> clientRef;
+
+    BrowserApp::RunWithContext([&clientRef] {
         CefRefPtr<GamepadMapperBrowserClient> client = new GamepadMapperBrowserClient();
 
         MyWindowDelegate::Options options;
@@ -27,8 +28,7 @@ void GamepadMapperBrowserClient::OpenBrowser() {
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 
-    resultState.Clear();
-    resultState.Get();
+    clientRef.Get()->resultState.Get();
 }
 
 GamepadMapperBrowserClient::GamepadMapperBrowserClient() {

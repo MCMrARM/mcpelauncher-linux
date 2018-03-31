@@ -11,7 +11,6 @@
 #include "../../xbox/msa.h"
 #include "../../xbox/xboxlive.h"
 #include "../../common/base64.h"
-#include "../../minecraft/Xbox.h"
 
 extern "C" {
 #include "eglut.h"
@@ -20,13 +19,15 @@ extern "C" {
 
 std::string const XboxLoginRenderHandler::Name = "XboxLoginRenderHandler";
 std::string const XboxLoginBrowserClient::APPEND_URL_PARAMS = "platform=android2.1.0504.0524&client_id=android-app%3A%2F%2Fcom.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y&cobrandid=90023&mkt=en-US&phone=&email=";
-AsyncResult<XboxLoginResult> XboxLoginBrowserClient::resultState;
 
-void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_android* auth) {
+XboxLoginResult XboxLoginBrowserClient::OpenBrowser() {
     Log::trace("XboxLoginBrowserClient", "OpenBrowser");
 
-    BrowserApp::RunWithContext([] {
+    AsyncResult<CefRefPtr<XboxLoginBrowserClient>> clientRef;
+
+    BrowserApp::RunWithContext([&clientRef] {
         CefRefPtr<XboxLoginBrowserClient> client = new XboxLoginBrowserClient();
+        clientRef.Set(client);
 
         XWindowAttributes attrs;
         XGetWindowAttributes(eglutGetDisplay(), eglutGetWindowHandle(), &attrs);
@@ -46,18 +47,7 @@ void XboxLoginBrowserClient::OpenBrowser(xbox::services::system::user_auth_andro
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, window)));
     });
 
-    resultState.Clear();
-
-    XboxLoginResult result = resultState.Get();
-    if (result.success) {
-        XboxLiveHelper::invokeXbLogin(auth, result.binaryToken, result.cid);
-        auth->auth_flow_result.code = 0;
-        auth->auth_flow_result.cid = result.cid;
-        auth->auth_flow_event.set(auth->auth_flow_result);
-    } else {
-        auth->auth_flow_result.code = 2;
-        auth->auth_flow_event.set(auth->auth_flow_result);
-    }
+    return clientRef.Get()->resultState.Get();
 }
 
 XboxLoginBrowserClient::XboxLoginBrowserClient() {

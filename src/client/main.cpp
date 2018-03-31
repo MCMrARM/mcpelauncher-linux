@@ -199,7 +199,7 @@ void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
     ret->auth_flow->auth_flow_result.code = 2;
     ret->auth_flow->auth_flow_event.set(ret->auth_flow->auth_flow_result);
 #else
-    XboxLoginBrowserClient::OpenBrowser(ret);
+    XboxLiveHelper::openLoginBrowser(ret);
 #endif
 }
 std::vector<mcpe::string> xblGetLocaleList() {

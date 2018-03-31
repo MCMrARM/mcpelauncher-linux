@@ -4,14 +4,16 @@
 #include <locale>
 #include "../../common/log.h"
 
-AsyncResult<GoogleLoginResult> GoogleLoginBrowserClient::resultState;
 std::string const GoogleLoginRenderHandler::Name = "GoogleLoginRenderHandler";
 
 GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(MyWindowDelegate::Options const& windowInfo) {
     Log::trace("GoogleLoginBrowserClient", "OpenBrowser");
 
-    BrowserApp::RunWithContext([windowInfo] {
+    AsyncResult<CefRefPtr<GoogleLoginBrowserClient>> clientRef;
+
+    BrowserApp::RunWithContext([windowInfo, &clientRef] {
         CefRefPtr<GoogleLoginBrowserClient> client = new GoogleLoginBrowserClient();
+        clientRef.Set(client);
 
         MyWindowDelegate::Options options = windowInfo;
         options.visible = false;
@@ -23,8 +25,7 @@ GoogleLoginResult GoogleLoginBrowserClient::OpenBrowser(MyWindowDelegate::Option
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 
-    resultState.Clear();
-    return resultState.Get();
+    return clientRef.Get()->resultState.Get();
 }
 
 GoogleLoginBrowserClient::GoogleLoginBrowserClient() {

@@ -42,6 +42,8 @@ public:
     static void invokeXbLogin(xbox::services::system::user_auth_android* auth, std::string const& binaryToken,
                               std::string const& cid);
 
+    static void openLoginBrowser(xbox::services::system::user_auth_android* auth);
+
 };
 
 class SimpleMSAStorageManager : public MSAStorageManager {

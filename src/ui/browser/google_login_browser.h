@@ -23,7 +23,7 @@ struct GoogleLoginResult {
 class GoogleLoginBrowserClient : public BrowserClient, public CefCookieVisitor {
 
 private:
-    static AsyncResult<GoogleLoginResult> resultState;
+    AsyncResult<GoogleLoginResult> resultState;
 
     GoogleLoginResult result;
 
