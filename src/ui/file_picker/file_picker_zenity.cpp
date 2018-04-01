@@ -1,5 +1,8 @@
 #include "file_picker_zenity.h"
 
+#ifdef __APPLE__
+#include <errno.h>
+#endif
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -7,7 +10,12 @@
 #include <cstring>
 #include "../../common/log.h"
 
+#ifdef __APPLE__
+// `brew install zenity`
+const std::string ZenityFilePicker::EXECUTABLE_PATH = "/usr/local/bin/zenity";
+#else
 const std::string ZenityFilePicker::EXECUTABLE_PATH = "/usr/bin/zenity";
+#endif
 
 std::vector<std::string> ZenityFilePicker::buildCommandLine() {
     std::vector<std::string> cmd;
