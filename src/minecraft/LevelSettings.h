@@ -16,12 +16,12 @@ public:
     int time; // 20
     bool edu, immutableWorld; // 21, 22
     float rainLevel, lightningLevel; // 28, 2c
-    bool mpGame, lanBroadcast, xblBroadcast; // 2d, 2e, 2f
+    bool xblBroadcastIntent, mpGame, lanBroadcast, xblBroadcast; // 2d, 2e, 2f, 2e
     int xblLanBroadcastMode; // 34
-    bool platformBroadcast, commandsEnabled; // 35, 36
-    bool texturepacksRequired, lockedBehaviourPack, lockedResourcePack, fromLockedTemplate; // 37, 38, 39, 3A
-    bool overrideSavedSettings; // 3B
-    bool bonusChestEnabled, startWithMap; // 3C, 3D
+    bool commandsEnabled; // 35
+    bool texturepacksRequired, lockedBehaviourPack, lockedResourcePack, fromLockedTemplate; // 36, 37, 38, 39
+    bool overrideSavedSettings; // 40
+    bool bonusChestEnabled, startWithMap; // 41, 42
     char filler[0x300];
 
     LevelSettings();

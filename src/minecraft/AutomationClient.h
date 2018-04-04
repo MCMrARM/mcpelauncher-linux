@@ -6,7 +6,7 @@ class AutomationClient {
 
 public:
 
-    char filler[0x300];
+    char filler[0x400];
 
     AutomationClient(IMinecraftApp& a);
 

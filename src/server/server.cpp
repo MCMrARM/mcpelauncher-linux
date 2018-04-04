@@ -33,6 +33,7 @@
 #include "../minecraft/CommandOutput.h"
 #include "../minecraft/I18n.h"
 #include "../minecraft/ResourcePackStack.h"
+#include "../minecraft/SaveTransactionManager.h"
 #include "server_minecraft_app.h"
 #include "server_properties.h"
 #include "../common/hook.h"
@@ -137,7 +138,7 @@ int main(int argc, char *argv[]) {
     api.playerInteractionsIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api26PlayerInteractionInterfaceE") + 2;
 
     Log::trace("Launcher", "Setting up level settings");
-    LevelSettings levelSettings;
+    LevelSettings levelSettings;/*
     levelSettings.seed = properties.getInt("level-seed", 0);
     levelSettings.gametype = properties.getInt("gamemode", 0);
     levelSettings.forceGameType = properties.getBool("force-gamemode", false);
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]) {
     levelSettings.lanBroadcast = true;
     levelSettings.commandsEnabled = true;
     levelSettings.texturepacksRequired = false;
-
+*/
     Log::trace("Launcher", "Initializing FilePathManager");
     FilePathManager pathmgr (platform->getCurrentStoragePath(), false);
     pathmgr.setPackagePath(platform->getPackagePath());
@@ -187,16 +188,21 @@ int main(int argc, char *argv[]) {
     ResourcePackRepository resourcePackRepo (eventing, packManifestFactory, skinPackKeyProvider, &pathmgr, packSourceFactory);
     Log::trace("Launcher", "Adding vanilla resource pack");
     std::unique_ptr<ResourcePackStack> stack (new ResourcePackStack());
-    stack->add(PackInstance(resourcePackRepo.vanillaPack, -1, false), resourcePackRepo, false);
+    stack->add(PackInstance(resourcePackRepo.vanillaPack, -1, false, nullptr), resourcePackRepo, false);
     resourcePackManager->setStack(std::move(stack), (ResourcePackStackType) 3, false);
     Log::trace("Launcher", "Adding world resource packs");
     resourcePackRepo.addWorldResourcePacks(pathmgr.getWorldsPath().std() + properties.getString("level-dir"));
-    Log::trace("Launcher", "Initializing NetworkHandler");
-    NetworkHandler handler;
     Log::trace("Launcher", "Initializing Automation::AutomationClient");
     DedicatedServerMinecraftApp minecraftApp;
     Automation::AutomationClient aclient (minecraftApp);
     minecraftApp.automationClient = &aclient;
+    Log::debug("Launcher", "Initializing SaveTransactionManager");
+    std::shared_ptr<SaveTransactionManager> saveTransactionManager (new SaveTransactionManager([](bool b) {
+        if (b)
+            Log::debug("Launcher", "Saving the world...");
+        else
+            Log::debug("Launcher", "World has been saved.");
+    }));
     Log::debug("Launcher", "Initializing ServerInstance");
     auto idleTimeout = std::chrono::seconds((int) (properties.getFloat("player-idle-timeout", 0) * 60.f));
     IContentKeyProvider* keyProvider = &stubKeyProvider;
@@ -204,14 +210,18 @@ int main(int argc, char *argv[]) {
     // skin packs key. To allow those worlds to be ever loaded again, a server property is added.
     if (properties.getBool("level-skinpack-encrypted"))
         keyProvider = &skinPackKeyProvider;
-    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), *keyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, properties.getInt("server-port", 19132), properties.getInt("server-port-v6", 19133), properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, handler, resourcePackRepo, ctm, *resourcePackManager, nullptr, [](mcpe::string const& s) {
+    ServerInstance instance (minecraftApp, whitelist, ops, &pathmgr, idleTimeout, /* world dir */ properties.getString("level-dir"), /* world name */ properties.getString("level-name"), mcpe::string(), *keyProvider, properties.getString("motd"), /* settings */ levelSettings, api, properties.getInt("view-distance", 22), true, properties.getInt("server-port", 19132), properties.getInt("server-port-v6", 19133), properties.getInt("max-players", 20), properties.getBool("online-mode", true), {}, "normal", *mce::UUID::EMPTY, eventing, resourcePackRepo, ctm, saveTransactionManager, *resourcePackManager, nullptr, [](mcpe::string const& s) {
         std::cout << "??? " << s.c_str() << "\n";
+    }, [](mcpe::string const& s) {
+        Log::debug("Launcher", "Saving level: %s", s.c_str());
     });
     Log::trace("Launcher", "Loading language data");
-    I18n::loadLanguages(*resourcePackManager, nullptr, "en_US");
+    I18n::loadLanguages(*resourcePackManager, "en_US");
     resourcePackManager->onLanguageChanged();
     Log::info("Launcher", "Server initialized");
     modLoader.onServerInstanceInitialized(&instance);
+
+    instance.startServerThread();
 
     int flags = fcntl(0, F_GETFL, 0);
     fcntl(0, F_SETFL, flags | O_NONBLOCK);
@@ -244,9 +254,7 @@ int main(int argc, char *argv[]) {
         }
 
         auto tp2 = std::chrono::steady_clock::now();
-        instance.update();
-        instance.mainThreadNetworkUpdate_HACK();
-        Scheduler::singleton()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(tp2 - tp));
+        Scheduler::client()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(tp2 - tp));
         std::this_thread::sleep_until(tp2 + std::chrono::nanoseconds(1000000000L / updatesPerSecond));
         tp = tp2;
     }

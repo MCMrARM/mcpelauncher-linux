@@ -4,12 +4,13 @@
 
 class ResourcePack;
 class ResourcePackRepository;
+class PackSettings;
 
 struct PackInstance {
 
-    char filler[0x71];
+    char filler[0x6C];
 
-    PackInstance(ResourcePack*, int, bool);
+    PackInstance(ResourcePack*, int, bool, PackSettings*);
 
 };
 

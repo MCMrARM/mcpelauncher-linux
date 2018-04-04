@@ -19,16 +19,7 @@ class ResourcePackManager;
 class ContentTierManager;
 class FilePathManager;
 class IContentKeyProvider;
-
-class NetworkHandler {
-
-public:
-
-    char filler[0x200];
-
-    NetworkHandler();
-
-};
+class SaveTransactionManager;
 
 class ServerInstance {
 
@@ -38,17 +29,15 @@ public:
     Minecraft* minecraft;
     char filler2[0x200];
 
-    /// @symbol _ZN14ServerInstanceC2ER13IMinecraftAppRK9WhitelistRK7OpsListP15FilePathManagerNSt6chrono8durationIxSt5ratioILx1ELx1EEEESsSsSsRK19IContentKeyProviderSs13LevelSettingsRN9minecraft3api3ApiEibiiibRKSt6vectorISsSaISsEESsRKN3mce4UUIDER17MinecraftEventingR14NetworkHandlerR22ResourcePackRepositoryRK18ContentTierManagerR19ResourcePackManagerPS15_St8functionIFvRKSsEE
-    ServerInstance(IMinecraftApp&, Whitelist const&, OpsList const&, FilePathManager*, std::chrono::seconds, mcpe::string, mcpe::string, mcpe::string, IContentKeyProvider const&, mcpe::string, LevelSettings, minecraft::api::Api&, int, bool, int, int, int, bool, std::vector<mcpe::string> const&, mcpe::string, mce::UUID const&, MinecraftEventing&, NetworkHandler&, ResourcePackRepository&, ContentTierManager const&, ResourcePackManager&, ResourcePackManager*, std::function<void (mcpe::string const&)>);
+    /// @symbol _ZN14ServerInstanceC2ER13IMinecraftAppRK9WhitelistRK7OpsListP15FilePathManagerNSt6chrono8durationIxSt5ratioILx1ELx1EEEESsSsSsRK19IContentKeyProviderSs13LevelSettingsRN9minecraft3api3ApiEibiiibRKSt6vectorISsSaISsEESsRKN3mce4UUIDER17MinecraftEventingR22ResourcePackRepositoryRK18ContentTierManagerSt10shared_ptrI22SaveTransactionManagerER19ResourcePackManagerPS16_St8functionIFvRKSsEES1D_
+    ServerInstance(IMinecraftApp&, Whitelist const&, OpsList const&, FilePathManager*, std::chrono::seconds, mcpe::string, mcpe::string, mcpe::string, IContentKeyProvider const&, mcpe::string, LevelSettings, minecraft::api::Api&, int, bool, int, int, int, bool, std::vector<mcpe::string> const&, mcpe::string, mce::UUID const&, MinecraftEventing&, ResourcePackRepository&, ContentTierManager const&, std::shared_ptr<SaveTransactionManager>, ResourcePackManager&, ResourcePackManager*, std::function<void (mcpe::string const&)>, std::function<void (mcpe::string const&)>);
 
     ~ServerInstance();
 
-    void update();
+    void startServerThread();
 
     void startLeaveGame();
 
     bool isLeaveGameDone() const;
-
-    void mainThreadNetworkUpdate_HACK();
 
 };
