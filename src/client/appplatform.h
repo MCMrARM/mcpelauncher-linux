@@ -157,9 +157,10 @@ public:
     int getPlatformUIScalingRules() {
         return enablePocketGuis ? 2 : 0;
     }
-    void _updateUsedMemorySnapshot();
-    void _updateAvailableMemorySnapshot();
-    void _updateTotalMemorySnapshot();
+    long long getUsedMemory();
+    long long getFreeMemory();
+    long long getTotalPhysicalMemory();
+    long long getMemoryLimit();
 
     long long calculateAvailableDiskFreeSpace();
 
@@ -198,5 +199,7 @@ public:
         for (auto const& func : queue)
             func();
     }
+
+    void calculateHardwareTier();
 
 };

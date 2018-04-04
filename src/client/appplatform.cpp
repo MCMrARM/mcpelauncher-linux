@@ -89,9 +89,10 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform20getAssetFileFullPathERKSs", &LinuxAppPlatform::getAssetFileFullPath);
     replaceVtableEntry(lib, vta, "_ZNK11AppPlatform14useCenteredGUIEv", &LinuxAppPlatform::useCenteredGUI);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android16getApplicationIdEv", &LinuxAppPlatform::getApplicationId);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android25_updateUsedMemorySnapshotEv", &LinuxAppPlatform::_updateUsedMemorySnapshot);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android30_updateAvailableMemorySnapshotEv", &LinuxAppPlatform::_updateAvailableMemorySnapshot);
-    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android26_updateTotalMemorySnapshotEv", &LinuxAppPlatform::_updateTotalMemorySnapshot);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android13getFreeMemoryEv", &LinuxAppPlatform::getFreeMemory);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android13getUsedMemoryEv", &LinuxAppPlatform::getUsedMemory);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android22getTotalPhysicalMemoryEv", &LinuxAppPlatform::getTotalPhysicalMemory);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android14getMemoryLimitEv", &LinuxAppPlatform::getMemoryLimit);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android11getDeviceIdEv", &LinuxAppPlatform::getDeviceId);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18isFirstSnoopLaunchEv", &LinuxAppPlatform::isFirstSnoopLaunch);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android29hasHardwareInformationChangedEv", &LinuxAppPlatform::hasHardwareInformationChanged);
@@ -107,6 +108,7 @@ void LinuxAppPlatform::initVtable(void* lib) {
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android18queueForMainThreadESt8functionIFvvEE", &LinuxAppPlatform::queueForMainThread);
     replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android35getMultiplayerServiceListToRegisterEv", &LinuxAppPlatform::getMultiplayerServiceListToRegister);
     replaceVtableEntry(lib, vta, "_ZN11AppPlatform16allowSplitScreenEv", &LinuxAppPlatform::allowSplitScreen);
+    replaceVtableEntry(lib, vta, "_ZN19AppPlatform_android21calculateHardwareTierEv", &LinuxAppPlatform::calculateHardwareTier);
 }
 
 void LinuxAppPlatform::hideMousePointer() {
@@ -198,35 +200,47 @@ long long LinuxAppPlatform::calculateAvailableDiskFreeSpace() {
     return (long long int) buf.f_bsize * buf.f_bfree;
 }
 
-void LinuxAppPlatform::_updateUsedMemorySnapshot() {
+long long LinuxAppPlatform::getUsedMemory() {
     FILE* file = fopen("/proc/self/statm", "r");
     if (file == nullptr)
-        return;
+        return 0L;
     int pageSize = getpagesize();
     long long pageCount = 0L;
     fscanf(file, "%lld", &pageCount);
     fclose(file);
-    usedMemory = pageCount * pageSize;
+    return pageCount * pageSize;
 }
 
-void LinuxAppPlatform::_updateAvailableMemorySnapshot() {
+long long LinuxAppPlatform::getFreeMemory() {
 #ifndef __APPLE__
     struct sysinfo memInfo;
     sysinfo (&memInfo);
     long long total = memInfo.freeram;
     total += memInfo.freeswap;
     total *= memInfo.mem_unit;
-    availableMemory = total;
+    return total;
+#else
+    return 1024L * 1024L * 1024L * 4L; // FIXME hardcoded to 4 GB
 #endif
 }
 
-void LinuxAppPlatform::_updateTotalMemorySnapshot() {
+long long LinuxAppPlatform::getTotalPhysicalMemory() {
 #ifndef __APPLE__
     struct sysinfo memInfo;
     sysinfo (&memInfo);
     long long total = memInfo.totalram;
     total += memInfo.totalswap;
     total *= memInfo.mem_unit;
-    totalMemory = total;
+    return total;
+#else
+    return 1024L * 1024L * 1024L * 4L; // FIXME hardcoded to 4 GB
 #endif
+}
+
+long long LinuxAppPlatform::getMemoryLimit() {
+    return getTotalPhysicalMemory();
+}
+
+void LinuxAppPlatform::calculateHardwareTier() {
+    hardwareTier = 3;
 }
