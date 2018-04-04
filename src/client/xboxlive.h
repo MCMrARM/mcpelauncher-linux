@@ -1,6 +1,6 @@
 #pragma once
 
-#include "msa.h"
+#include "../msa/msa.h"
 #include "../common/cll.h"
 #include "../minecraft/Xbox.h"
 #include <map>
@@ -41,6 +41,8 @@ public:
 
     static void invokeXbLogin(xbox::services::system::user_auth_android* auth, std::string const& binaryToken,
                               std::string const& cid);
+
+    static void openLoginBrowser(xbox::services::system::user_auth_android* auth);
 
 };
 

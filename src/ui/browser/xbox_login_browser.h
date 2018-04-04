@@ -7,9 +7,8 @@
 #include <condition_variable>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
-#include "../minecraft/Xbox.h"
-#include "../common/browser.h"
-#include "../common/async_result_util.h"
+#include "browser.h"
+#include "../../common/async_result_util.h"
 
 class XboxLoginRenderHandler;
 class XboxLiveV8Handler;
@@ -24,13 +23,13 @@ class XboxLoginBrowserClient : public BrowserClient {
 
 private:
 
-    static AsyncResult<XboxLoginResult> resultState;
+    AsyncResult<XboxLoginResult> resultState;
 
 public:
 
     static const std::string APPEND_URL_PARAMS;
 
-    static void OpenBrowser(xbox::services::system::user_auth_android* userAuth);
+    static XboxLoginResult OpenBrowser();
 
     XboxLoginBrowserClient();
 

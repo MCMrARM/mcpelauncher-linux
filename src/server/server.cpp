@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
     stack->add(PackInstance(resourcePackRepo.vanillaPack, -1, false), resourcePackRepo, false);
     resourcePackManager->setStack(std::move(stack), (ResourcePackStackType) 3, false);
     Log::trace("Launcher", "Adding world resource packs");
-    resourcePackRepo.addWorldResourcePacks(pathmgr.getWorldsPath() + properties.getString("level-dir"));
+    resourcePackRepo.addWorldResourcePacks(pathmgr.getWorldsPath().std() + properties.getString("level-dir"));
     Log::trace("Launcher", "Initializing NetworkHandler");
     NetworkHandler handler;
     Log::trace("Launcher", "Initializing Automation::AutomationClient");

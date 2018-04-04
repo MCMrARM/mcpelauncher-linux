@@ -3,16 +3,17 @@
 #include <sys/wait.h>
 #include "include/views/cef_browser_view.h"
 #include "gamepad_mapper_browser.h"
-#include "gamepad.h"
-#include "../common/path_helper.h"
+#include "../../client/gamepad.h"
+#include "../../common/path_helper.h"
 
-AsyncResult<bool> GamepadMapperBrowserClient::resultState;
 std::string const GamepadMapperRenderHandler::Name = "GamepadMapperRenderHandler";
 
 void GamepadMapperBrowserClient::OpenBrowser() {
     printf("GamepadMapperBrowserClient::OpenBrowser\n");
 
-    BrowserApp::RunWithContext([] {
+    AsyncResult<CefRefPtr<GamepadMapperBrowserClient>> clientRef;
+
+    BrowserApp::RunWithContext([&clientRef] {
         CefRefPtr<GamepadMapperBrowserClient> client = new GamepadMapperBrowserClient();
 
         MyWindowDelegate::Options options;
@@ -23,12 +24,11 @@ void GamepadMapperBrowserClient::OpenBrowser() {
         CefBrowserSettings browserSettings;
         browserSettings.web_security = STATE_DISABLED;
         CefRefPtr<CefBrowserView> view = CefBrowserView::CreateBrowserView(
-                client, "file://" + PathHelper::findDataFile("src/client/initial_setup_resources/gamepad_mapper/index.html"), browserSettings, NULL, NULL);
+                client, "file://" + PathHelper::findDataFile("src/ui/browser/resources/gamepad_mapper/index.html"), browserSettings, NULL, NULL);
         client->SetPrimaryWindow(CefWindow::CreateTopLevelWindow(new MyWindowDelegate(view, options)));
     });
 
-    resultState.Clear();
-    resultState.Get();
+    clientRef.Get()->resultState.Get();
 }
 
 GamepadMapperBrowserClient::GamepadMapperBrowserClient() {

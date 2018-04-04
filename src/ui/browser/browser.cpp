@@ -3,8 +3,8 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <sys/stat.h>
-#include "path_helper.h"
-#include "log.h"
+#include "../../common/path_helper.h"
+#include "../../common/log.h"
 
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"

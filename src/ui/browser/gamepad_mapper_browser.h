@@ -7,15 +7,15 @@
 #include <condition_variable>
 #include "include/cef_app.h"
 #include "include/cef_client.h"
-#include "../common/browser.h"
-#include "../common/async_result_util.h"
+#include "browser.h"
+#include "../../common/async_result_util.h"
 
 class GamepadMapperV8Handler;
 
 class GamepadMapperBrowserClient : public BrowserClient {
 
 private:
-    static AsyncResult<bool> resultState;
+    AsyncResult<bool> resultState;
 
 public:
     static void OpenBrowser();

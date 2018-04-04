@@ -42,17 +42,17 @@
 #include "../common/common.h"
 #include "../common/hook.h"
 #include "../common/modloader.h"
-#include "../xbox/xboxlive.h"
+#include "xboxlive.h"
 #include "../common/extract.h"
 #ifndef DISABLE_CEF
-#include "../common/browser.h"
-#include "../xbox/xbox_login_browser.h"
-#include "initial_setup_browser.h"
-#include "gamepad_mapper_browser.h"
+#include "../ui/browser/browser.h"
+#include "../ui/browser/xbox_login_browser.h"
+#include "../ui/browser/initial_setup_browser.h"
+#include "../ui/browser/gamepad_mapper_browser.h"
 #include "../common/path_helper.h"
 #endif
 #ifndef DISABLE_PLAYAPI
-#include "google_login_browser.h"
+#include "../ui/browser/google_login_browser.h"
 #endif
 #ifdef USE_EGLUT
 #include <EGL/egl.h>
@@ -60,11 +60,11 @@
 extern "C" {
 #include <eglut.h>
 }
-#include "window_eglut.h"
+#include "../ui/game_window/window_eglut.h"
 #endif
 #ifdef USE_GLFW
 #include <GLFW/glfw3.h>
-#include "window_glfw.h"
+#include "../ui/game_window/window_glfw.h"
 #endif
 
 extern "C" {
@@ -196,10 +196,10 @@ void xboxInvokeAuthFlow(xbox::services::system::user_auth_android* ret) {
 #ifdef DISABLE_CEF
     std::cerr << "This build does not support Xbox Live login.\n";
     std::cerr << "To log in please build the launcher with CEF support.\n";
-    ret->auth_flow->auth_flow_result.code = 2;
-    ret->auth_flow->auth_flow_event.set(ret->auth_flow->auth_flow_result);
+    ret->auth_flow_result.code = 2;
+    ret->auth_flow_event.set(ret->auth_flow_result);
 #else
-    XboxLoginBrowserClient::OpenBrowser(ret);
+    XboxLiveHelper::openLoginBrowser(ret);
 #endif
 }
 std::vector<mcpe::string> xblGetLocaleList() {

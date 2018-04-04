@@ -3,7 +3,7 @@
 #include <functional>
 
 #ifdef __APPLE__
-#include "function_dawin.h"
+#include "function_darwin.h"
 #else
 namespace mcpe {
 template<typename T>

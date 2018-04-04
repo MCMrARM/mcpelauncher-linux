@@ -40,6 +40,7 @@ set(CEF_ENABLED true)
 set(PLAYAPI_ENABLED true)
 set(LIBZIP_FROM_SOURCES false)
 set(GAMEPAD_SUPPORT_ENABLED true)
+set(USE_ZENITY true)
 
 if(APPLE)
     set(GLFW_ENABLED true)
@@ -126,14 +127,18 @@ endif(APPLE)
 set(EGLUT_SOURCES libs/eglut/eglut.c libs/eglut/eglut_x11.c)
 
 set(COMMON_SOURCE_FILES src/common/common.cpp src/common/hook.cpp src/client/appplatform.cpp src/minecraft/ImagePickingCallback.h src/minecraft/FilePickerSettings.h src/minecraft/Common.h src/minecraft/Xbox.h src/minecraft/std/string.h src/common/base64.cpp src/common/base64.h src/common/async_result_util.h src/common/extract.cpp src/common/extract.h src/common/path_helper.cpp src/common/path_helper.h src/common/log.cpp src/common/log.h src/minecraft/symbols.cpp src/minecraft/symbols.h src/minecraft/std/function.h src/common/modloader.cpp src/common/modloader.h)
-set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/appplatform.cpp src/client/fake_jni.cpp src/client/fake_jni.h src/xbox/msa.cpp src/xbox/msa.h src/xbox/msa_token.h src/xbox/msa_network.cpp src/xbox/msa_network.h src/xbox/xboxlive.h src/xbox/xboxlive.cpp src/common/cll.cpp src/common/cll.h)
+set(CLIENT_SOURCE_FILES src/client/main.cpp src/client/appplatform.cpp src/client/fake_jni.cpp src/client/fake_jni.h src/msa/msa.cpp src/msa/msa.h src/msa/msa_token.h src/msa/msa_network.cpp src/msa/msa_network.h src/client/xboxlive.h src/client/xboxlive.cpp src/common/cll.cpp src/common/cll.h)
 set(CLIENT_SOURCE_FILES_GAMEPAD src/client/gamepad.cpp src/client/gamepad.h)
-set(CLIENT_SOURCE_FILES_CEF src/common/browser.cpp src/common/browser.h src/xbox/xbox_login_browser.h src/xbox/xbox_login_browser.cpp src/client/initial_setup_browser.cpp src/client/initial_setup_browser.h src/client/window.h)
-set(CLIENT_SOURCE_FILES_CEF_GAMEPAD src/client/gamepad_mapper_browser.cpp src/client/gamepad_mapper_browser.h)
-set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/client/google_login_browser.h src/client/google_login_browser.cpp src/client/google_play_helper.cpp src/client/google_play_helper.h)
-set(CLIENT_SOURCE_FILES_EGLUT src/client/window_eglut.cpp src/client/window_eglut.h)
-set(CLIENT_SOURCE_FILES_GLFW src/client/window_glfw.cpp src/client/window_glfw.h)
+set(CLIENT_SOURCE_FILES_CEF src/ui/browser/browser.cpp src/ui/browser/browser.h src/ui/browser/xbox_login_browser.h src/ui/browser/xbox_login_browser.cpp src/ui/browser/initial_setup_browser.cpp src/ui/browser/initial_setup_browser.h)
+set(CLIENT_SOURCE_FILES_CEF_GAMEPAD src/ui/browser/gamepad_mapper_browser.cpp src/ui/browser/gamepad_mapper_browser.h)
+set(CLIENT_SOURCE_FILES_PLAYAPI gplay_api/src/config.h gplay_api/src/config.cpp src/ui/browser/google_login_browser.h src/ui/browser/google_login_browser.cpp src/ui/browser/google_play_helper.cpp src/ui/browser/google_play_helper.h)
+set(CLIENT_SOURCE_FILES_CORE_UI src/ui/game_window/window.h src/ui/file_picker/file_picker.h src/ui/file_picker/file_picker_factory.cpp src/ui/file_picker/file_picker_factory.h)
+set(CLIENT_SOURCE_FILES_EGLUT src/ui/game_window/window_eglut.cpp src/ui/game_window/window_eglut.h)
+set(CLIENT_SOURCE_FILES_GLFW src/ui/game_window/window_glfw.cpp src/ui/game_window/window_glfw.h)
+set(CLIENT_SOURCE_FILES_ZENITY src/ui/file_picker/file_picker_zenity.cpp src/ui/file_picker/file_picker_zenity.h)
 set(SERVER_SOURCE_FILES src/server/server.cpp src/server/server_minecraft_app.h src/server/server_properties.cpp src/server/server_properties.h src/server/stub_key_provider.h)
+
+set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_CORE_UI})
 
 if(APPLE)
     set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/std/string_darwin.cpp)
@@ -141,6 +146,10 @@ else()
     set(COMMON_SOURCE_FILES ${COMMON_SOURCE_FILES} src/minecraft/std/string_linux.cpp)
     set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} src/client/amdfix.s src/common/openssl_multithread.cpp src/common/openssl_multithread.h)
 endif(APPLE)
+
+if (USE_ZENITY)
+    set(CLIENT_SOURCE_FILES ${CLIENT_SOURCE_FILES} ${CLIENT_SOURCE_FILES_ZENITY})
+endif()
 
 
 set(HYBRIS_DEFINES PRIVATE ANDROID_X86_LINKER _GNU_SOURCE LINKER_TEXT_BASE=0xB0000100 LINKER_AREA_SIZE=0x01000000 LINKER_DEBUG=1)
@@ -197,6 +206,9 @@ if (BUILD_CLIENT)
     endif()
     if (LIBZIP_FROM_SOURCES)
         add_dependencies(mcpelauncher libzip)
+    endif()
+    if (USE_ZENITY)
+        target_compile_definitions(mcpelauncher PRIVATE USE_ZENITY)
     endif()
 
     target_link_libraries(mcpelauncher ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES} ${CURL_LIBRARIES})
@@ -256,7 +268,7 @@ if (BUILD_CLIENT)
             COMMAND ${CMAKE_COMMAND} -E create_symlink
             ${CMAKE_SOURCE_DIR}/libs/cef/bin/icudtl.dat $<TARGET_FILE_DIR:mcpelauncher>/icudtl.dat)
     add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
-            ${CMAKE_SOURCE_DIR}/src/client/initial_setup_resources $<TARGET_FILE_DIR:mcpelauncher>/src/client/initial_setup_resources)
+            ${CMAKE_SOURCE_DIR}/src/ui/browser/resources $<TARGET_FILE_DIR:mcpelauncher>/src/ui/browser/resources)
     add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
             ${CMAKE_SOURCE_DIR}/libs $<TARGET_FILE_DIR:mcpelauncher>/libs)
     add_non_source_dir_custom_command(${CMAKE_COMMAND} -E create_symlink
@@ -274,7 +286,7 @@ if (BUILD_CLIENT)
             DESTINATION share/mcpelauncher/libs/cef
             PATTERN "*"
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-    install(DIRECTORY src/client/initial_setup_resources
+    install(DIRECTORY src/ui/browser/initial_setup_resources
             DESTINATION share/mcpelauncher/src/client
             PATTERN "*"
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
