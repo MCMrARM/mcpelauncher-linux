@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
     api.playerInteractionsIfaceVtable = (void**) hybris_dlsym(handle, "_ZTVN9minecraft3api26PlayerInteractionInterfaceE") + 2;
 
     Log::trace("Launcher", "Setting up level settings");
-    LevelSettings levelSettings;/*
+    LevelSettings levelSettings;
     levelSettings.seed = properties.getInt("level-seed", 0);
     levelSettings.gametype = properties.getInt("gamemode", 0);
     levelSettings.forceGameType = properties.getBool("force-gamemode", false);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
     levelSettings.lanBroadcast = true;
     levelSettings.commandsEnabled = true;
     levelSettings.texturepacksRequired = false;
-*/
+
     Log::trace("Launcher", "Initializing FilePathManager");
     FilePathManager pathmgr (platform->getCurrentStoragePath(), false);
     pathmgr.setPackagePath(platform->getPackagePath());
