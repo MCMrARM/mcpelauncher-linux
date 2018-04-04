@@ -112,6 +112,10 @@ int main(int argc, char *argv[]) {
 
     mcpe::string::empty = (mcpe::string*) hybris_dlsym(handle, "_ZN4Util12EMPTY_STRINGE");
 
+    Log::info("Launcher", "Applying patches");
+    void* ptr = hybris_dlsym(handle, "_ZN5Level17_checkUserStorageEv");
+    patchCallInstruction(ptr, (void*) (void (*)()) []{ }, true);
+
     ModLoader modLoader;
     modLoader.loadModsFromDirectory(PathHelper::getPrimaryDataDirectory() + "mods/");
 
