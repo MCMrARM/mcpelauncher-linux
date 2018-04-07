@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) {
         }
 
         auto tp2 = std::chrono::steady_clock::now();
-        Scheduler::client()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(tp2 - tp));
+        // Scheduler::client()->processCoroutines(std::chrono::duration_cast<std::chrono::duration<long long>>(tp2 - tp));
         std::this_thread::sleep_until(tp2 + std::chrono::nanoseconds(1000000000L / updatesPerSecond));
         tp = tp2;
     }
