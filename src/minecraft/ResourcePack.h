@@ -63,6 +63,8 @@ public:
 
     void addWorldResourcePacks(mcpe::string const&);
 
+    void refreshPacks();
+
 };
 
 struct ContentTierManager {

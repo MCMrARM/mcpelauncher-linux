@@ -196,6 +196,7 @@ int main(int argc, char *argv[]) {
     resourcePackManager->setStack(std::move(stack), (ResourcePackStackType) 3, false);
     Log::trace("Launcher", "Adding world resource packs");
     resourcePackRepo.addWorldResourcePacks(pathmgr.getWorldsPath().std() + properties.getString("level-dir"));
+    resourcePackRepo.refreshPacks();
     Log::trace("Launcher", "Initializing Automation::AutomationClient");
     DedicatedServerMinecraftApp minecraftApp;
     Automation::AutomationClient aclient (minecraftApp);

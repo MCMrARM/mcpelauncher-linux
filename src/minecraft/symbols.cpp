@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Sat Apr 07 2018 13:52:35 UTC
+// Generated on Sat Apr 07 2018 14:36:14 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
@@ -399,6 +399,10 @@ static void (ResourcePackRepository::*_ResourcePackRepository_addWorldResourcePa
 void ResourcePackRepository::addWorldResourcePacks(mcpe::string const & p1) {
     (this->*_ResourcePackRepository_addWorldResourcePacks)(p1);
 }
+static void (ResourcePackRepository::*_ResourcePackRepository_refreshPacks)();
+void ResourcePackRepository::refreshPacks() {
+    (this->*_ResourcePackRepository_refreshPacks)();
+}
 static void (ContentTierManager::*_ContentTierManager_ContentTierManager)();
 ContentTierManager::ContentTierManager() {
     (this->*_ContentTierManager_ContentTierManager)();
@@ -646,6 +650,8 @@ void minecraft_symbols_init(void* handle) {
     if (_ResourcePackRepository_ResourcePackRepository == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN22ResourcePackRepositoryC2ER17MinecraftEventingR19PackManifestFactoryR29IContentAccessibilityProviderP15FilePathManagerR17PackSourceFactory");
     ((void*&) _ResourcePackRepository_addWorldResourcePacks) = hybris_dlsym(handle, "_ZN22ResourcePackRepository21addWorldResourcePacksERKSs");
     if (_ResourcePackRepository_addWorldResourcePacks == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN22ResourcePackRepository21addWorldResourcePacksERKSs");
+    ((void*&) _ResourcePackRepository_refreshPacks) = hybris_dlsym(handle, "_ZN22ResourcePackRepository12refreshPacksEv");
+    if (_ResourcePackRepository_refreshPacks == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN22ResourcePackRepository12refreshPacksEv");
     ((void*&) _ContentTierManager_ContentTierManager) = hybris_dlsym(handle, "_ZN18ContentTierManagerC2Ev");
     if (_ContentTierManager_ContentTierManager == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN18ContentTierManagerC2Ev");
     ((void*&) _ResourcePackManager_ResourcePackManager) = hybris_dlsym(handle, "_ZN19ResourcePackManagerC2ESt8functionIFSsvEERK18ContentTierManager");
