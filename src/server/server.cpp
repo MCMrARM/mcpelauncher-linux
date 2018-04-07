@@ -249,8 +249,10 @@ int main(int argc, char *argv[]) {
                 memcpy(lineBuffer, &lineBuffer[i + 1], lineBufferOffset - i - 1);
                 lineBufferOffset -= i + 1;
 
-                std::unique_ptr<DedicatedServerCommandOrigin> commandOrigin(new DedicatedServerCommandOrigin("Server", *instance.minecraft));
-                instance.minecraft->getCommands()->requestCommandExecution(std::move(commandOrigin), cmd, 4, true);
+                instance.queueForServerThread([&instance, cmd]() {
+                    std::unique_ptr<DedicatedServerCommandOrigin> commandOrigin(new DedicatedServerCommandOrigin("Server", *instance.minecraft));
+                    instance.minecraft->getCommands()->requestCommandExecution(std::move(commandOrigin), cmd, 4, true);
+                });
                 i = 0;
             } else {
                 i++;

@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Sat Apr 07 2018 13:49:23 UTC
+// Generated on Sat Apr 07 2018 13:52:35 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
@@ -112,6 +112,10 @@ void ServerInstance::startServerThread() {
 static void (ServerInstance::*_ServerInstance_leaveGameSync)();
 void ServerInstance::leaveGameSync() {
     (this->*_ServerInstance_leaveGameSync)();
+}
+static void (ServerInstance::*_ServerInstance_queueForServerThread)(std::function<void ( )>);
+void ServerInstance::queueForServerThread(std::function<void ( )> p1) {
+    (this->*_ServerInstance_queueForServerThread)(p1);
 }
 
 #include "OpsList.h"
@@ -518,6 +522,8 @@ void minecraft_symbols_init(void* handle) {
     if (_ServerInstance_startServerThread == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance17startServerThreadEv");
     ((void*&) _ServerInstance_leaveGameSync) = hybris_dlsym(handle, "_ZN14ServerInstance13leaveGameSyncEv");
     if (_ServerInstance_leaveGameSync == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance13leaveGameSyncEv");
+    ((void*&) _ServerInstance_queueForServerThread) = hybris_dlsym(handle, "_ZN14ServerInstance20queueForServerThreadESt8functionIFvvEE");
+    if (_ServerInstance_queueForServerThread == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance20queueForServerThreadESt8functionIFvvEE");
     ((void*&) _OpsList_OpsList) = hybris_dlsym(handle, "_ZN7OpsListC2Eb");
     if (_OpsList_OpsList == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN7OpsListC2Eb");
     ((void*&) GameControllerManager::sGamePadManager) = hybris_dlsym(handle, "_ZN21GameControllerManager15sGamePadManagerE");

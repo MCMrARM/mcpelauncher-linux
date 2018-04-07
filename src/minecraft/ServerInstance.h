@@ -38,4 +38,7 @@ public:
 
     void leaveGameSync();
 
+    /// @symbol _ZN14ServerInstance20queueForServerThreadESt8functionIFvvEE
+    void queueForServerThread(std::function<void ()>);
+
 };
