@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Wed Apr 04 2018 17:35:01 UTC
+// Generated on Sat Apr 07 2018 13:49:23 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
@@ -109,13 +109,9 @@ static void (ServerInstance::*_ServerInstance_startServerThread)();
 void ServerInstance::startServerThread() {
     (this->*_ServerInstance_startServerThread)();
 }
-static void (ServerInstance::*_ServerInstance_startLeaveGame)();
-void ServerInstance::startLeaveGame() {
-    (this->*_ServerInstance_startLeaveGame)();
-}
-static bool (ServerInstance::*_ServerInstance_isLeaveGameDone)() const;
-bool ServerInstance::isLeaveGameDone() const {
-    return (this->*_ServerInstance_isLeaveGameDone)();
+static void (ServerInstance::*_ServerInstance_leaveGameSync)();
+void ServerInstance::leaveGameSync() {
+    (this->*_ServerInstance_leaveGameSync)();
 }
 
 #include "OpsList.h"
@@ -520,10 +516,8 @@ void minecraft_symbols_init(void* handle) {
     if (_ServerInstance_destructor == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstanceD2Ev");
     ((void*&) _ServerInstance_startServerThread) = hybris_dlsym(handle, "_ZN14ServerInstance17startServerThreadEv");
     if (_ServerInstance_startServerThread == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance17startServerThreadEv");
-    ((void*&) _ServerInstance_startLeaveGame) = hybris_dlsym(handle, "_ZN14ServerInstance14startLeaveGameEv");
-    if (_ServerInstance_startLeaveGame == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance14startLeaveGameEv");
-    ((void*&) _ServerInstance_isLeaveGameDone) = hybris_dlsym(handle, "_ZNK14ServerInstance15isLeaveGameDoneEv");
-    if (_ServerInstance_isLeaveGameDone == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZNK14ServerInstance15isLeaveGameDoneEv");
+    ((void*&) _ServerInstance_leaveGameSync) = hybris_dlsym(handle, "_ZN14ServerInstance13leaveGameSyncEv");
+    if (_ServerInstance_leaveGameSync == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN14ServerInstance13leaveGameSyncEv");
     ((void*&) _OpsList_OpsList) = hybris_dlsym(handle, "_ZN7OpsListC2Eb");
     if (_OpsList_OpsList == nullptr) Log::error("MinecraftSymbols", "Unresolved symbol: %s", "_ZN7OpsListC2Eb");
     ((void*&) GameControllerManager::sGamePadManager) = hybris_dlsym(handle, "_ZN21GameControllerManager15sGamePadManagerE");

@@ -36,8 +36,6 @@ public:
 
     void startServerThread();
 
-    void startLeaveGame();
-
-    bool isLeaveGameDone() const;
+    void leaveGameSync();
 
 };
