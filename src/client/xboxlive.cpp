@@ -2,7 +2,7 @@
 #include "../common/base64.h"
 #include "../common/path_helper.h"
 #include "../common/log.h"
-#ifdef CEF_ENABLED
+#ifndef DISABLE_CEF
 #include "../ui/browser/xbox_login_browser.h"
 #endif
 
@@ -57,7 +57,7 @@ void XboxLiveHelper::invokeXbLogin(xbox::services::system::user_auth_android* au
 }
 
 void XboxLiveHelper::openLoginBrowser(xbox::services::system::user_auth_android* auth) {
-#ifdef CEF_ENABLED
+#ifndef DISABLE_CEF
     auto result = XboxLoginBrowserClient::OpenBrowser();
     if (result.success) {
         XboxLiveHelper::invokeXbLogin(auth, result.binaryToken, result.cid);
