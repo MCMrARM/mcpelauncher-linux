@@ -515,7 +515,7 @@ int main(int argc, char *argv[]) {
         ((unsigned char*) patchOff)[0x15a + 3] += 4;
 
         reflectShaderUniformsOriginal = (void (*)(void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL21reflectShaderUniformsEv");
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERKSsRNS_13ShaderProgramES4_S4_") + (0xEB62 - 0xEAD0);
+        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce9ShaderOGLC2ERNS_11ShaderCacheERNS_13ShaderProgramES4_S4_") + (0xEB62 - 0xEAD0);
         patchCallInstruction((void*) patchOff, (void*) &reflectShaderUniformsHook, false);
 
         bindVertexArrayOriginal = (void (*)(void*, void*, void*)) hybris_dlsym(handle, "_ZN3mce9ShaderOGL18bindVertexPointersERKNS_12VertexFormatEPv");
