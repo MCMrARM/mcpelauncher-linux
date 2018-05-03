@@ -286,8 +286,8 @@ if (BUILD_CLIENT)
             DESTINATION share/mcpelauncher/libs/cef
             PATTERN "*"
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
-    install(DIRECTORY src/ui/browser/initial_setup_resources
-            DESTINATION share/mcpelauncher/src/client
+    install(DIRECTORY src/ui/browser/resources
+            DESTINATION share/mcpelauncher/src/ui/browser
             PATTERN "*"
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ)
     install(DIRECTORY libs/native
