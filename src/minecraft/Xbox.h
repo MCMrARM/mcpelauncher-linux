@@ -154,6 +154,22 @@ struct task_xbox_live_result_token_and_signature_result {
 };
 
 
+struct cancellation_token {
+    static cancellation_token none() {
+        return cancellation_token();
+    }
+
+    void* impl = nullptr;
+
+    cancellation_token() {}
+    cancellation_token(cancellation_token const& t) {
+        if (t.impl != nullptr)
+            throw std::runtime_error("Only null cancellation_token are supported");
+        impl = t.impl;
+    }
+};
+
+
 }
 
 
@@ -180,9 +196,10 @@ struct auth_manager {
     static std::shared_ptr<xbox::services::system::auth_manager> get_auth_manager_instance();
 
     void set_rps_ticket(mcpe::string const&);
-    pplx::task_xbox_live_result_void initialize_default_nsal();
-    /// @symbol _ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_
-    pplx::task_xbox_live_result_token_and_signature_result internal_get_token_and_signature(mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&);
+    /// @symbol _ZN4xbox8services6system12auth_manager23initialize_default_nsalEN4pplx18cancellation_tokenE
+    pplx::task_xbox_live_result_void initialize_default_nsal(pplx::cancellation_token t = pplx::cancellation_token::none());
+    /// @symbol _ZN4xbox8services6system12auth_manager32internal_get_token_and_signatureESsRKSsS4_SsRKSt6vectorIhSaIhEEbbS4_N4pplx18cancellation_tokenE
+    pplx::task_xbox_live_result_token_and_signature_result internal_get_token_and_signature(mcpe::string, mcpe::string const&, mcpe::string const&, mcpe::string, std::vector<unsigned char> const&, bool, bool, mcpe::string const&, pplx::cancellation_token t = pplx::cancellation_token::none());
     std::shared_ptr<xbox::services::system::auth_config> get_auth_config();
 
 };
