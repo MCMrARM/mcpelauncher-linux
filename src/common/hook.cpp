@@ -3,6 +3,7 @@
 #include <elf.h>
 #include <stdio.h>
 #include <string.h>
+#include <unordered_map>
 #include <vector>
 #include <sys/mman.h>
 #include <map>
@@ -20,6 +21,12 @@ struct soinfo_hookinfo {
     std::vector<hook_section> hookSections;
 };
 std::map<soinfo*, soinfo_hookinfo> hookLibraries;
+
+struct hook_defs {
+    void *hook, **original;
+};
+
+std::unordered_map<void*, hook_defs> hooks;
 
 void addHookLibrary(void* ptr, std::string const& fileName) {
     soinfo* lib = (soinfo*) ptr;
@@ -107,7 +114,7 @@ bool patchLibrary(void* lib, void* sym, void* override) {
     return foundEntry;
 }
 
-int hookFunction(void* symbol, void* hook, void** original) {
+int hookFunction_impl(void* symbol, void* hook, void** original) {
     *original = symbol;
     bool foundEntry = false;
     for (auto& handle : hookLibraries)
@@ -120,4 +127,16 @@ int hookFunction(void* symbol, void* hook, void** original) {
     }
 
     return 0;
+}
+
+int hookFunction(void* symbol, void* hook, void** original) {
+    auto def = hooks.find(symbol);
+    if (def == hooks.end()) {
+        hookFunction_impl(symbol, hook, original);
+        hooks.insert({symbol, {hook, original}});
+    } else {
+        *original = *def->second.original;
+        *def->second.original = hook;
+        def->second = {hook, original};
+    }
 }
