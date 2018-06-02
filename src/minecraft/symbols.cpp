@@ -1,5 +1,5 @@
 // This file was automatically generated using tools/process_headers.py
-// Generated on Sun May 20 2018 12:28:14 UTC
+// Generated on Sat Jun 02 2018 13:19:33 UTC
 
 #include <hybris/dlfcn.h>
 #include "../common/log.h"
@@ -97,8 +97,8 @@ std::shared_ptr<xbox::services::system::user_auth_android> xbox::services::syste
 }
 
 #include "ServerInstance.h"
-static void (ServerInstance::*_ServerInstance_ServerInstance)(IMinecraftApp &, Whitelist &, OpsList const &, FilePathManager *, std::chrono::seconds, mcpe::string, mcpe::string, mcpe::string, LevelSettings, minecraft::api::Api &, int, bool, int, int, int, bool, std::vector<mcpe::string> const &, mcpe::string, mce::UUID const &, MinecraftEventing &, ResourcePackRepository &, ContentTierManager const &, ResourcePackManager &, std::function<std::unique_ptr<LevelStorage> ( Scheduler & )>, std::string const &, LevelData *, ResourcePackManager *, std::function<void ( mcpe::string const & )>, std::function<void ( mcpe::string const & )>);
-ServerInstance::ServerInstance(IMinecraftApp & p1, Whitelist & p2, OpsList const & p3, FilePathManager * p4, std::chrono::seconds p5, mcpe::string p6, mcpe::string p7, mcpe::string p8, LevelSettings p9, minecraft::api::Api & p10, int p11, bool p12, int p13, int p14, int p15, bool p16, std::vector<mcpe::string> const & p17, mcpe::string p18, mce::UUID const & p19, MinecraftEventing & p20, ResourcePackRepository & p21, ContentTierManager const & p22, ResourcePackManager & p23, std::function<std::unique_ptr<LevelStorage> ( Scheduler & )> p24, std::string const & p25, LevelData * p26, ResourcePackManager * p27, std::function<void ( mcpe::string const & )> p28, std::function<void ( mcpe::string const & )> p29) {
+static void (ServerInstance::*_ServerInstance_ServerInstance)(IMinecraftApp &, Whitelist &, OpsList const &, FilePathManager *, std::chrono::seconds, mcpe::string, mcpe::string, mcpe::string, LevelSettings, minecraft::api::Api &, int, bool, int, int, int, bool, std::vector<mcpe::string> const &, mcpe::string, mce::UUID const &, MinecraftEventing &, ResourcePackRepository &, ContentTierManager const &, ResourcePackManager &, std::function<std::unique_ptr<LevelStorage> ( Scheduler & )>, mcpe::string const &, LevelData *, ResourcePackManager *, std::function<void ( mcpe::string const & )>, std::function<void ( mcpe::string const & )>);
+ServerInstance::ServerInstance(IMinecraftApp & p1, Whitelist & p2, OpsList const & p3, FilePathManager * p4, std::chrono::seconds p5, mcpe::string p6, mcpe::string p7, mcpe::string p8, LevelSettings p9, minecraft::api::Api & p10, int p11, bool p12, int p13, int p14, int p15, bool p16, std::vector<mcpe::string> const & p17, mcpe::string p18, mce::UUID const & p19, MinecraftEventing & p20, ResourcePackRepository & p21, ContentTierManager const & p22, ResourcePackManager & p23, std::function<std::unique_ptr<LevelStorage> ( Scheduler & )> p24, mcpe::string const & p25, LevelData * p26, ResourcePackManager * p27, std::function<void ( mcpe::string const & )> p28, std::function<void ( mcpe::string const & )> p29) {
     (this->*_ServerInstance_ServerInstance)(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29);
 }
 static void (ServerInstance::*_ServerInstance_destructor)();
