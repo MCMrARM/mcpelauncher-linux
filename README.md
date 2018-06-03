@@ -22,6 +22,28 @@ $ mkdir build/ && cd build/
 $ cmake ..
 $ make -j$(nproc) # This will use all cores on your system
 ```
+## Arch Linux/Manjaro Linux/Antergos
+
+Arch Linux users can simply install mcpelauncher-linux from the AUR (Arch User Repository).  
+(Before attempting this, please consult the [wiki](https://github.com/MCMrARM/mcpelauncher-linux/wiki/Requirements-for-installation#enabling-multilib-support) and see how to enable the multilib repository.)  
+There are 2 possible methods of doing this.
+
+### Preferred Method (AUR Helper)
+Install `trizen` and then enter:  
+`trizen -S mcpelauncher-linux`
+
+or if using `yaourt` (not recommended, and is insecure):  
+`yaourt -S mcpelauncher-linux`
+
+### Manual Build Method
+**NOTE:** This method requires manually installing the AUR-based dependencies and will take far more user effort.
+
+Enter the following to manually build `mcpelauncher-linux` using `makepkg`:  
+```
+git clone https://aur.archlinux.org/mcpelauncher-linux.git
+cd mcpelauncher-linux
+makepkg -sri
+```
 
 ## macOS
 
