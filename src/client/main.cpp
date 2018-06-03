@@ -259,11 +259,8 @@ static int XIOErrorHandlerImpl(Display* display) {
 #endif
 
 
-static void (*clearRenderTargetOrginal)(void*, void*, void*);
-static void clearRenderTarget(void* a, void* b, void* c) {
-    glEnable(GL_SCISSOR_TEST);
-    clearRenderTargetOrginal(a, b, c);
-    glDisable(GL_SCISSOR_TEST);
+static void setScissorRect(void* a, int x, int y, unsigned int w, unsigned int h) {
+    glScissor(x, y, w, h);
 }
 
 extern "C"
@@ -348,7 +345,6 @@ int main(int argc, char *argv[]) {
 
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
-    bool workaroundSplitscreen = false;
 
     int windowWidth = 720;
     int windowHeight = 480;
@@ -376,9 +372,6 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "--amd-fix") == 0) {
             std::cout << "--amd-fix: Enabling AMD Workaround.\n";
             workaroundAMD = true;
-        } else if (strcmp(argv[i], "-sf") == 0 || strcmp(argv[i], "--splitscreen-fix") == 0) {
-            std::cout << "--splitscreen-fix: Enabling splitscreen workaround.\n";
-            workaroundSplitscreen = true;
 #ifdef USE_GLFW
         } else if (strcmp(argv[i], "--gl-core") == 0) {
             std::cout << "--gl-core: Using OpenGL Core profile.\n";
@@ -500,12 +493,9 @@ int main(int argc, char *argv[]) {
     patchOff = (unsigned int) hybris_dlsym(handle, "_ZN4xbox8services12java_interop7log_cllERKSsS3_S3_");
     patchCallInstruction((void*) patchOff, (void*) &xblLogCLL, true);
 
-    if (workaroundSplitscreen) {
-        (void*&) clearRenderTargetOrginal = hybris_dlsym(handle,
-                                            "_ZN3mce13RenderContext16clearColorBufferERK5ColorPKNS_12ViewportInfoE");
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN12GameRenderer17clearRenderTargetER13ScreenContext") + 57;
-        patchCallInstruction((void*) patchOff, (void*) &clearRenderTarget, false);
-    }
+    patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce13RenderContext26setViewportWithFullScissorERKNS_12ViewportInfoE") + (0x85E - 0x740);
+    patchCallInstruction((void*) patchOff, (void*) &setScissorRect, false);
+
     if (graphicsApi == GraphicsApi::OPENGL) {
         patchOff = (unsigned int) hybris_dlsym(handle, "_ZN3mce11ShaderGroup10loadShaderERNS_12RenderDeviceERKSsS4_S4_S4_");
         if (((unsigned char*) patchOff)[0x90C - 0x7F0 + 1] != 0xA0) {
