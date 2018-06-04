@@ -54,6 +54,6 @@ const char *mcpe::string::c_str() const {
 }
 
 std::ostream& operator<< (std::ostream& os, const mcpe::string& obj) {
-    os << obj.std();
+    os << obj.c_str();
     return os;
 }

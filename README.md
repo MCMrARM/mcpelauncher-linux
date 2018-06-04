@@ -27,8 +27,10 @@ $ make -j$(nproc) # This will use all cores on your system
 
 Make sure you've got XCode set up: `xcode-select --install` (when the dialog pops up, just say you want the tools). Next, make sure you have [Brew](https://brew.sh/) installed
 
-The packages you'll need are as follows:
+The packages you'll need are as follows (`brew install package`):
 
+- openssl
+- zenity
 - cmake
 - git (this will come pre-installed with xcode-select, but make sure it's up-to-date)
 
@@ -40,7 +42,7 @@ The commands to build using CMake are as follows:
 
 ```console
 $ mkdir build/ && cd build/
-$ cmake ..
+$ cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ..
 $ make -j$(sysctl -n hw.ncpu) # This will use all the cores on your system
 ```
 
